@@ -17,6 +17,11 @@ import (
 
 type textMatcher func(string) bool
 
+const (
+	maxScanTokenBytes = 1024 * 1024
+	maxMatchLineBytes = 4096
+)
+
 // Run searches files under cwd.
 func Run(ctx context.Context, cwd string, raw string, maxBytes int) (agent.ToolResult, error) {
 	var args struct {
@@ -116,12 +121,18 @@ func grepFile(path, rel string, matcher textMatcher, limit int) ([]string, error
 	defer file.Close()
 	var matches []string
 	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64*1024), maxScanTokenBytes)
 	lineNumber := 0
 	for scanner.Scan() {
 		lineNumber++
 		line := scanner.Text()
 		if matcher(line) {
-			matches = append(matches, fmt.Sprintf("%s:%d:%s", rel, lineNumber, line))
+			// Keep one very long matching line from eating the entire tool result.
+			display, truncated := toolkit.TruncateString(line, maxMatchLineBytes)
+			if truncated {
+				display += "...[truncated]"
+			}
+			matches = append(matches, fmt.Sprintf("%s:%d:%s", rel, lineNumber, display))
 			if len(matches) >= limit {
 				return matches, nil
 			}

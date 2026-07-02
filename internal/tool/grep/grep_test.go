@@ -61,6 +61,22 @@ func TestGrepIgnoreCase(t *testing.T) {
 	}
 }
 
+func TestGrepTruncatesLongMatchingLine(t *testing.T) {
+	dir := t.TempDir()
+	longLine := strings.Repeat("x", 70*1024) + "needle\n"
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte(longLine), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	result, err := Run(context.Background(), dir, `{"pattern":"needle","literal":true}`, 10000)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	if !strings.Contains(result.Content, "[truncated]") {
+		t.Fatalf("grep result = %q, want truncated marker", result.Content)
+	}
+}
+
 func TestGrepRejectsInvalidRegex(t *testing.T) {
 	_, err := Run(context.Background(), t.TempDir(), `{"pattern":"["}`, 1000)
 	if err == nil || !strings.Contains(err.Error(), "compile grep pattern") {

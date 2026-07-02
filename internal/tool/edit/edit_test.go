@@ -54,6 +54,26 @@ func TestNUF072EditPreservesCRLF(t *testing.T) {
 	}
 }
 
+func TestEditAppliesMultipleReplacementsAgainstOriginal(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "a.txt")
+	if err := os.WriteFile(path, []byte("a b"), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	_, err := Run(
+		context.Background(),
+		dir,
+		`{"path":"a.txt","replacements":[{"old":"a","new":"b"},{"old":"b","new":"c"}]}`,
+	)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	if string(mustRead(t, path)) != "b c" {
+		t.Fatalf("edited content = %q, want b c", string(mustRead(t, path)))
+	}
+}
+
 func TestEditRejectsMissingOldText(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("abc"), 0o644); err != nil {

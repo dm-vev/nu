@@ -58,6 +58,22 @@ func TestWriteRejectsPathEscape(t *testing.T) {
 	}
 }
 
+func TestWriteRejectsSymlinkParentEscape(t *testing.T) {
+	dir := t.TempDir()
+	outside := t.TempDir()
+	if err := os.Symlink(outside, filepath.Join(dir, "link")); err != nil {
+		t.Skipf("Symlink unsupported: %v", err)
+	}
+
+	_, err := Run(context.Background(), dir, `{"path":"link/new.txt","content":"bad"}`)
+	if err == nil || !strings.Contains(err.Error(), "escapes cwd") {
+		t.Fatalf("Run error = %v, want symlink cwd escape", err)
+	}
+	if _, err := os.Stat(filepath.Join(outside, "new.txt")); err == nil {
+		t.Fatalf("outside file was created")
+	}
+}
+
 func decodeResult(t *testing.T, raw string) map[string]any {
 	t.Helper()
 	var got map[string]any
