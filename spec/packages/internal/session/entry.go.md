@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic JSONL entry envelope exists; known payload typing and extra-field preservation are pending.
 
 ## TODO
 

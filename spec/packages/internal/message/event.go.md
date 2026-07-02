@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic Event and MarshalJSONL exist; full event type taxonomy is pending.
 
 ## TODO
 

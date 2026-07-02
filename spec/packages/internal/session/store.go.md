@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Append/load with in-process locking exists; fs injection, fsync policy, and state entries are pending.
 
 ## TODO
 

@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic tree build/path/move operations exist; persisted active-leaf state handling is pending.
 
 ## TODO
 
