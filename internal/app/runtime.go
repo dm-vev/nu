@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"nu/internal/provider/openai"
 	"nu/internal/tool"
 )
+
+var fireworksBaseURL = "https://api.fireworks.ai/inference/v1"
 
 // Options carries process state into one app invocation.
 type Options struct {
@@ -137,7 +140,7 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 	}
 
 	// Runtime selection uses the same model metadata and auth rules as list-models.
-	entries, registry, err := loadModelRegistry(req.ModelsPath)
+	entries, registry, err := loadModelRegistry(modelsPath(opts.Home, req.ModelsPath))
 	if err != nil {
 		return Options{}, err
 	}
@@ -180,6 +183,16 @@ func loadModelRegistry(path string) ([]model.Model, model.Registry, error) {
 		entries = append(entries, custom...)
 	}
 	return entries, model.NewRegistry(entries), nil
+}
+
+func modelsPath(home string, explicit string) string {
+	if strings.TrimSpace(explicit) != "" {
+		return explicit
+	}
+	if strings.TrimSpace(home) == "" {
+		return ""
+	}
+	return filepath.Join(home, ".nu", "agent", "models.json")
 }
 
 func providerAuthState(ctx context.Context, store auth.Store, entries []model.Model) (map[string]bool, error) {
@@ -301,6 +314,12 @@ func newProviderClient(
 			return nil, err
 		}
 		return bedrock.New(bedrock.Config{Credentials: creds}), nil
+	case "fireworks":
+		key, err := providerAPIKey(ctx, store, req, selected.Provider)
+		if err != nil {
+			return nil, err
+		}
+		return compat.New(fireworksBaseURL, key), nil
 	default:
 		return nil, fmt.Errorf("provider %q is not implemented", selected.Provider)
 	}

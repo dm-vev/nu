@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: 687e919
-Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, Phase 3 provider construction helpers, and selected model display labels.
+Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, Phase 3 provider construction helpers, selected model display labels, global models file defaults, and is being fixed to construct Fireworks as an OpenAI-compatible provider.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] Run the targeted package tests.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -78,7 +78,8 @@ Logic:
 
 - Return injected `Options.Provider` unchanged for tests.
 - Load auth from `~/.nu/auth.json` and `Options.Env`.
-- Build a model registry from built-ins plus optional `req.ModelsPath`.
+- Build a model registry from built-ins plus explicit `req.ModelsPath` or,
+  when omitted, global `~/.nu/agent/models.json`.
 - Treat URL `req.Provider` values as OpenAI-compatible Chat Completions
   endpoints and require `req.Model`.
 - Resolve `req.Model` when supplied.
@@ -89,8 +90,8 @@ Logic:
 - Prefer `openai-default` when no provider/model is supplied and OpenAI is
   available, otherwise choose the first visible model.
 - Use `req.APIKey` before auth store values.
-- Construct OpenAI, Anthropic, Google, Bedrock, or OpenAI-compatible custom
-  provider adapters.
+- Construct OpenAI, Anthropic, Google, Bedrock, Fireworks, or OpenAI-compatible
+  custom provider adapters.
 
 Acceptance:
 
@@ -99,6 +100,7 @@ Acceptance:
 - `--models` custom entries can affect runtime selection;
 - custom `display_name` entries affect display labels without changing provider
   model ids;
+- global `~/.nu/agent/models.json` is used when `--models` is omitted;
 - default selection is stable and does not depend on registry sort order.
 
 ### `loadModelRegistry(path string) ([]model.Model, model.Registry, error)`
@@ -112,6 +114,18 @@ Logic:
 Acceptance:
 
 - custom `models.json` entries appear in list-models and runtime selection.
+
+### `modelsPath(home string, explicit string) string`
+
+Logic:
+
+- Return `explicit` when non-empty.
+- Return empty when home is empty.
+- Otherwise return `~/.nu/agent/models.json` under the supplied home.
+
+Acceptance:
+
+- runtime uses global models by default without reading process globals.
 
 ### `providerAuthState(ctx context.Context, store auth.Store, entries []model.Model) (map[string]bool, error)`
 
@@ -189,6 +203,7 @@ Logic:
 Acceptance:
 
 - OpenAI, Anthropic, Google, and Bedrock selections create streamers;
+- Fireworks selections create an OpenAI-compatible chat streamer;
 - unsupported custom providers fail before network work.
 
 ### `providerAPIKey(ctx context.Context, store auth.Store, req cli.Request, providerID string) (string, error)`

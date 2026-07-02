@@ -70,7 +70,7 @@ func runPrint(ctx context.Context, rt *Runtime, req cli.Request) error {
 
 func runListModels(ctx context.Context, rt *Runtime, req cli.Request) error {
 	// List output must reflect the same custom registry used for runtime selection.
-	entries, registry, err := loadModelRegistry(req.ModelsPath)
+	entries, registry, err := loadModelRegistry(modelsPath(rt.Options.Home, req.ModelsPath))
 	if err != nil {
 		return err
 	}

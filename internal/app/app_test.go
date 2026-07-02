@@ -301,6 +301,31 @@ func TestListModelsUsesCustomModelsPath(t *testing.T) {
 	}
 }
 
+func TestListModelsUsesGlobalModelsPathByDefault(t *testing.T) {
+	home := t.TempDir()
+	agentDir := filepath.Join(home, ".nu", "agent")
+	if err := os.MkdirAll(agentDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll error = %v", err)
+	}
+	raw := `{"models":[{"id":"global","provider":"fireworks","api":"chat","display_name":"Global Fireworks","requires_auth":false,"context_window":9,"max_output":4}]}`
+	if err := os.WriteFile(filepath.Join(agentDir, "models.json"), []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	var stdout bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--list-models"},
+		Home:   home,
+		Stdout: &stdout,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
+	}
+	if !strings.Contains(stdout.String(), "fireworks/global\tchat\t9\t4\tGlobal Fireworks") {
+		t.Fatalf("stdout = %q, want global model", stdout.String())
+	}
+}
+
 func TestListModelsIncludesDisplayName(t *testing.T) {
 	dir := t.TempDir()
 	modelsPath := filepath.Join(dir, "models.json")
@@ -344,6 +369,55 @@ func TestPrintModeBuildsProviderFromCLI(t *testing.T) {
 	}
 	if gotPath != "/chat/completions" || stdout.String() != "ok\n" {
 		t.Fatalf("path/stdout = %q/%q, want compat chat response", gotPath, stdout.String())
+	}
+}
+
+func TestPrintModeBuildsFireworksProviderFromGlobalModels(t *testing.T) {
+	home := t.TempDir()
+	agentDir := filepath.Join(home, ".nu", "agent")
+	if err := os.MkdirAll(agentDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll error = %v", err)
+	}
+	raw := `{"models":[{"id":"glm","provider":"fireworks","api":"chat","requires_auth":true}]}`
+	if err := os.WriteFile(filepath.Join(agentDir, "models.json"), []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+	authRaw := `{"providers":{"fireworks":{"api_key":"key"}}}`
+	if err := os.MkdirAll(filepath.Join(home, ".nu"), 0o755); err != nil {
+		t.Fatalf("MkdirAll auth dir error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".nu", "auth.json"), []byte(authRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile auth error = %v", err)
+	}
+
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+	}))
+	defer server.Close()
+
+	oldBaseURL := fireworksBaseURL
+	fireworksBaseURL = server.URL
+	defer func() {
+		fireworksBaseURL = oldBaseURL
+	}()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--print", "hello"},
+		Home:   home,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if gotPath != "/chat/completions" || stdout.String() != "ok\n" {
+		t.Fatalf("path/stdout = %q/%q, want Fireworks compat response", gotPath, stdout.String())
 	}
 }
 
