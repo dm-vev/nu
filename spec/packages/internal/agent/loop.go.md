@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Text-only provider loop exists; tool-call continuation and message persistence are pending.
 
 ## TODO
 

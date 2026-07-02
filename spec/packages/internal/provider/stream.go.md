@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic start/text/done/error events and Collect exist; tool-call and usage assembly are pending.
 
 ## TODO
 

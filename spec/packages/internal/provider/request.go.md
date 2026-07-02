@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic provider request validation exists; tools, images, thinking, and cache hints are pending.
 
 ## TODO
 

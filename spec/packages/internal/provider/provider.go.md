@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Basic Streamer and immutable registry exist; model/API integration is pending.
 
 ## TODO
 

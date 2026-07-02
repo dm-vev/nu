@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Scripted provider exists for agent tests; richer stream scripts can be added when tool calls land.
 
 ## TODO
 

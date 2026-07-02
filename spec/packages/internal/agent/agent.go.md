@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Text-only prompt and abort path exist; session/tool/retry/queue integration is pending.
 
 ## TODO
 
