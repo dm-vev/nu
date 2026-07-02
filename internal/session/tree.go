@@ -1,6 +1,7 @@
 package session
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -45,8 +46,34 @@ func BuildTree(entries []Entry) (*Tree, error) {
 		tree.leaves[entry.ID] = true
 		tree.activeLeaf = entry.ID
 	}
+	if leaf := sessionStateLeaf(entries); leaf != "" && tree.leaves[leaf] {
+		// A final session_state entry persists selection without rewriting older lines.
+		tree.activeLeaf = leaf
+	}
 
 	return tree, nil
+}
+
+func sessionStateLeaf(entries []Entry) string {
+	if len(entries) == 0 {
+		return ""
+	}
+	last := entries[len(entries)-1]
+	if last.Kind != KindExtension {
+		return ""
+	}
+	var state struct {
+		Name       string `json:"name"`
+		Type       string `json:"type"`
+		ActiveLeaf string `json:"active_leaf"`
+	}
+	if err := json.Unmarshal(last.Payload, &state); err != nil {
+		return ""
+	}
+	if state.Name != "session_state" && state.Type != "session_state" {
+		return ""
+	}
+	return state.ActiveLeaf
 }
 
 // PathTo returns the ordered root-to-leaf path.
