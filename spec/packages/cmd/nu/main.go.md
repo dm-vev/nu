@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Phase 0 thin entry point exists; keep open until app integration covers signal/env startup.
 
 ## TODO
 

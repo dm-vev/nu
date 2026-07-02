@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Phase 0 parser handles core flags used by the first vertical slice; full request population is pending.
 
 ## TODO
 

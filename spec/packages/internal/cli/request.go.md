@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Initial request shape exists; detailed model/auth/session/resource fields are pending.
 
 ## TODO
 

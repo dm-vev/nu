@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Help/version/print dispatch exists; JSON/RPC/package/share/update modes are pending.
 
 ## TODO
 

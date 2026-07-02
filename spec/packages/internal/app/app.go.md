@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: TODO
+Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Not implemented yet.
+Implementation Comments: Phase 0 dispatch skeleton exists; config/auth/resource wiring is still pending.
 
 ## TODO
 
