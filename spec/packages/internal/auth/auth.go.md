@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 4ddd508
+Implementation Commit: c64b048
 Implementation Comments: Phase 3 auth resolves provider credentials from auth.json, deterministic env, and bounded command execution without network calls.
 
 ## TODO
@@ -73,6 +73,8 @@ Logic:
 - Resolve `api_key_command` by running `sh -c` under caller context and
   trimming whitespace.
 - Fall back to known provider env names when no auth-file credential exists.
+- For Bedrock, require both AWS access key id and AWS secret access key before
+  reporting auth as available.
 
 Acceptance:
 
@@ -86,3 +88,4 @@ Tests:
 - `TestNUF020AuthFileBeatsEnvironment`
 - `TestNUF020EnvInterpolation`
 - `TestNUF020CommandInterpolation`
+- `TestBedrockEnvRequiresAccessKeyAndSecret`

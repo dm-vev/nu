@@ -49,7 +49,7 @@ Exit: tools are test-covered without real provider calls.
 
 ## Phase 3: Real Providers And Models
 
-Status: implemented through `4ddd508`.
+Status: implemented through `c64b048`.
 
 - OpenAI Chat Completions
 - OpenAI Responses

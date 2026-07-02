@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 4ddd508
-Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events. List-models prints auth-visible model registry entries.
+Implementation Commit: c64b048
+Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events. List-models prints auth-visible built-in/custom model registry entries and chat modes configure real providers before agent creation.
 
 ## TODO
 
@@ -33,19 +33,23 @@ Logic:
 - Dispatch list-models to `runListModels`.
 - Dispatch chat print mode to `runPrint`.
 - Dispatch chat JSON mode to `runJSON`.
+- Configure provider/runtime selections from the parsed request before chat
+  modes create an agent.
 - Return a clear not-implemented error for modes outside the current slice.
 
 Acceptance:
 
 - dispatches help, version, list-models, print mode, and JSON mode;
+- configured real providers are reachable from print and JSON modes;
 - returns a clear error for unimplemented modes.
 
-### `runListModels(ctx context.Context, rt *Runtime) error`
+### `runListModels(ctx context.Context, rt *Runtime, req cli.Request) error`
 
 Logic:
 
-- Resolve provider auth state from `Options.Home` and `Options.Env`.
-- Build the built-in model registry.
+- Load auth from `Options.Home` and `Options.Env`.
+- Resolve provider auth state through runtime helpers.
+- Build the model registry from built-ins plus optional `req.ModelsPath`.
 - Print visible models as tab-separated `provider/id`, api, context window, and
   max output fields.
 - Keep output deterministic by using registry ordering.
@@ -53,25 +57,14 @@ Logic:
 Acceptance:
 
 - authenticated provider models are visible;
-- unauthenticated provider models are hidden.
-
-### `providerAuthState(ctx context.Context, opts Options) (map[string]bool, error)`
-
-Logic:
-
-- Load `~/.nu/auth.json` when `Options.Home` is set.
-- Resolve OpenAI, Anthropic, Google, and Bedrock auth through `internal/auth`.
-- Return provider ids with available credentials.
-
-Acceptance:
-
-- uses injected env and home, never process globals.
+- unauthenticated provider models are hidden;
+- custom `--models` entries are included.
 
 ### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
 
 Logic:
 
-- Require `rt.Agent`; do not accept an injected print callback.
+- Require a provider-backed agent.
 - Join prompt args into the prompt text exactly as CLI parsing supplied them.
 - Call `Agent.Prompt` with the caller context.
 - Let the runtime agent emitter own stdout writing.
@@ -100,7 +93,8 @@ Tests:
 
 - `TestNUF002DispatchPrintMode`
 - `TestAppRunPrintModeUsesInjectedRuntime`
-- `TestAppRunPrintModeWithoutHandlerFails`
+- `TestAppRunPrintModeWithoutAvailableModelFails`
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`
 - `TestNUF170JSONModeFeedsToolResultBackToProvider`
 - `TestListModelsUsesAuthState`
+- `TestListModelsUsesCustomModelsPath`

@@ -62,13 +62,15 @@ Tests:
 
 API keys and OAuth tokens are stored in `auth.json`. Auth file values override
 process environment. Env interpolation and command interpolation are supported
-for configured values.
+for configured values. Bedrock auth requires both AWS access key id and secret
+access key before it is treated as available.
 
 Tests:
 
 - `TestNUF020AuthFileBeatsEnvironment`
 - `TestNUF020EnvInterpolation`
 - `TestNUF020CommandInterpolation`
+- `TestBedrockEnvRequiresAccessKeyAndSecret`
 
 ## Providers And Models
 
@@ -78,14 +80,23 @@ Nu supports provider adapters for OpenAI Chat Completions, OpenAI Responses,
 Anthropic Messages, Google Generative AI, AWS Bedrock, and OpenAI-compatible
 custom providers.
 
+Tool-use continuations preserve the assistant tool-call message before tool
+result messages so provider-specific APIs can build valid follow-up payloads.
+
 Tests:
 
 - `TestNUF030OpenAIChatRequestShape`
 - `TestNUF030OpenAIResponsesToolCallStream`
+- `TestOpenAIChatPayloadIncludesAssistantToolCalls`
+- `TestOpenAIResponsesPayloadIncludesFunctionCallHistory`
 - `TestNUF030AnthropicMessagesRequestShape`
+- `TestAnthropicPayloadIncludesAssistantToolUse`
 - `TestGoogleGenerateContentRequestShape`
+- `TestGooglePayloadIncludesFunctionCallAndResponse`
 - `TestBedrockConverseRequestShape`
+- `TestBedrockPayloadIncludesToolUseAndResult`
 - `TestBedrockSignAddsAuthorization`
+- `TestBedrockRejectsOversizedEventFrame`
 
 ### NUF-031 Model Registry
 
@@ -116,6 +127,9 @@ Tests:
 
 The agent loops over provider responses and tool results until the assistant
 stops without tool calls, the user aborts, or retry policy is exhausted.
+
+When a provider requests a tool, the next provider request includes both the
+assistant tool-call message and the tool result message in order.
 
 Tests:
 

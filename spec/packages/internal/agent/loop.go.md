@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 456582c
-Implementation Comments: Provider loop handles text and finalized tool calls before continuing, and rejects malformed tool-call ordering; retry/queues remain future specs.
+Implementation Commit: c64b048
+Implementation Comments: Provider loop handles text and finalized tool calls, preserves assistant tool-call history before tool results, and rejects malformed tool-call ordering; retry/queues remain future specs.
 
 ## TODO
 
@@ -34,8 +34,9 @@ Logic:
 - For every provider event, call `handleProviderEvent` and emit corresponding
   message/update events.
 - On normalized provider `error`, return `provider.ErrStream` with context.
-- On `done` with `tool_use`, execute finalized tool calls, append tool result
-  messages, and start the next provider request in the same turn.
+- On `done` with `tool_use`, execute finalized tool calls, append assistant
+  tool-call messages followed by tool result messages, and start the next
+  provider request in the same turn.
 - On final `done`, emit final `turn_end` with accumulated text.
 - Stop on context cancellation, abort, premature stream close, or validation error.
 
@@ -43,7 +44,7 @@ Acceptance:
 
 - sends context to provider;
 - accumulates assistant stream into messages;
-- feeds tool results back to provider;
+- feeds assistant tool-call history and tool results back to provider;
 - stops on final provider done, abort, provider error, or unrecoverable error.
 
 ### `handleProviderEvent(state *State, ev provider.Event) error`
@@ -62,6 +63,24 @@ Logic:
 Acceptance:
 
 - converts start/text/tool/done provider events without provider-specific logic.
+
+### `executeToolCalls(ctx context.Context, state *State) ([]provider.Message, error)`
+
+Logic:
+
+- Require at least one finalized tool call after a `tool_use` stop.
+- Sort pending tool calls by provider index for deterministic continuation.
+- Reject unfinished tool calls and missing tool implementations.
+- Append the assistant tool-call message before executing and appending the
+  tool result message.
+- Emit tool start/end events around each tool execution.
+- Wrap context cancellation and tool execution errors with tool name context.
+
+Acceptance:
+
+- returned provider messages preserve assistant tool-call history and tool
+  result order;
+- missing or unfinished tool calls fail before the next provider request.
 
 Tests:
 

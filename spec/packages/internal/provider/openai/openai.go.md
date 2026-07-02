@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 4ddd508
-Implementation Comments: Phase 3 OpenAI adapter covers Chat Completions and Responses request/stream shapes with deterministic tool-end ordering.
+Implementation Commit: c64b048
+Implementation Comments: Phase 3 OpenAI adapter covers Chat Completions and Responses request/stream shapes, assistant tool-call history, and deterministic tool-end ordering.
 
 ## TODO
 
@@ -65,22 +65,53 @@ Logic:
 
 - Convert provider messages into Chat Completions messages.
 - Include `model`, `stream: true`, and stream usage options.
+- Represent assistant tool-call history as Chat Completions `tool_calls`.
 - Represent tool results as `role: tool` with `tool_call_id`.
 
 Acceptance:
 
-- matches Chat Completions request shape used by tests.
+- matches Chat Completions request shape used by tests;
+- preserves assistant tool-call history before tool results.
+
+### `chatMessage(message provider.Message) map[string]any`
+
+Logic:
+
+- Convert assistant tool-call history into one Chat Completions assistant
+  message with `tool_calls`.
+- Convert tool results into `role: tool` messages with `tool_call_id`.
+- Preserve simple user/assistant text messages as role/content pairs.
+
+Acceptance:
+
+- Chat payloads include the assistant tool-call entry required before tool
+  result messages.
 
 ### `BuildResponsesPayload(req provider.Request) (map[string]any, error)`
 
 Logic:
 
 - Convert provider messages into Responses `input` items.
+- Represent assistant tool-call history as `function_call` input items.
+- Represent tool results as `function_call_output` input items.
 - Include `model` and `stream: true`.
 
 Acceptance:
 
-- matches Responses request shape used by tests.
+- matches Responses request shape used by tests;
+- preserves function-call history before function-call output.
+
+### `responsesInput(message provider.Message) map[string]any`
+
+Logic:
+
+- Convert assistant tool-call history into Responses `function_call` input.
+- Convert tool results into `function_call_output` input.
+- Preserve simple user/assistant messages as role/content items.
+
+Acceptance:
+
+- Responses payloads include function-call history before tool output.
 
 ### `Stream(ctx context.Context, req provider.Request) (<-chan provider.Event, error)`
 
@@ -102,3 +133,5 @@ Tests:
 
 - `TestNUF030OpenAIChatRequestShape`
 - `TestNUF030OpenAIResponsesToolCallStream`
+- `TestOpenAIChatPayloadIncludesAssistantToolCalls`
+- `TestOpenAIResponsesPayloadIncludesFunctionCallHistory`

@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Phase 0 parser handles core flags used by the first vertical slice; full request population is pending.
+Implementation Comments: Parser records Phase 3 provider/model/auth/model-file selectors and preserves extension flags.
 
 ## TODO
 
@@ -30,6 +30,8 @@ Logic:
 
 - Iterate argv left-to-right and classify tokens as known flags, unknown extension flags, file references, or prompt text.
 - Parse known flags into typed `Request` fields and attach source spans for diagnostics.
+- Store `--provider`, `--model`, `--api-key`, and `--models` values in the
+  request instead of discarding them.
 - Keep `@file` references separate from prompt text so resource loading can resolve them later.
 - Record invalid values as diagnostics and continue parsing when the remaining argv is still meaningful.
 

@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Initial request shape exists; detailed model/auth/session/resource fields are pending.
+Implementation Comments: Request shape carries Phase 3 provider/model/auth/model-file selectors; detailed session/resource fields are pending.
 
 ## TODO
 
@@ -29,6 +29,8 @@ consumers.
 Logic:
 
 - Store command kind, execution mode, model selector, auth selector, session reference, tool filters, resource flags, prompt messages, file arguments, raw extension flags, and diagnostics source spans.
+- Store `provider`, `model`, `api_key`, and `models` flag values for Phase 3
+  provider/runtime selection.
 - Keep process IO, filesystem, environment, and runtime dependencies out of this type.
 - Keep validation in `args.go` and mode dispatch in `app` so this file remains a pure request contract.
 

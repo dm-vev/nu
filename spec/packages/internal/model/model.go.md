@@ -81,6 +81,7 @@ Logic:
 - Return nil for missing files.
 - Decode `{ "models": [...] }`.
 - Validate provider, API, and id.
+- Preserve explicit `enabled: false` and default omitted enabled to true.
 
 Acceptance:
 

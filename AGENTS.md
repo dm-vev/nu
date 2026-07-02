@@ -21,7 +21,7 @@ Use the documented Go workflow once source packages exist:
 
 ```bash
 go test ./...
-go test -race ./internal/agent ./internal/session ./internal/extension ./internal/tool
+go test -race ./internal/agent ./internal/session ./internal/tool
 go vet ./...
 gofmt -w <files>
 ```

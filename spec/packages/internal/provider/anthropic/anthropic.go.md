@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 4ddd508
-Implementation Comments: Phase 3 Anthropic Messages adapter covers request shape and SSE text/tool parsing.
+Implementation Commit: c64b048
+Implementation Comments: Phase 3 Anthropic Messages adapter covers request shape, assistant tool-use history, tool results, and SSE text/tool parsing.
 
 ## TODO
 
@@ -29,12 +29,38 @@ transport.
 Logic:
 
 - Convert user/assistant text messages into Anthropic `messages`.
+- Convert assistant tool-call history into assistant-role `tool_use` content blocks.
 - Convert tool results into user-role `tool_result` content blocks.
 - Include `model`, `max_tokens`, and `stream: true`.
 
 Acceptance:
 
-- matches Messages request shape used by tests.
+- matches Messages request shape used by tests;
+- preserves assistant tool-use history before tool results.
+
+### `messagesMessage(message provider.Message) map[string]any`
+
+Logic:
+
+- Convert assistant tool-call history into assistant `tool_use` content.
+- Convert tool results into user-role `tool_result` content.
+- Preserve user/assistant text messages as Anthropic role/content pairs.
+- Normalize unknown roles to user text messages.
+
+Acceptance:
+
+- payload messages preserve the provider-required tool_use/tool_result order.
+
+### `decodeJSONOrText(raw string) any`
+
+Logic:
+
+- Decode JSON arguments/results when possible.
+- Fall back to `{ "text": raw }` when the value is not valid JSON.
+
+Acceptance:
+
+- malformed tool arguments do not panic or fail payload construction.
 
 ### `Stream(ctx context.Context, req provider.Request) (<-chan provider.Event, error)`
 
@@ -53,3 +79,4 @@ Acceptance:
 Tests:
 
 - `TestNUF030AnthropicMessagesRequestShape`
+- `TestAnthropicPayloadIncludesAssistantToolUse`
