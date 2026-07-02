@@ -20,7 +20,10 @@ import (
 	"nu/internal/provider"
 )
 
-const defaultRegion = "us-east-1"
+const (
+	defaultRegion            = "us-east-1"
+	maxEventStreamFrameBytes = 8 * 1024 * 1024
+)
 
 // Credentials are AWS credentials used for Bedrock runtime signing.
 type Credentials struct {
@@ -75,19 +78,39 @@ func BuildConversePayload(req provider.Request) (map[string]any, error) {
 	}
 	messages := make([]map[string]any, 0, len(req.Messages))
 	for _, message := range req.Messages {
-		role := message.Role
-		if role == "assistant" {
-			role = "assistant"
-		}
-		if role == "tool" {
-			role = "user"
-		}
-		messages = append(messages, map[string]any{
-			"role":    role,
-			"content": []map[string]string{{"text": message.Content}},
-		})
+		messages = append(messages, converseMessage(message))
 	}
 	return map[string]any{"messages": messages}, nil
+}
+
+func converseMessage(message provider.Message) map[string]any {
+	if message.Role == "assistant" && message.ToolCallID != "" {
+		return map[string]any{
+			"role": "assistant",
+			"content": []map[string]any{{
+				"toolUse": map[string]any{
+					"toolUseId": message.ToolCallID,
+					"name":      message.Name,
+					"input":     decodeJSONOrText(message.Content),
+				},
+			}},
+		}
+	}
+	if message.Role == "tool" {
+		return map[string]any{
+			"role": "user",
+			"content": []map[string]any{{
+				"toolResult": map[string]any{
+					"toolUseId": message.ToolCallID,
+					"content":   []map[string]string{{"text": message.Content}},
+				},
+			}},
+		}
+	}
+	return map[string]any{
+		"role":    message.Role,
+		"content": []map[string]string{{"text": message.Content}},
+	}
 }
 
 // Sign applies AWS Signature Version 4 headers to req.
@@ -279,6 +302,10 @@ func readEventStreamPayload(r io.Reader) ([]byte, error) {
 	if totalLen < 16 || headersLen > totalLen-16 {
 		return nil, fmt.Errorf("bedrock event length is invalid")
 	}
+	// The remote frame length is capped before allocation to bound memory use.
+	if totalLen > maxEventStreamFrameBytes {
+		return nil, fmt.Errorf("bedrock event frame too large: %d bytes", totalLen)
+	}
 	rest := make([]byte, totalLen-12)
 	if _, err := io.ReadFull(r, rest); err != nil {
 		return nil, err
@@ -291,6 +318,14 @@ func readEventStreamPayload(r io.Reader) ([]byte, error) {
 	payloadStart := int(12 + headersLen)
 	payloadEnd := len(message) - 4
 	return message[payloadStart:payloadEnd], nil
+}
+
+func decodeJSONOrText(raw string) any {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err == nil {
+		return value
+	}
+	return map[string]string{"text": raw}
 }
 
 func canonicalHeaders(req *http.Request) (string, string) {

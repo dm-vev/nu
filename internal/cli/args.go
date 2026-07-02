@@ -84,6 +84,34 @@ func Parse(args []string) (Request, []Diagnostic) {
 				continue
 			}
 			req.Mode = mode
+		case arg == "--provider":
+			value, ok := nextValue(args, &i)
+			if !ok {
+				diagnostics = append(diagnostics, Diagnostic{Message: "--provider requires a value"})
+				continue
+			}
+			req.Provider = value
+		case arg == "--model":
+			value, ok := nextValue(args, &i)
+			if !ok {
+				diagnostics = append(diagnostics, Diagnostic{Message: "--model requires a value"})
+				continue
+			}
+			req.Model = value
+		case arg == "--api-key":
+			value, ok := nextValue(args, &i)
+			if !ok {
+				diagnostics = append(diagnostics, Diagnostic{Message: "--api-key requires a value"})
+				continue
+			}
+			req.APIKey = value
+		case arg == "--models":
+			value, ok := nextValue(args, &i)
+			if !ok {
+				diagnostics = append(diagnostics, Diagnostic{Message: "--models requires a value"})
+				continue
+			}
+			req.ModelsPath = value
 		case arg == "--thinking":
 			value, ok := nextValue(args, &i)
 			if !ok {

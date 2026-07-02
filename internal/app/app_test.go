@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
 	"nu/internal/agent"
+	"nu/internal/cli"
 	"nu/internal/provider"
 	"nu/internal/testkit"
 )
@@ -198,7 +201,7 @@ func TestJSONSessionHeaderDefaults(t *testing.T) {
 	}
 }
 
-func TestAppRunPrintModeWithoutHandlerFails(t *testing.T) {
+func TestAppRunPrintModeWithoutAvailableModelFails(t *testing.T) {
 	var stderr bytes.Buffer
 	code := Run(context.Background(), Options{
 		Args:   []string{"--print", "hello"},
@@ -207,8 +210,8 @@ func TestAppRunPrintModeWithoutHandlerFails(t *testing.T) {
 	if code != exitError {
 		t.Fatalf("Run exit code = %d, want %d", code, exitError)
 	}
-	if !strings.Contains(stderr.String(), "print mode requires agent handler") {
-		t.Fatalf("Run stderr = %q, want missing handler error", stderr.String())
+	if !strings.Contains(stderr.String(), "resolve model: no available models") {
+		t.Fatalf("Run stderr = %q, want no available models error", stderr.String())
 	}
 }
 
@@ -227,5 +230,84 @@ func TestListModelsUsesAuthState(t *testing.T) {
 	}
 	if strings.Contains(stdout.String(), "anthropic/") {
 		t.Fatalf("stdout = %q, should hide unauthenticated Anthropic models", stdout.String())
+	}
+}
+
+func TestListModelsUsesCustomModelsPath(t *testing.T) {
+	dir := t.TempDir()
+	modelsPath := filepath.Join(dir, "models.json")
+	raw := `{"models":[{"id":"local","provider":"compat","api":"chat","requires_auth":false,"context_window":7,"max_output":3}]}`
+	if err := os.WriteFile(modelsPath, []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	var stdout bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--list-models", "--models", modelsPath},
+		Stdout: &stdout,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
+	}
+	if !strings.Contains(stdout.String(), "compat/local\tchat\t7\t3") {
+		t.Fatalf("stdout = %q, want custom model", stdout.String())
+	}
+}
+
+func TestPrintModeBuildsProviderFromCLI(t *testing.T) {
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+	}))
+	defer server.Close()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--print", "--provider", server.URL, "--model", "local", "--api-key", "key", "hello"},
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if gotPath != "/chat/completions" || stdout.String() != "ok\n" {
+		t.Fatalf("path/stdout = %q/%q, want compat chat response", gotPath, stdout.String())
+	}
+}
+
+func TestSelectModelUsesOpenAIDefaultWhenAPIKeyMarksAllProviders(t *testing.T) {
+	entries, registry, err := loadModelRegistry("")
+	if err != nil {
+		t.Fatalf("loadModelRegistry error = %v", err)
+	}
+	authState := map[string]bool{}
+	markConfiguredProviders(authState, entries)
+
+	selected, err := selectModel(registry, authState, cli.Request{})
+	if err != nil {
+		t.Fatalf("selectModel error = %v", err)
+	}
+	if selected.Provider != "openai" || selected.ID != "gpt-5.5" {
+		t.Fatalf("selected = %s/%s, want openai/gpt-5.5", selected.Provider, selected.ID)
+	}
+}
+
+func TestSelectModelUsesOpenAIDefaultForProviderOnly(t *testing.T) {
+	_, registry, err := loadModelRegistry("")
+	if err != nil {
+		t.Fatalf("loadModelRegistry error = %v", err)
+	}
+	authState := map[string]bool{"openai": true}
+
+	selected, err := selectModel(registry, authState, cli.Request{Provider: "openai"})
+	if err != nil {
+		t.Fatalf("selectModel error = %v", err)
+	}
+	if selected.Provider != "openai" || selected.ID != "gpt-5.5" {
+		t.Fatalf("selected = %s/%s, want openai/gpt-5.5", selected.Provider, selected.ID)
 	}
 }

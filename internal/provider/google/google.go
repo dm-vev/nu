@@ -47,19 +47,42 @@ func BuildGenerateContentPayload(req provider.Request) (map[string]any, error) {
 	}
 	contents := make([]map[string]any, 0, len(req.Messages))
 	for _, message := range req.Messages {
-		role := message.Role
-		if role == "assistant" {
-			role = "model"
-		}
-		if role == "tool" {
-			role = "user"
-		}
-		contents = append(contents, map[string]any{
-			"role":  role,
-			"parts": []map[string]string{{"text": message.Content}},
-		})
+		contents = append(contents, generateContentMessage(message))
 	}
 	return map[string]any{"contents": contents}, nil
+}
+
+func generateContentMessage(message provider.Message) map[string]any {
+	if message.Role == "assistant" && message.ToolCallID != "" {
+		return map[string]any{
+			"role": "model",
+			"parts": []map[string]any{{
+				"functionCall": map[string]any{
+					"name": message.Name,
+					"args": decodeJSONOrText(message.Content),
+				},
+			}},
+		}
+	}
+	if message.Role == "tool" {
+		return map[string]any{
+			"role": "user",
+			"parts": []map[string]any{{
+				"functionResponse": map[string]any{
+					"name":     message.Name,
+					"response": decodeJSONOrText(message.Content),
+				},
+			}},
+		}
+	}
+	role := message.Role
+	if role == "assistant" {
+		role = "model"
+	}
+	return map[string]any{
+		"role":  role,
+		"parts": []map[string]string{{"text": message.Content}},
+	}
 }
 
 // Stream starts one Gemini streaming request.
@@ -182,4 +205,12 @@ func send(ctx context.Context, ch chan<- provider.Event, ev provider.Event) bool
 	case ch <- ev:
 		return true
 	}
+}
+
+func decodeJSONOrText(raw string) any {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err == nil {
+		return value
+	}
+	return map[string]string{"text": raw}
 }

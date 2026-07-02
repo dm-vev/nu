@@ -3,12 +3,25 @@ package cli
 import "testing"
 
 func TestNUF001ParseKnownFlags(t *testing.T) {
-	req, diagnostics := Parse([]string{"--print", "--mode", "json", "--thinking", "high", "@README.md", "hello"})
+	req, diagnostics := Parse([]string{
+		"--print",
+		"--mode", "json",
+		"--provider", "openai",
+		"--model", "gpt-5.5",
+		"--api-key", "key",
+		"--models", "models.json",
+		"--thinking", "high",
+		"@README.md",
+		"hello",
+	})
 	if len(diagnostics) != 0 {
 		t.Fatalf("Parse diagnostics = %v, want none", diagnostics)
 	}
 	if req.Mode != ModeJSON {
 		t.Fatalf("Request mode = %q, want %q", req.Mode, ModeJSON)
+	}
+	if req.Provider != "openai" || req.Model != "gpt-5.5" || req.APIKey != "key" || req.ModelsPath != "models.json" {
+		t.Fatalf("Request provider fields = %#v", req)
 	}
 	if len(req.FileArgs) != 1 || req.FileArgs[0] != "@README.md" {
 		t.Fatalf("Request file args = %v, want @README.md", req.FileArgs)

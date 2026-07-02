@@ -64,3 +64,30 @@ func TestNUF030AnthropicMessagesRequestShape(t *testing.T) {
 		t.Fatalf("tool result content=%#v", content)
 	}
 }
+
+func TestAnthropicPayloadIncludesAssistantToolUse(t *testing.T) {
+	payload, err := BuildMessagesPayload(provider.Request{
+		Provider: "anthropic",
+		API:      "messages",
+		Model:    "claude-opus-4-8",
+		Messages: []provider.Message{
+			{Role: "user", Content: "read"},
+			{Role: "assistant", ToolCallID: "toolu_1", Name: "read", Content: `{"path":"a.txt"}`},
+			{Role: "tool", ToolCallID: "toolu_1", Content: "ok"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildMessagesPayload error = %v", err)
+	}
+	messages := payload["messages"].([]map[string]any)
+	assistant := messages[1]
+	content := assistant["content"].([]map[string]any)[0]
+	input := content["input"].(map[string]any)
+	if assistant["role"] != "assistant" ||
+		content["type"] != "tool_use" ||
+		content["id"] != "toolu_1" ||
+		content["name"] != "read" ||
+		input["path"] != "a.txt" {
+		t.Fatalf("assistant tool content = %#v", content)
+	}
+}

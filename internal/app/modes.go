@@ -9,7 +9,6 @@ import (
 	"nu/internal/agent"
 	"nu/internal/auth"
 	"nu/internal/cli"
-	"nu/internal/model"
 )
 
 func runMode(ctx context.Context, rt *Runtime, req cli.Request) error {
@@ -27,8 +26,13 @@ func runMode(ctx context.Context, rt *Runtime, req cli.Request) error {
 		fmt.Fprintln(rt.Options.Stdout, cli.Version(rt.Options.Version))
 		return nil
 	case cli.CommandListModels:
-		return runListModels(ctx, rt)
+		return runListModels(ctx, rt, req)
 	case cli.CommandChat:
+		opts, err := configureProvider(ctx, rt.Options, req)
+		if err != nil {
+			return err
+		}
+		rt = &Runtime{Options: opts}
 		if req.Mode == cli.ModePrint {
 			return runPrint(ctx, rt, req)
 		}
@@ -56,12 +60,20 @@ func runPrint(ctx context.Context, rt *Runtime, req cli.Request) error {
 	return nil
 }
 
-func runListModels(ctx context.Context, rt *Runtime) error {
-	authState, err := providerAuthState(ctx, rt.Options)
+func runListModels(ctx context.Context, rt *Runtime, req cli.Request) error {
+	// List output must reflect the same custom registry used for runtime selection.
+	entries, registry, err := loadModelRegistry(req.ModelsPath)
 	if err != nil {
 		return err
 	}
-	registry := model.NewRegistry(model.Builtins())
+	store, err := auth.Load(authFilePath(rt.Options.Home), rt.Options.Env)
+	if err != nil {
+		return err
+	}
+	authState, err := providerAuthState(ctx, store, entries)
+	if err != nil {
+		return err
+	}
 	for _, entry := range registry.Available(authState) {
 		if _, err := fmt.Fprintf(
 			rt.Options.Stdout,
@@ -76,24 +88,6 @@ func runListModels(ctx context.Context, rt *Runtime) error {
 		}
 	}
 	return nil
-}
-
-func providerAuthState(ctx context.Context, opts Options) (map[string]bool, error) {
-	store, err := auth.Load(authFilePath(opts.Home), opts.Env)
-	if err != nil {
-		return nil, err
-	}
-	state := map[string]bool{}
-	for _, providerID := range []string{"openai", "anthropic", "google", "bedrock"} {
-		_, ok, err := store.ResolveAPIKey(ctx, providerID)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			state[providerID] = true
-		}
-	}
-	return state, nil
 }
 
 func authFilePath(home string) string {

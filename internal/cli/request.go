@@ -29,6 +29,10 @@ const (
 type Request struct {
 	Command        CommandKind
 	Mode           Mode
+	Provider       string
+	Model          string
+	APIKey         string
+	ModelsPath     string
 	Prompt         []string
 	FileArgs       []string
 	ExtensionFlags []string

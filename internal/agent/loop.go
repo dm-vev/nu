@@ -152,7 +152,7 @@ func executeToolCalls(ctx context.Context, state *State) ([]provider.Message, er
 	// Provider chunks may interleave; result messages still follow tool-call index order.
 	sort.Ints(indexes)
 
-	results := make([]provider.Message, 0, len(indexes))
+	results := make([]provider.Message, 0, len(indexes)*2)
 	for _, index := range indexes {
 		pending := state.toolCalls[index]
 		if !pending.done {
@@ -166,6 +166,13 @@ func executeToolCalls(ctx context.Context, state *State) ([]provider.Message, er
 			return nil, fmt.Errorf("execute tool %s: %w", pending.call.Name, err)
 		}
 
+		// The assistant tool-call message preserves the provider turn that requested the tool.
+		results = append(results, provider.Message{
+			Role:       "assistant",
+			Content:    pending.call.Arguments,
+			ToolCallID: pending.call.ID,
+			Name:       pending.call.Name,
+		})
 		emit(state, Event{Type: "tool_start", Data: map[string]string{"id": pending.call.ID, "name": pending.call.Name}})
 		result, err := tool(ctx, pending.call)
 		if err != nil {

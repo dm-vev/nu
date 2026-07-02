@@ -58,14 +58,7 @@ func BuildChatPayload(req provider.Request) (map[string]any, error) {
 	}
 	messages := make([]map[string]any, 0, len(req.Messages))
 	for _, message := range req.Messages {
-		item := map[string]any{"role": message.Role, "content": message.Content}
-		if message.Role == "tool" {
-			item["tool_call_id"] = message.ToolCallID
-		}
-		if message.Name != "" {
-			item["name"] = message.Name
-		}
-		messages = append(messages, item)
+		messages = append(messages, chatMessage(message))
 	}
 	return map[string]any{
 		"model":          req.Model,
@@ -75,6 +68,31 @@ func BuildChatPayload(req provider.Request) (map[string]any, error) {
 	}, nil
 }
 
+func chatMessage(message provider.Message) map[string]any {
+	if message.Role == "assistant" && message.ToolCallID != "" {
+		return map[string]any{
+			"role":    "assistant",
+			"content": nil,
+			"tool_calls": []map[string]any{{
+				"id":   message.ToolCallID,
+				"type": "function",
+				"function": map[string]string{
+					"name":      message.Name,
+					"arguments": message.Content,
+				},
+			}},
+		}
+	}
+	item := map[string]any{"role": message.Role, "content": message.Content}
+	if message.Role == "tool" {
+		item["tool_call_id"] = message.ToolCallID
+	}
+	if message.Name != "" {
+		item["name"] = message.Name
+	}
+	return item
+}
+
 // BuildResponsesPayload builds a Responses request body.
 func BuildResponsesPayload(req provider.Request) (map[string]any, error) {
 	if err := provider.ValidateRequest(req); err != nil {
@@ -82,21 +100,32 @@ func BuildResponsesPayload(req provider.Request) (map[string]any, error) {
 	}
 	input := make([]map[string]any, 0, len(req.Messages))
 	for _, message := range req.Messages {
-		item := map[string]any{"role": message.Role, "content": message.Content}
-		if message.Role == "tool" {
-			item["type"] = "function_call_output"
-			item["call_id"] = message.ToolCallID
-			item["output"] = message.Content
-			delete(item, "content")
-			delete(item, "role")
-		}
-		input = append(input, item)
+		input = append(input, responsesInput(message))
 	}
 	return map[string]any{
 		"model":  req.Model,
 		"input":  input,
 		"stream": true,
 	}, nil
+}
+
+func responsesInput(message provider.Message) map[string]any {
+	if message.Role == "assistant" && message.ToolCallID != "" {
+		return map[string]any{
+			"type":      "function_call",
+			"call_id":   message.ToolCallID,
+			"name":      message.Name,
+			"arguments": message.Content,
+		}
+	}
+	if message.Role == "tool" {
+		return map[string]any{
+			"type":    "function_call_output",
+			"call_id": message.ToolCallID,
+			"output":  message.Content,
+		}
+	}
+	return map[string]any{"role": message.Role, "content": message.Content}
 }
 
 // Stream starts one OpenAI streaming request.

@@ -55,21 +55,7 @@ func BuildMessagesPayload(req provider.Request) (map[string]any, error) {
 	}
 	messages := make([]map[string]any, 0, len(req.Messages))
 	for _, message := range req.Messages {
-		switch message.Role {
-		case "tool":
-			messages = append(messages, map[string]any{
-				"role": "user",
-				"content": []map[string]any{{
-					"type":        "tool_result",
-					"tool_use_id": message.ToolCallID,
-					"content":     message.Content,
-				}},
-			})
-		case "assistant", "user":
-			messages = append(messages, map[string]any{"role": message.Role, "content": message.Content})
-		default:
-			messages = append(messages, map[string]any{"role": "user", "content": message.Content})
-		}
+		messages = append(messages, messagesMessage(message))
 	}
 	return map[string]any{
 		"model":      req.Model,
@@ -77,6 +63,34 @@ func BuildMessagesPayload(req provider.Request) (map[string]any, error) {
 		"max_tokens": defaultMaxTokens,
 		"stream":     true,
 	}, nil
+}
+
+func messagesMessage(message provider.Message) map[string]any {
+	if message.Role == "assistant" && message.ToolCallID != "" {
+		return map[string]any{
+			"role": "assistant",
+			"content": []map[string]any{{
+				"type":  "tool_use",
+				"id":    message.ToolCallID,
+				"name":  message.Name,
+				"input": decodeJSONOrText(message.Content),
+			}},
+		}
+	}
+	if message.Role == "tool" {
+		return map[string]any{
+			"role": "user",
+			"content": []map[string]any{{
+				"type":        "tool_result",
+				"tool_use_id": message.ToolCallID,
+				"content":     message.Content,
+			}},
+		}
+	}
+	if message.Role == "assistant" || message.Role == "user" {
+		return map[string]any{"role": message.Role, "content": message.Content}
+	}
+	return map[string]any{"role": "user", "content": message.Content}
 }
 
 // Stream starts one Anthropic streaming request.
@@ -257,6 +271,14 @@ func normalizeAnthropicError(kind string) string {
 	default:
 		return "fatal"
 	}
+}
+
+func decodeJSONOrText(raw string) any {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err == nil {
+		return value
+	}
+	return map[string]string{"text": raw}
 }
 
 func send(ctx context.Context, ch chan<- provider.Event, ev provider.Event) bool {

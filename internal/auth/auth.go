@@ -32,7 +32,6 @@ var fallbackEnv = map[string][]string{
 	"openai":    {"OPENAI_API_KEY"},
 	"anthropic": {"ANTHROPIC_API_KEY"},
 	"google":    {"GEMINI_API_KEY", "GOOGLE_API_KEY"},
-	"bedrock":   {"AWS_ACCESS_KEY_ID"},
 }
 
 // Load reads auth.json and captures the supplied process environment.
@@ -64,12 +63,24 @@ func (s Store) ResolveAPIKey(ctx context.Context, providerID string) (string, bo
 	if ok {
 		return s.resolveCredential(ctx, providerID, credential)
 	}
+	if providerID == "bedrock" {
+		return s.resolveBedrockEnv()
+	}
 	for _, name := range fallbackEnv[providerID] {
 		if value := strings.TrimSpace(s.env[name]); value != "" {
 			return value, true, nil
 		}
 	}
 	return "", false, nil
+}
+
+func (s Store) resolveBedrockEnv() (string, bool, error) {
+	accessKey := strings.TrimSpace(s.env["AWS_ACCESS_KEY_ID"])
+	secretKey := strings.TrimSpace(s.env["AWS_SECRET_ACCESS_KEY"])
+	if accessKey == "" || secretKey == "" {
+		return "", false, nil
+	}
+	return accessKey, true, nil
 }
 
 func (s Store) resolveCredential(ctx context.Context, providerID string, credential Credential) (string, bool, error) {

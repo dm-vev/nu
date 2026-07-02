@@ -1,6 +1,8 @@
 package bedrock
 
 import (
+	"encoding/binary"
+	"hash/crc32"
 	"net/http"
 	"strings"
 	"testing"
@@ -29,6 +31,36 @@ func TestBedrockConverseRequestShape(t *testing.T) {
 	}
 }
 
+func TestBedrockPayloadIncludesToolUseAndResult(t *testing.T) {
+	payload, err := BuildConversePayload(provider.Request{
+		Provider: "bedrock",
+		API:      "converse-stream",
+		Model:    "anthropic.claude-3-sonnet-20240229-v1:0",
+		Messages: []provider.Message{
+			{Role: "user", Content: "read"},
+			{Role: "assistant", ToolCallID: "tooluse_1", Name: "read", Content: `{"path":"a.txt"}`},
+			{Role: "tool", ToolCallID: "tooluse_1", Content: "ok"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildConversePayload error = %v", err)
+	}
+	messages := payload["messages"].([]map[string]any)
+	toolUseContent := messages[1]["content"].([]map[string]any)[0]
+	toolUse := toolUseContent["toolUse"].(map[string]any)
+	input := toolUse["input"].(map[string]any)
+	toolResultContent := messages[2]["content"].([]map[string]any)[0]
+	toolResult := toolResultContent["toolResult"].(map[string]any)
+	if messages[1]["role"] != "assistant" ||
+		toolUse["toolUseId"] != "tooluse_1" ||
+		toolUse["name"] != "read" ||
+		input["path"] != "a.txt" ||
+		messages[2]["role"] != "user" ||
+		toolResult["toolUseId"] != "tooluse_1" {
+		t.Fatalf("messages = %#v", messages)
+	}
+}
+
 func TestBedrockSignAddsAuthorization(t *testing.T) {
 	req, err := http.NewRequest(http.MethodPost, "https://bedrock-runtime.us-east-1.amazonaws.com/model/m/converse-stream", strings.NewReader("{}"))
 	if err != nil {
@@ -46,5 +78,17 @@ func TestBedrockSignAddsAuthorization(t *testing.T) {
 	}
 	if req.Header.Get("X-Amz-Date") != "20260702T120000Z" {
 		t.Fatalf("X-Amz-Date=%q", req.Header.Get("X-Amz-Date"))
+	}
+}
+
+func TestBedrockRejectsOversizedEventFrame(t *testing.T) {
+	frame := make([]byte, 12)
+	binary.BigEndian.PutUint32(frame[0:4], maxEventStreamFrameBytes+1)
+	binary.BigEndian.PutUint32(frame[4:8], 0)
+	binary.BigEndian.PutUint32(frame[8:12], crc32.ChecksumIEEE(frame[0:8]))
+
+	_, err := readEventStreamPayload(strings.NewReader(string(frame)))
+	if err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("readEventStreamPayload error = %v, want too large", err)
 	}
 }

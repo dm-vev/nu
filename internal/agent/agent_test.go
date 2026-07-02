@@ -80,6 +80,14 @@ func TestNUF050ToolCallFeedsResultBackToProvider(t *testing.T) {
 	if len(requests) != 2 {
 		t.Fatalf("Provider requests = %d, want 2", len(requests))
 	}
+	messages := requests[1].Messages
+	assistantMessage := messages[len(messages)-2]
+	if assistantMessage.Role != "assistant" ||
+		assistantMessage.ToolCallID != "call-1" ||
+		assistantMessage.Name != "fake" ||
+		assistantMessage.Content != `{"input":"hi"}` {
+		t.Fatalf("Second request assistant tool message = %#v, want tool call context", assistantMessage)
+	}
 	lastMessage := requests[1].Messages[len(requests[1].Messages)-1]
 	if lastMessage.Role != "tool" || lastMessage.ToolCallID != "call-1" || lastMessage.Content != "tool result" {
 		t.Fatalf("Second request last message = %#v, want tool result", lastMessage)

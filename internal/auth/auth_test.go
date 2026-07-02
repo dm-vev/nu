@@ -55,6 +55,32 @@ func TestNUF020CommandInterpolation(t *testing.T) {
 	}
 }
 
+func TestBedrockEnvRequiresAccessKeyAndSecret(t *testing.T) {
+	store, err := Load("", []string{"AWS_ACCESS_KEY_ID=AKID"})
+	if err != nil {
+		t.Fatalf("Load error = %v", err)
+	}
+	_, ok, err := store.ResolveAPIKey(context.Background(), "bedrock")
+	if err != nil {
+		t.Fatalf("ResolveAPIKey error = %v", err)
+	}
+	if ok {
+		t.Fatalf("bedrock auth ok with access key only")
+	}
+
+	store, err = Load("", []string{"AWS_ACCESS_KEY_ID=AKID", "AWS_SECRET_ACCESS_KEY=SECRET"})
+	if err != nil {
+		t.Fatalf("Load error = %v", err)
+	}
+	_, ok, err = store.ResolveAPIKey(context.Background(), "bedrock")
+	if err != nil {
+		t.Fatalf("ResolveAPIKey error = %v", err)
+	}
+	if !ok {
+		t.Fatalf("bedrock auth missing with access key and secret")
+	}
+}
+
 func writeAuth(t *testing.T, raw string) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "auth.json")

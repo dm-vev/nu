@@ -106,3 +106,57 @@ func TestNUF030OpenAIResponsesToolCallStream(t *testing.T) {
 		t.Fatalf("done=%#v, want tool_use", events[4])
 	}
 }
+
+func TestOpenAIChatPayloadIncludesAssistantToolCalls(t *testing.T) {
+	payload, err := BuildChatPayload(provider.Request{
+		Provider: "openai",
+		API:      "chat",
+		Model:    "gpt-4.1",
+		Messages: []provider.Message{
+			{Role: "user", Content: "read"},
+			{Role: "assistant", ToolCallID: "call-1", Name: "read", Content: `{"path":"a.txt"}`},
+			{Role: "tool", ToolCallID: "call-1", Content: "ok"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildChatPayload error = %v", err)
+	}
+	messages := payload["messages"].([]map[string]any)
+	assistant := messages[1]
+	if assistant["role"] != "assistant" {
+		t.Fatalf("assistant message = %#v", assistant)
+	}
+	toolCalls := assistant["tool_calls"].([]map[string]any)
+	function := toolCalls[0]["function"].(map[string]string)
+	if toolCalls[0]["id"] != "call-1" || function["name"] != "read" || function["arguments"] != `{"path":"a.txt"}` {
+		t.Fatalf("tool calls = %#v", toolCalls)
+	}
+}
+
+func TestOpenAIResponsesPayloadIncludesFunctionCallHistory(t *testing.T) {
+	payload, err := BuildResponsesPayload(provider.Request{
+		Provider: "openai",
+		API:      "responses",
+		Model:    "gpt-5.5",
+		Messages: []provider.Message{
+			{Role: "user", Content: "read"},
+			{Role: "assistant", ToolCallID: "call-1", Name: "read", Content: `{"path":"a.txt"}`},
+			{Role: "tool", ToolCallID: "call-1", Content: "ok"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("BuildResponsesPayload error = %v", err)
+	}
+	input := payload["input"].([]map[string]any)
+	call := input[1]
+	result := input[2]
+	if call["type"] != "function_call" ||
+		call["call_id"] != "call-1" ||
+		call["name"] != "read" ||
+		call["arguments"] != `{"path":"a.txt"}` ||
+		result["type"] != "function_call_output" ||
+		result["call_id"] != "call-1" ||
+		result["output"] != "ok" {
+		t.Fatalf("input = %#v", input)
+	}
+}
