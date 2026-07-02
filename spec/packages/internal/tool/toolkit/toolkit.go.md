@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 6ec7970
-Implementation Comments: Shared stdlib helpers support tool subpackages; tool behavior stays in one-tool packages.
+Implementation Commit: 3d3fb26
+Implementation Comments: Shared stdlib helpers support tool subpackages; path sandboxing resolves symlinks before accepting a cwd-contained path.
 
 ## TODO
 
@@ -45,11 +45,17 @@ Logic:
 - Require non-empty cwd and relative requested path.
 - Clean requested path.
 - Reject `..` escapes and absolute paths.
-- Return absolute path under cwd and slash-form relative path.
+- Resolve cwd and the requested path through symlinks.
+- For create targets that do not exist yet, resolve the nearest existing parent
+  and join missing leaf components only after containment is proven.
+- Reject resolved paths outside cwd.
+- Return resolved absolute path under cwd and slash-form relative path.
 
 Acceptance:
 
-- rejects cwd escapes;
+- rejects lexical cwd escapes;
+- rejects symlink cwd escapes for existing files and new files under symlinked
+  parents;
 - supports `.` as root.
 
 ### `JSONResult(value map[string]any) (agent.ToolResult, error)`

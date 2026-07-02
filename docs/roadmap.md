@@ -32,7 +32,7 @@ finish with JSON events.
 
 ## Phase 2: Built-in Tools
 
-Status: implemented through `6ec7970`.
+Status: implemented through `3d3fb26`.
 
 - read
 - write
@@ -42,6 +42,8 @@ Status: implemented through `6ec7970`.
 - find
 - ls
 - truncation and full-output persistence
+- review fixes for symlink path escapes, multi-edit ordering, long grep lines,
+  and Windows bash package compilation
 
 Exit: tools are test-covered without real provider calls.
 

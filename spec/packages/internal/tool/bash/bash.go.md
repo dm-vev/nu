@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 6ec7970
-Implementation Comments: Bash tool lives in its own subpackage and keeps process-group timeout handling.
+Implementation Commit: 3d3fb26
+Implementation Comments: Bash tool lives in its own subpackage; platform runners keep Unix process-group timeout handling and Windows compilation.
 
 ## TODO
 
@@ -19,8 +19,8 @@ Implement the `bash` built-in tool.
 
 ## Code Style
 
-Use `exec.CommandContext` and `sh -c`. On Unix, kill the process group on
-timeout so child processes do not outlive the shell.
+Keep argument decoding, timeout setup, truncation, and JSON result formatting in
+`Run`. Delegate only process execution to platform files.
 
 ## Functions
 
@@ -31,9 +31,8 @@ Logic:
 - Decode `command` and optional `timeout_ms`.
 - Reject empty commands.
 - Create timeout context when requested.
-- Start `sh -c` in cwd.
-- Capture stdout and stderr.
-- On timeout, kill process group and mark `timed_out`.
+- Call the platform runner in cwd.
+- Capture stdout, stderr, exit code, and timeout state from the runner.
 - Return JSON with stdout, stderr, exit code, timed_out, output, truncated, and
   optional `full_output_path`.
 - Persist full output to temp file when displayed output is truncated.
@@ -50,3 +49,7 @@ Tests:
 - `TestNUF073BashTimeoutKillsProcess`
 - `TestNUF073BashTruncatesAndPersistsFullOutput`
 - `TestBashRejectsEmptyCommand`
+
+Compile checks:
+
+- `GOOS=windows GOARCH=amd64 go test -c ./internal/tool/bash`

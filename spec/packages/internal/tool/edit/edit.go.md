@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 6ec7970
-Implementation Comments: Edit tool lives in its own subpackage with exact replacement and CRLF tests.
+Implementation Commit: 3d3fb26
+Implementation Comments: Edit tool lives in its own subpackage with exact replacement, CRLF, and original-span multi-replacement tests.
 
 ## TODO
 
@@ -35,14 +35,20 @@ Logic:
 - Read original content.
 - For each replacement, require non-empty `old` and exactly one match in the
   original content.
-- Apply replacements to the editable content.
+- Record each replacement as a byte span in the original content.
+- Sort spans and reject overlaps.
+- Apply replacements from the end of the file back to the front, so one
+  replacement cannot affect another replacement's target.
 - Write final content.
 - Return JSON with `path` and patch text.
 
 Acceptance:
 
 - applies a single exact replacement;
+- applies multiple replacements against original content, not against prior
+  replacement output;
 - rejects missing or ambiguous old text;
+- rejects overlapping replacements;
 - preserves existing CRLF line endings unless replacement changes them.
 
 Tests:
@@ -50,4 +56,5 @@ Tests:
 - `TestNUF072EditSingleReplacement`
 - `TestNUF072EditRejectsAmbiguousOldText`
 - `TestNUF072EditPreservesCRLF`
+- `TestEditAppliesMultipleReplacementsAgainstOriginal`
 - `TestEditRejectsMissingOldText`

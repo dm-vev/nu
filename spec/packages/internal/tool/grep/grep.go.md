@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 6ec7970
-Implementation Comments: Grep tool lives in its own subpackage with literal, regexp, ignore-case, and gitignore tests.
+Implementation Commit: 3d3fb26
+Implementation Comments: Grep tool lives in its own subpackage with literal, regexp, ignore-case, gitignore, and long-line truncation tests.
 
 ## TODO
 
@@ -34,7 +34,9 @@ Logic:
 - Resolve root under cwd.
 - Compile regexp matcher or create literal matcher.
 - Walk root, skipping `.git` and root `.gitignore` patterns.
-- For matching files, scan lines and emit `path:line:text`.
+- For matching files, scan lines with an explicit large token limit.
+- Emit `path:line:text`, truncating very long matching line text before it
+  enters the tool result.
 - Stop after limit and return sorted matches as JSON.
 
 Acceptance:
@@ -42,6 +44,8 @@ Acceptance:
 - supports literal and regexp matching;
 - supports ignore-case matching;
 - respects root `.gitignore`;
+- handles long matching lines without scanner token errors;
+- truncates very long matching line text;
 - rejects invalid regexp.
 
 Tests:
@@ -49,4 +53,5 @@ Tests:
 - `TestNUF074GrepLiteralAndRegex`
 - `TestNUF074GrepRespectsGitignore`
 - `TestGrepIgnoreCase`
+- `TestGrepTruncatesLongMatchingLine`
 - `TestGrepRejectsInvalidRegex`
