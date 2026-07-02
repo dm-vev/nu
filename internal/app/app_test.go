@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -143,6 +145,43 @@ func TestNUF170JSONModeFeedsToolResultBackToProvider(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), `"type":"tool_end"`) {
 		t.Fatalf("JSON stdout missing tool_end event: %q", stdout.String())
+	}
+}
+
+func TestJSONModeUsesBuiltinToolsByDefault(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("from built-in"), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+	var stdout bytes.Buffer
+	fake := testkit.NewScriptedProviderScripts(
+		[]provider.Event{
+			{Type: provider.EventStart},
+			{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "read"},
+			{Type: provider.EventToolCallDelta, Index: 0, Delta: `{"path":"a.txt"}`},
+			{Type: provider.EventToolCallEnd, Index: 0},
+			{Type: provider.EventDone, StopReason: "tool_use"},
+		},
+		[]provider.Event{
+			{Type: provider.EventStart},
+			{Type: provider.EventText, Delta: "ok"},
+			{Type: provider.EventDone},
+		},
+	)
+
+	code := Run(context.Background(), Options{
+		Args:     []string{"--mode", "json", "read"},
+		CWD:      dir,
+		Stdout:   &stdout,
+		Provider: fake,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
+	}
+	requests := fake.Requests()
+	lastMessage := requests[1].Messages[len(requests[1].Messages)-1]
+	if !strings.Contains(lastMessage.Content, "from built-in") {
+		t.Fatalf("tool result = %q, want built-in read content", lastMessage.Content)
 	}
 }
 

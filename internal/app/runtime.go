@@ -11,6 +11,7 @@ import (
 	"nu/internal/agent"
 	"nu/internal/cli"
 	"nu/internal/provider"
+	"nu/internal/tool"
 )
 
 // Options carries process state into one app invocation.
@@ -94,12 +95,16 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 	if opts.Provider == nil {
 		return nil
 	}
+	tools := opts.Tools
+	if tools == nil {
+		tools = tool.Builtins(opts.CWD)
+	}
 	return agent.New(agent.Options{
 		Provider:   opts.Provider,
 		ProviderID: opts.ProviderID,
 		API:        opts.API,
 		Model:      opts.Model,
-		Tools:      opts.Tools,
+		Tools:      tools,
 		Emit:       emit,
 	})
 }
