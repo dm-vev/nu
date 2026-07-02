@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: -
-Implementation Comments: Basic tree build/path/move operations exist; persisted active-leaf state handling is pending.
+Current: IMPLEMENTED
+Implementation Commit: 2931429
+Implementation Comments: Basic tree build/path/move operations exist; Phase 4 loads a final session_state extension entry as active-leaf state.
 
 ## TODO
 
-- [ ] Add or confirm the failing tests listed in this file.
-- [ ] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Add or confirm the failing tests listed in this file.
+- [x] Implement the file according to the function logic below.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -33,13 +33,15 @@ Logic:
   append-only parent-before-child semantics.
 - Build parent, child, depth, and leaf indexes.
 - Identify roots and leaves.
-- Set active leaf using persisted state entry when valid, otherwise last entry.
+- Set active leaf using a final `session_state` extension entry when valid,
+  otherwise last entry.
 
 Acceptance:
 
 - detects duplicate ids;
 - detects missing parents;
 - computes roots, children, leaves, and active leaf.
+- uses valid final session_state active leaf.
 
 ### `PathTo(tree *Tree, leaf string) ([]Entry, error)`
 
@@ -71,3 +73,4 @@ Tests:
 
 - `TestSessionBuildTreeRejectsDuplicateID`
 - `TestNUF082SelectingAssistantEntryMovesLeaf`
+- `TestSessionStateEntrySetsActiveLeaf`

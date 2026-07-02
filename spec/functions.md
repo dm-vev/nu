@@ -280,6 +280,7 @@ Tests:
 
 - `TestNUF080SessionAppendBuildsTree`
 - `TestNUF080SessionLoadRejectsBrokenParent`
+- `TestSessionExportImportRoundTrip`
 
 ### NUF-081 Resume, Fork, Clone
 
@@ -289,6 +290,7 @@ from an earlier user message, and clone the active branch to a new session.
 Tests:
 
 - `TestNUF081ContinueLatestByCWD`
+- `TestNUF081ResumeByPathOrPartialID`
 - `TestNUF081ForkStartsNewFileFromUserEntry`
 - `TestNUF081CloneCopiesActiveBranch`
 
@@ -302,6 +304,7 @@ Tests:
 
 - `TestNUF082SelectingUserEntryPreloadsEditor`
 - `TestNUF082SelectingAssistantEntryMovesLeaf`
+- `TestSessionStateEntrySetsActiveLeaf`
 
 ## Compaction
 

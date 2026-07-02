@@ -63,6 +63,8 @@ Exit: mocked provider contract tests pass; real smoke tests are opt-in.
 
 ## Phase 4: Sessions And Compaction
 
+Status: core implemented through `2931429`.
+
 - resume, continue, fork, clone
 - tree storage
 - import/export JSONL
