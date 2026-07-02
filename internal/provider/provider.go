@@ -17,16 +17,21 @@ var ErrStream = errors.New("provider stream error")
 type EventType string
 
 const (
-	EventStart EventType = "start"
-	EventText  EventType = "text_delta"
-	EventDone  EventType = "done"
-	EventError EventType = "error"
+	EventStart         EventType = "start"
+	EventText          EventType = "text_delta"
+	EventToolCallStart EventType = "tool_call_start"
+	EventToolCallDelta EventType = "tool_call_delta"
+	EventToolCallEnd   EventType = "tool_call_end"
+	EventDone          EventType = "done"
+	EventError         EventType = "error"
 )
 
 // Message is provider-neutral prompt context.
 type Message struct {
-	Role    string
-	Content string
+	Role       string
+	Content    string
+	ToolCallID string
+	Name       string
 }
 
 // Request is the provider-neutral request consumed by adapters.
@@ -45,6 +50,8 @@ type Event struct {
 	Model      string
 	Index      int
 	Delta      string
+	ToolCallID string
+	ToolName   string
 	StopReason string
 	ErrorClass string
 	Message    string

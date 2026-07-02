@@ -18,19 +18,35 @@ type Options struct {
 	ProviderID string
 	API        string
 	Model      string
+	Tools      map[string]ToolFunc
 	Emit       func(Event)
 }
 
 // Event is one agent event emitted to app/RPC boundaries.
 type Event struct {
-	Type string
-	Data any
+	Type string `json:"type"`
+	Data any    `json:"data,omitempty"`
 }
 
 // Prompt is one user prompt.
 type Prompt struct {
 	Text string
 }
+
+// ToolCall is one finalized provider tool request.
+type ToolCall struct {
+	ID        string
+	Name      string
+	Arguments string
+}
+
+// ToolResult is one tool result fed back to the provider.
+type ToolResult struct {
+	Content string
+}
+
+// ToolFunc executes one tool call.
+type ToolFunc func(context.Context, ToolCall) (ToolResult, error)
 
 // Agent owns prompt execution state.
 type Agent struct {
@@ -52,6 +68,13 @@ func New(opts Options) *Agent {
 	if opts.Model == "" {
 		opts.Model = "test"
 	}
+	if len(opts.Tools) > 0 {
+		tools := make(map[string]ToolFunc, len(opts.Tools))
+		for name, tool := range opts.Tools {
+			tools[name] = tool
+		}
+		opts.Tools = tools
+	}
 	return &Agent{opts: opts}
 }
 
@@ -68,6 +91,7 @@ func (a *Agent) Prompt(ctx context.Context, input Prompt) error {
 		ProviderID: a.opts.ProviderID,
 		API:        a.opts.API,
 		Model:      a.opts.Model,
+		Tools:      a.opts.Tools,
 		Emit:       a.opts.Emit,
 	}
 	return runTurn(runCtx, state, TurnInput{Prompt: input.Text})

@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Runtime carries process IO and an optional agent built from an injected provider.
+Implementation Comments: Runtime carries process IO, provider settings, and optional session id for headless modes.
 
 ## TODO
 
@@ -19,8 +19,9 @@ Shared runtime object passed to mode handlers.
 
 ## Code Style
 
-Plain structs with concrete dependencies. Construct the agent directly when a
-provider is supplied; do not add registries before there are multiple adapters.
+Plain structs with concrete dependencies. Construct mode-specific agents with
+the emitter that mode needs; do not add registries before there are multiple
+adapters.
 
 ## Types
 
@@ -28,43 +29,57 @@ provider is supplied; do not add registries before there are multiple adapters.
 
 Logic:
 
-- Store normalized process IO and the optional agent used by print mode.
+- Store normalized process IO, provider settings, and session id.
 - Keep ownership explicit: runtime closes only components it created.
 - Do not start goroutines, TUI loops, RPC loops, or provider streams during construction.
 
 Acceptance:
 
-- contains normalized process IO and optional agent;
+- contains normalized process IO, provider settings, and session id;
 - has no goroutines after construction.
 
 ### `type Options struct`
 
 Logic:
 
-- Carry argv, environment, cwd, home, stdin, stdout, stderr, version, and optional provider settings from `cmd/nu`.
+- Carry argv, environment, cwd, home, stdin, stdout, stderr, version, optional
+  provider settings, and optional session id from `cmd/nu`.
 - Keep options serializable enough for integration tests to construct without process globals.
 - Do not store parsed CLI state here; parsing output belongs to `cli.Request`.
 
 Acceptance:
 
-- carries argv, env, cwd, home, stdin, stdout, stderr, version metadata, and optional provider.
+- carries argv, env, cwd, home, stdin, stdout, stderr, version metadata,
+  optional provider, and optional session id.
 
 ## Functions
 
-### `newAgent(opts Options) *agent.Agent`
+### `newAgent(opts Options, emit func(agent.Event)) *agent.Agent`
 
 Logic:
 
 - Return nil when no provider is configured.
 - Create `agent.Agent` with provider id, API, model, and provider stream.
-- Convert the agent `turn_end` event into one stdout line for print mode.
-- Ignore non-final events at this layer.
+- Install the mode-specific event callback.
 
 Acceptance:
 
 - no provider means no agent;
-- final turn text is printed once.
+- mode-specific emitter receives agent events.
+
+### `writeJSONLine(w io.Writer, value any) error`
+
+Logic:
+
+- Marshal `value` with `encoding/json`.
+- Write bytes plus one LF.
+- Wrap marshal/write errors with context.
+
+Acceptance:
+
+- writes exactly one valid JSON object line per call.
 
 Tests:
 
 - `TestAppRunPrintModeUsesInjectedRuntime`
+- `TestNUF170JSONModeStdoutIsOnlyJSONL`

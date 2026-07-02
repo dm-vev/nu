@@ -55,13 +55,14 @@ Acceptance:
 
 Logic:
 
-- Normalize provider stream chunks into start, text delta, done, or error.
+- Normalize provider stream chunks into start, text delta, tool call start,
+  tool call delta, tool call end, done, or error.
 - Carry only fields the agent can consume now.
 - Keep provider-specific payloads inside adapters until a feature needs them.
 
 Acceptance:
 
-- represents start, text delta, done, and error events.
+- represents start, text delta, tool call, done, and error events.
 
 ## Functions
 

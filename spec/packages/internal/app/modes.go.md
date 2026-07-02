@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Help/version dispatch exists. Print mode now calls the runtime agent directly.
+Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events.
 
 ## TODO
 
@@ -31,11 +31,12 @@ Logic:
 - Check `ctx` before blocking work and pass it to every blocking dependency.
 - Dispatch help and version without constructing extra state.
 - Dispatch chat print mode to `runPrint`.
+- Dispatch chat JSON mode to `runJSON`.
 - Return a clear not-implemented error for modes outside the current slice.
 
 Acceptance:
 
-- dispatches help, version, and print mode;
+- dispatches help, version, print mode, and JSON mode;
 - returns a clear error for unimplemented modes.
 
 ### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
@@ -52,8 +53,24 @@ Acceptance:
 - calls the agent provider path for `--print`;
 - fails clearly when no provider-backed agent exists.
 
+### `runJSON(ctx context.Context, rt *Runtime, req cli.Request) error`
+
+Logic:
+
+- Require a provider-backed agent.
+- Write one session header JSON object before agent events.
+- Write every agent event as one JSON object per line.
+- Keep human diagnostics out of stdout by returning errors to `app.Run`.
+
+Acceptance:
+
+- stdout is valid JSONL only;
+- first line is the session header;
+- later lines are agent events in emission order.
+
 Tests:
 
 - `TestNUF002DispatchPrintMode`
 - `TestAppRunPrintModeUsesInjectedRuntime`
 - `TestAppRunPrintModeWithoutHandlerFails`
+- `TestNUF170JSONModeStdoutIsOnlyJSONL`

@@ -47,5 +47,5 @@ func NewRuntime(ctx context.Context, opts Options) (*Runtime, error) {
 	}
 
 	opts = normalizeOptions(opts)
-	return &Runtime{Options: opts, Agent: newAgent(opts)}, nil
+	return &Runtime{Options: opts}, nil
 }

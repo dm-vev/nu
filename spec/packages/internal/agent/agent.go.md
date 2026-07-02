@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Text-only prompt and abort path exist; session/tool/retry/queue integration is deferred until those specs are reopened.
+Implementation Comments: Prompt, abort, event callback, and Phase 1 fake-tool execution are in scope.
 
 ## TODO
 
@@ -15,8 +15,8 @@ Implementation Comments: Text-only prompt and abort path exist; session/tool/ret
 
 ## Purpose
 
-Public controller for sending prompts, aborting work, and observing events in
-the current text-only slice.
+Public controller for sending prompts, aborting work, executing Phase 1 test
+tools, and observing events.
 
 ## Code Style
 
@@ -31,12 +31,12 @@ Logic:
 
 - Copy constructor inputs into a concrete value without starting background work.
 - Apply defaults before returning the constructed value.
-- Initialize provider settings and event callback.
+- Initialize provider settings, event callback, and in-process test tools.
 - Start no provider call until `Prompt`.
 
 Acceptance:
 
-- initializes provider settings and event callback;
+- initializes provider settings, event callback, and tools map;
 - starts no provider call until `Prompt`.
 
 ### `(*Agent) Prompt(ctx context.Context, input Prompt) error`
@@ -69,4 +69,5 @@ Acceptance:
 Tests:
 
 - `TestNUF050TextOnlyTurnEnds`
+- `TestNUF050ToolCallFeedsResultBackToProvider`
 - `TestNUF050AbortStopsProviderAndTools`
