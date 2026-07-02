@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: 687e919
-Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, Phase 3 provider construction helpers, selected model display labels, global models file defaults, and is being fixed to construct Fireworks as an OpenAI-compatible provider.
+Current: IMPLEMENTED
+Implementation Commit: a44b95f
+Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, Phase 3 provider construction helpers, selected model display labels, global models file defaults, and Fireworks as an OpenAI-compatible provider.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
