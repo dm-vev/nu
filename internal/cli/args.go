@@ -99,7 +99,13 @@ func Parse(args []string) (Request, []Diagnostic) {
 			}
 		case knownBoolFlags[arg]:
 		case strings.HasPrefix(arg, "--"):
-			req.ExtensionFlags = append(req.ExtensionFlags, arg)
+			// Preserve extension-owned flag values without interpreting their schema.
+			flag := arg
+			if !strings.Contains(arg, "=") && i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+				i++
+				flag += "=" + args[i]
+			}
+			req.ExtensionFlags = append(req.ExtensionFlags, flag)
 		default:
 			req.Prompt = append(req.Prompt, arg)
 		}

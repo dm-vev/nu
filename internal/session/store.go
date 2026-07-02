@@ -60,6 +60,7 @@ func (s *Store) Append(ctx context.Context, ref Ref, entry Entry) error {
 		return err
 	}
 
+	// Serialize append with parent validation so a bad child is never persisted.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -70,6 +71,14 @@ func (s *Store) Append(ctx context.Context, ref Ref, entry Entry) error {
 	path := s.path(ref)
 	_, statErr := os.Stat(path)
 	isNew := os.IsNotExist(statErr)
+	if !isNew && entry.ParentID != "" {
+		if err := s.parentExists(path, entry.ParentID); err != nil {
+			return err
+		}
+	}
+	if isNew && entry.ParentID != "" {
+		return fmt.Errorf("%w: missing parent %s", ErrInvalidTree, entry.ParentID)
+	}
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return fmt.Errorf("open session %s: %w", path, err)
@@ -99,6 +108,33 @@ func (s *Store) Append(ctx context.Context, ref Ref, entry Entry) error {
 		return fmt.Errorf("append session entry %s: %w", path, err)
 	}
 	return nil
+}
+
+func (s *Store) parentExists(path, parentID string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return fmt.Errorf("open session %s: %w", path, err)
+	}
+	defer file.Close()
+
+	// Scan existing entries only until the parent is found; no full tree rebuild here.
+	scanner := bufio.NewScanner(file)
+	if !scanner.Scan() {
+		return fmt.Errorf("%w: missing parent %s", ErrInvalidTree, parentID)
+	}
+	for scanner.Scan() {
+		entry, err := UnmarshalEntry(scanner.Bytes())
+		if err != nil {
+			return fmt.Errorf("decode session entry %s: %w", path, err)
+		}
+		if entry.ID == parentID {
+			return nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("read session %s: %w", path, err)
+	}
+	return fmt.Errorf("%w: missing parent %s", ErrInvalidTree, parentID)
 }
 
 // Load reconstructs a session from disk.

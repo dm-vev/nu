@@ -48,3 +48,17 @@ func TestAppRunPrintModeUsesInjectedRuntime(t *testing.T) {
 		t.Fatalf("Run stdout = %q, want ok", stdout.String())
 	}
 }
+
+func TestAppRunPrintModeWithoutHandlerFails(t *testing.T) {
+	var stderr bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--print", "hello"},
+		Stderr: &stderr,
+	})
+	if code != exitError {
+		t.Fatalf("Run exit code = %d, want %d", code, exitError)
+	}
+	if !strings.Contains(stderr.String(), "print mode requires agent handler") {
+		t.Fatalf("Run stderr = %q, want missing handler error", stderr.String())
+	}
+}

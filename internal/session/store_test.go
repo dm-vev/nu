@@ -67,6 +67,14 @@ func TestNUF080SessionLoadRejectsBrokenParent(t *testing.T) {
 	}
 }
 
+func TestNUF080SessionAppendRejectsBrokenParent(t *testing.T) {
+	store := OpenStore(t.TempDir(), nil)
+	err := store.Append(context.Background(), Ref{ID: "s1"}, testEntry("e1", "missing", KindMessage))
+	if !errors.Is(err, ErrInvalidTree) {
+		t.Fatalf("Append error = %v, want ErrInvalidTree", err)
+	}
+}
+
 func TestSessionBuildTreeRejectsDuplicateID(t *testing.T) {
 	_, err := BuildTree([]Entry{
 		testEntry("e1", "", KindMessage),

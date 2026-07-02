@@ -19,12 +19,12 @@ func TestNUF001ParseKnownFlags(t *testing.T) {
 }
 
 func TestNUF001UnknownFlagsArePreservedForExtensions(t *testing.T) {
-	req, diagnostics := Parse([]string{"--extension-flag", "prompt"})
+	req, diagnostics := Parse([]string{"--extension-flag", "value", "--x=1", "prompt"})
 	if len(diagnostics) != 0 {
 		t.Fatalf("Parse diagnostics = %v, want none", diagnostics)
 	}
-	if len(req.ExtensionFlags) != 1 || req.ExtensionFlags[0] != "--extension-flag" {
-		t.Fatalf("Request extension flags = %v, want --extension-flag", req.ExtensionFlags)
+	if len(req.ExtensionFlags) != 2 || req.ExtensionFlags[0] != "--extension-flag=value" || req.ExtensionFlags[1] != "--x=1" {
+		t.Fatalf("Request extension flags = %v, want extension flags with values", req.ExtensionFlags)
 	}
 	if len(req.Prompt) != 1 || req.Prompt[0] != "prompt" {
 		t.Fatalf("Request prompt = %v, want prompt", req.Prompt)

@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"nu/internal/cli"
 )
@@ -36,6 +35,5 @@ func runPrint(rt *Runtime, req cli.Request) error {
 	if rt.Options.Print != nil {
 		return rt.Options.Print(rt, req)
 	}
-	fmt.Fprintln(rt.Options.Stdout, strings.Join(req.Prompt, " "))
-	return nil
+	return fmt.Errorf("print mode requires agent handler")
 }

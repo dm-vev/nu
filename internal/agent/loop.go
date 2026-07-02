@@ -36,6 +36,7 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 		return err
 	}
 
+	// Event order mirrors the provider stream contract consumed by JSON/RPC.
 	emit(state, message.Event{Type: "turn_start"})
 	ch, err := state.Provider.Stream(ctx, req)
 	if err != nil {
@@ -46,6 +47,7 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 			return err
 		}
 		if ev.Type == provider.EventDone {
+			// Final text is emitted once at turn end; deltas already went out live.
 			emit(state, message.Event{Type: "turn_end", Data: map[string]string{"text": state.text.String()}})
 			return nil
 		}
