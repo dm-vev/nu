@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: PLANNED
-Implementation Commit: TBD
-Implementation Comments: Phase 3 registry covers built-in/custom models and thinking mappings.
+Current: IMPLEMENTED
+Implementation Commit: 4ddd508
+Implementation Comments: Phase 3 registry covers built-in/custom models, auth filtering, explicit disabled custom models, and thinking mappings.
 
 ## TODO
 
-- [ ] Add or confirm the failing tests listed in this file.
-- [ ] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Add or confirm the failing tests listed in this file.
+- [x] Implement the file according to the function logic below.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -128,6 +128,6 @@ Tests:
 - `TestNUF031ModelPatternSelectsProviderAndModel`
 - `TestNUF031UnavailableModelsHiddenWithoutAuth`
 - `TestNUF031CustomModelsOverrideBuiltins`
+- `TestCustomModelsCanDisableEntry`
 - `TestNUF032ThinkingLevelMapping`
 - `TestNUF032UnsupportedThinkingLevelFallsBackOrErrors`
-

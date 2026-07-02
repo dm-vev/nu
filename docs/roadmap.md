@@ -49,6 +49,8 @@ Exit: tools are test-covered without real provider calls.
 
 ## Phase 3: Real Providers And Models
 
+Status: implemented through `4ddd508`.
+
 - OpenAI Chat Completions
 - OpenAI Responses
 - Anthropic Messages

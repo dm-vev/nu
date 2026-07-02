@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 456582c
-Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events.
+Implementation Commit: 4ddd508
+Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events. List-models prints auth-visible model registry entries.
 
 ## TODO
 
@@ -30,14 +30,42 @@ Logic:
 
 - Check `ctx` before blocking work and pass it to every blocking dependency.
 - Dispatch help and version without constructing extra state.
+- Dispatch list-models to `runListModels`.
 - Dispatch chat print mode to `runPrint`.
 - Dispatch chat JSON mode to `runJSON`.
 - Return a clear not-implemented error for modes outside the current slice.
 
 Acceptance:
 
-- dispatches help, version, print mode, and JSON mode;
+- dispatches help, version, list-models, print mode, and JSON mode;
 - returns a clear error for unimplemented modes.
+
+### `runListModels(ctx context.Context, rt *Runtime) error`
+
+Logic:
+
+- Resolve provider auth state from `Options.Home` and `Options.Env`.
+- Build the built-in model registry.
+- Print visible models as tab-separated `provider/id`, api, context window, and
+  max output fields.
+- Keep output deterministic by using registry ordering.
+
+Acceptance:
+
+- authenticated provider models are visible;
+- unauthenticated provider models are hidden.
+
+### `providerAuthState(ctx context.Context, opts Options) (map[string]bool, error)`
+
+Logic:
+
+- Load `~/.nu/auth.json` when `Options.Home` is set.
+- Resolve OpenAI, Anthropic, Google, and Bedrock auth through `internal/auth`.
+- Return provider ids with available credentials.
+
+Acceptance:
+
+- uses injected env and home, never process globals.
 
 ### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
 
@@ -75,3 +103,4 @@ Tests:
 - `TestAppRunPrintModeWithoutHandlerFails`
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`
 - `TestNUF170JSONModeFeedsToolResultBackToProvider`
+- `TestListModelsUsesAuthState`

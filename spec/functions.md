@@ -83,6 +83,9 @@ Tests:
 - `TestNUF030OpenAIChatRequestShape`
 - `TestNUF030OpenAIResponsesToolCallStream`
 - `TestNUF030AnthropicMessagesRequestShape`
+- `TestGoogleGenerateContentRequestShape`
+- `TestBedrockConverseRequestShape`
+- `TestBedrockSignAddsAuthorization`
 
 ### NUF-031 Model Registry
 
@@ -95,6 +98,7 @@ Tests:
 - `TestNUF031ModelPatternSelectsProviderAndModel`
 - `TestNUF031UnavailableModelsHiddenWithoutAuth`
 - `TestNUF031CustomModelsOverrideBuiltins`
+- `TestCustomModelsCanDisableEntry`
 
 ### NUF-032 Thinking Levels
 
