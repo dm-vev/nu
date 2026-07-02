@@ -211,3 +211,21 @@ func TestAppRunPrintModeWithoutHandlerFails(t *testing.T) {
 		t.Fatalf("Run stderr = %q, want missing handler error", stderr.String())
 	}
 }
+
+func TestListModelsUsesAuthState(t *testing.T) {
+	var stdout bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--list-models"},
+		Env:    []string{"OPENAI_API_KEY=test"},
+		Stdout: &stdout,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
+	}
+	if !strings.Contains(stdout.String(), "openai/gpt-5.5") {
+		t.Fatalf("stdout = %q, want OpenAI model", stdout.String())
+	}
+	if strings.Contains(stdout.String(), "anthropic/") {
+		t.Fatalf("stdout = %q, should hide unauthenticated Anthropic models", stdout.String())
+	}
+}
