@@ -178,6 +178,34 @@ func TestNUF050RejectsMalformedToolCallStream(t *testing.T) {
 	}
 }
 
+func TestAgentSetModelAffectsNextPrompt(t *testing.T) {
+	fake := testkit.NewScriptedProvider(
+		provider.Event{Type: provider.EventStart},
+		provider.Event{Type: provider.EventText, Delta: "ok"},
+		provider.Event{Type: provider.EventDone, StopReason: "stop"},
+	)
+	a := New(Options{Provider: fake})
+
+	if err := a.SetModel("openai", "chat", "gpt-test"); err != nil {
+		t.Fatalf("SetModel error = %v", err)
+	}
+	cfg := a.Config()
+	if cfg.ProviderID != "openai" || cfg.API != "chat" || cfg.Model != "gpt-test" {
+		t.Fatalf("Config = %#v, want updated labels", cfg)
+	}
+	if err := a.Prompt(context.Background(), Prompt{Text: "hi"}); err != nil {
+		t.Fatalf("Prompt error = %v", err)
+	}
+
+	requests := fake.Requests()
+	if len(requests) != 1 {
+		t.Fatalf("requests = %d, want 1", len(requests))
+	}
+	if requests[0].Provider != "openai" || requests[0].API != "chat" || requests[0].Model != "gpt-test" {
+		t.Fatalf("provider request = %#v, want updated labels", requests[0])
+	}
+}
+
 type blockingProvider struct {
 	started chan struct{}
 }

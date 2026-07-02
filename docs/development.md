@@ -22,6 +22,13 @@ gofmt -w <files>
 
 Use narrow package tests while developing, then the full command.
 
+Useful narrow commands for the UI/RPC slice:
+
+```bash
+go test ./internal/rpc ./internal/tui ./internal/app ./internal/agent
+go test -race ./internal/agent ./internal/rpc ./internal/tui
+```
+
 ## Dependency Policy
 
 Use the Go standard library first. Add a dependency only when:

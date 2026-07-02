@@ -107,6 +107,19 @@ The TUI owns terminal raw mode, rendering, input decoding, focus, overlays, and
 components. Agent logic never writes directly to the terminal; it emits events
 that the TUI renders.
 
+The first implemented TUI layer is deterministic rather than raw-terminal
+complete: renderer, input decoder, editor buffer, overlay stack, and app loop
+are implemented with the standard library. Raw mode, diff writing, selectors,
+and full Pi visual components remain separate files under the same package.
+
+### RPC
+
+The RPC server owns strict JSONL framing over injected stdin/stdout. It
+recognizes Pi command names, keeps stdout protocol-only, forwards agent events,
+and stores lightweight runtime state. Commands whose durable backends are still
+landing return stable structured responses over in-memory state instead of
+printing human text.
+
 ## Architecture Decisions
 
 ### NUA-001: Process Extensions

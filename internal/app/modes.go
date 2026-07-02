@@ -9,6 +9,8 @@ import (
 	"nu/internal/agent"
 	"nu/internal/auth"
 	"nu/internal/cli"
+	"nu/internal/rpc"
+	"nu/internal/tui"
 )
 
 func runMode(ctx context.Context, rt *Runtime, req cli.Request) error {
@@ -38,6 +40,12 @@ func runMode(ctx context.Context, rt *Runtime, req cli.Request) error {
 		}
 		if req.Mode == cli.ModeJSON {
 			return runJSON(ctx, rt, req)
+		}
+		if req.Mode == cli.ModeRPC {
+			return runRPC(ctx, rt, req)
+		}
+		if req.Mode == cli.ModeInteractive {
+			return runInteractive(ctx, rt, req)
 		}
 		return fmt.Errorf("mode %q is not implemented yet", req.Mode)
 	default:
@@ -88,6 +96,42 @@ func runListModels(ctx context.Context, rt *Runtime, req cli.Request) error {
 		}
 	}
 	return nil
+}
+
+func runRPC(ctx context.Context, rt *Runtime, _ cli.Request) error {
+	server := rpc.NewServer(rpc.Options{
+		Stdin:     rt.Options.Stdin,
+		Stdout:    rt.Options.Stdout,
+		Stderr:    rt.Options.Stderr,
+		CWD:       rt.Options.CWD,
+		SessionID: rt.Options.SessionID,
+		Provider:  rt.Options.ProviderID,
+		API:       rt.Options.API,
+		Model:     rt.Options.Model,
+	})
+	a := newAgent(rt.Options, server.Emit)
+	if a == nil {
+		return fmt.Errorf("rpc mode requires agent handler")
+	}
+	server.SetAgent(a)
+	return server.Run(ctx)
+}
+
+func runInteractive(ctx context.Context, rt *Runtime, _ cli.Request) error {
+	ui := tui.NewApp(tui.AppOptions{
+		Stdin:    rt.Options.Stdin,
+		Stdout:   rt.Options.Stdout,
+		Stderr:   rt.Options.Stderr,
+		CWD:      rt.Options.CWD,
+		Provider: rt.Options.ProviderID,
+		Model:    rt.Options.Model,
+	})
+	a := newAgent(rt.Options, ui.Emit)
+	if a == nil {
+		return fmt.Errorf("interactive mode requires agent handler")
+	}
+	ui.SetAgent(a)
+	return ui.Run(ctx)
 }
 
 func authFilePath(home string) string {

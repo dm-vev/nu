@@ -151,6 +151,53 @@ func TestNUF170JSONModeFeedsToolResultBackToProvider(t *testing.T) {
 	}
 }
 
+func TestNUF002DispatchRPCMode(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	fake := testkit.NewScriptedProvider()
+
+	code := Run(context.Background(), Options{
+		Args:     []string{"--mode", "rpc"},
+		Stdin:    strings.NewReader(`{"id":"s","type":"get_state"}` + "\n" + `{"id":"q","type":"shutdown"}` + "\n"),
+		Stdout:   &stdout,
+		Stderr:   &stderr,
+		Provider: fake,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if stderr.String() != "" {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"id":"s"`) || !strings.Contains(stdout.String(), `"command":"get_state"`) {
+		t.Fatalf("RPC stdout = %q, want get_state response", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), `"id":"q"`) || !strings.Contains(stdout.String(), `"command":"shutdown"`) {
+		t.Fatalf("RPC stdout = %q, want shutdown response", stdout.String())
+	}
+}
+
+func TestNUF002DispatchInteractiveMode(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	fake := testkit.NewScriptedProvider()
+
+	code := Run(context.Background(), Options{
+		Args:     []string{"--mode", "interactive"},
+		Stdin:    strings.NewReader("/quit\n"),
+		Stdout:   &stdout,
+		Stderr:   &stderr,
+		Provider: fake,
+		CWD:      "/tmp/nu-test",
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "Nu") || !strings.Contains(stdout.String(), "/tmp/nu-test") {
+		t.Fatalf("interactive stdout = %q, want rendered frame", stdout.String())
+	}
+}
+
 func TestJSONModeUsesBuiltinToolsByDefault(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("from built-in"), 0o644); err != nil {

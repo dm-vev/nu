@@ -3,15 +3,15 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: c64b048
-Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events. List-models prints auth-visible built-in/custom model registry entries and chat modes configure real providers before agent creation.
+Implementation Commit: pending
+Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode now creates an RPC server first and injects an agent emitter. Interactive mode now creates a TUI app first and injects an agent emitter.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
 - [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -33,6 +33,8 @@ Logic:
 - Dispatch list-models to `runListModels`.
 - Dispatch chat print mode to `runPrint`.
 - Dispatch chat JSON mode to `runJSON`.
+- Dispatch chat RPC mode to `runRPC`.
+- Dispatch chat interactive mode to `runInteractive`.
 - Configure provider/runtime selections from the parsed request before chat
   modes create an agent.
 - Return a clear not-implemented error for modes outside the current slice.
@@ -40,6 +42,7 @@ Logic:
 Acceptance:
 
 - dispatches help, version, list-models, print mode, and JSON mode;
+- dispatches RPC and interactive modes;
 - configured real providers are reachable from print and JSON modes;
 - returns a clear error for unimplemented modes.
 
@@ -89,6 +92,36 @@ Acceptance:
 - first line is the session header;
 - later lines are agent events in emission order.
 
+### `runRPC(ctx context.Context, rt *Runtime, req cli.Request) error`
+
+Logic:
+
+- Create an `rpc.Server` over runtime stdin/stdout/stderr and runtime labels.
+- Create a provider-backed agent with `server.Emit`.
+- Inject the agent into the server.
+- Run the server until stdin EOF, shutdown command, context cancellation, or
+  protocol write error.
+
+Acceptance:
+
+- `--mode rpc` accepts JSONL commands from stdin;
+- stdout contains only JSONL responses/events.
+
+### `runInteractive(ctx context.Context, rt *Runtime, req cli.Request) error`
+
+Logic:
+
+- Create a `tui.App` over runtime stdin/stdout/stderr and runtime labels.
+- Create a provider-backed agent with `ui.Emit`.
+- Inject the agent into the UI app.
+- Run the UI loop until quit input, stdin EOF, context cancellation, or UI write
+  error.
+
+Acceptance:
+
+- `--mode interactive` starts a deterministic UI loop;
+- non-empty submitted lines call the provider-backed agent.
+
 Tests:
 
 - `TestNUF002DispatchPrintMode`
@@ -98,3 +131,5 @@ Tests:
 - `TestNUF170JSONModeFeedsToolResultBackToProvider`
 - `TestListModelsUsesAuthState`
 - `TestListModelsUsesCustomModelsPath`
+- `TestNUF002DispatchRPCMode`
+- `TestNUF002DispatchInteractiveMode`

@@ -339,16 +339,28 @@ Interactive mode provides message history, editor, footer, startup header,
 status, tool rendering, thinking rendering, images where supported, selectors,
 overlays, and resize handling.
 
+The first Go UI implementation must expose the same wiring boundaries as Pi:
+terminal input becomes editor/command actions, agent events update a render
+state, and rendering produces deterministic frames that the terminal driver
+writes. Raw terminal integration can stay narrow, but renderer, input decoder,
+editor buffer, overlay focus, and app-mode wiring are required before further
+interactive features build on them.
+
 Tests:
 
 - `TestNUF100RendererDoesNotOverflowWidth`
 - `TestNUF100ResizeInvalidatesLayout`
+- `TestNUF002DispatchInteractiveMode`
 
 ### NUF-101 Editor
 
 The editor supports multiline input, cursor movement, word movement, deletion,
 undo, kill ring, autocomplete, external editor, pasted images, and path
 completion.
+
+The initial editor implementation must keep buffer mutations separate from
+rendering, preserve cursor position through undo, submit text without mutating
+history, and leave extension/autocomplete hooks as explicit state boundaries.
 
 Tests:
 
@@ -461,13 +473,27 @@ Tests:
 ### NUF-171 RPC Mode
 
 RPC mode reads JSONL commands from stdin and writes JSONL responses/events to
-stdout. It supports prompt, steer, follow_up, abort, new_session, state, and
-settings commands.
+stdout. Stdout is protocol-only and stderr is diagnostics-only.
+
+Nu must accept Pi's headless command names: `prompt`, `steer`, `follow_up`,
+`abort`, `new_session`, `get_state`, `state`, `set_settings`, `set_model`,
+`cycle_model`, `get_available_models`, `set_thinking_level`,
+`cycle_thinking_level`, `set_steering_mode`, `set_follow_up_mode`, `compact`,
+`set_auto_compaction`, `set_auto_retry`, `abort_retry`, `bash`, `abort_bash`,
+`get_session_stats`, `export_html`, `switch_session`, `fork`, `clone`,
+`get_fork_messages`, `get_entries`, `get_tree`, `get_last_assistant_text`,
+`set_session_name`, `get_messages`, `get_commands`, and `shutdown`.
+
+Commands backed by not-yet-complete Nu subsystems must still have stable RPC
+wiring: validate input, update in-memory runtime state when possible, return a
+structured success/error response, and never print human text to stdout.
 
 Tests:
 
 - `TestNUF171RPCPromptResponseCorrelation`
 - `TestNUF171RPCRejectsPromptDuringStreamWithoutBehavior`
+- `TestNUF171RPCShutdownWritesFinalResponse`
+- `TestNUF002DispatchRPCMode`
 
 ## Export, Share, Update
 

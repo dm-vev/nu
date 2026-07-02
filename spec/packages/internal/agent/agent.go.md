@@ -3,15 +3,15 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: a94e00c
-Implementation Comments: Prompt, abort, event callback, and Phase 1 fake-tool execution are implemented; real built-in tools stay Phase 2.
+Implementation Commit: pending
+Implementation Comments: Prompt/abort/event callback remain intact. Agent now exposes mutex-protected Busy, Config, and SetModel so RPC/TUI code can inspect or mutate future provider labels without racing active prompts.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
 - [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -66,8 +66,44 @@ Acceptance:
 
 - cancels active provider stream.
 
+### `(*Agent) Busy() bool`
+
+Logic:
+
+- Read the busy flag under the agent mutex.
+- Return true while a prompt owns the active cancel function.
+
+Acceptance:
+
+- RPC and TUI can reject or queue work without racing prompt startup.
+
+### `(*Agent) Config() Config`
+
+Logic:
+
+- Copy the provider id, api, and model labels under the agent mutex.
+- Return no provider secrets.
+
+Acceptance:
+
+- headless state responses can report current model identity.
+
+### `(*Agent) SetModel(providerID string, api string, model string) error`
+
+Logic:
+
+- Reject changes while busy.
+- Trim and validate required labels.
+- Update provider id, api, and model under the mutex.
+
+Acceptance:
+
+- RPC model commands can affect later provider requests;
+- active streams keep their existing request labels.
+
 Tests:
 
 - `TestNUF050TextOnlyTurnEnds`
 - `TestNUF050ToolCallFeedsResultBackToProvider`
 - `TestNUF050AbortStopsProviderAndTools`
+- `TestAgentSetModelAffectsNextPrompt`

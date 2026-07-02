@@ -57,6 +57,23 @@ stdin JSONL command -> rpc dispatcher -> session controller -> stdout JSONL
 
 RPC stdout must remain machine-readable JSONL. Diagnostics go to stderr.
 
+Current wiring recognizes the Pi RPC command set and keeps command responses,
+agent events, queue state, settings, model labels, bash execution, and
+lightweight session/tree data inside `internal/rpc`. Durable
+session/export/share depth still belongs to the dedicated packages as they
+land.
+
+### Current Interactive Mode
+
+```text
+stdin line -> tui editor -> agent prompt -> agent events -> tui frame
+```
+
+The current Go UI slice is deterministic and testable: renderer, input decoder,
+editor buffer, overlay focus, and app wiring are split under `internal/tui`.
+Raw terminal mode, terminal diffing, selectors, and rich Pi visual parity are
+the next terminal-driver layer, not hidden in app dispatch.
+
 ## Package Responsibilities
 
 ### `internal/agent`
@@ -102,6 +119,12 @@ The core never imports extension code.
 
 Owns raw terminal mode, input parsing, renderer diffing, components, focus,
 overlays, keybindings, and terminal capability detection.
+
+Implemented now: deterministic frames, strict width checks, input decoding,
+editor buffer, overlay focus, and a line-oriented app loop.
+
+Pending: raw terminal lifecycle, diff writer, selector components, theme files,
+and full Pi visual rendering.
 
 ## First Implementation Slice
 

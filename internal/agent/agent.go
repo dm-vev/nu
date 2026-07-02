@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"nu/internal/provider"
@@ -20,6 +21,13 @@ type Options struct {
 	Model      string
 	Tools      map[string]ToolFunc
 	Emit       func(Event)
+}
+
+// Config is the provider identity used for future turns.
+type Config struct {
+	ProviderID string
+	API        string
+	Model      string
 }
 
 // Event is one agent event emitted to app/RPC boundaries.
@@ -80,19 +88,19 @@ func New(opts Options) *Agent {
 
 // Prompt sends one prompt to the provider.
 func (a *Agent) Prompt(ctx context.Context, input Prompt) error {
-	runCtx, err := a.start(ctx)
+	runCtx, opts, err := a.start(ctx)
 	if err != nil {
 		return err
 	}
 	defer a.finish()
 
 	state := &State{
-		Provider:   a.opts.Provider,
-		ProviderID: a.opts.ProviderID,
-		API:        a.opts.API,
-		Model:      a.opts.Model,
-		Tools:      a.opts.Tools,
-		Emit:       a.opts.Emit,
+		Provider:   opts.Provider,
+		ProviderID: opts.ProviderID,
+		API:        opts.API,
+		Model:      opts.Model,
+		Tools:      opts.Tools,
+		Emit:       opts.Emit,
 	}
 	return runTurn(runCtx, state, TurnInput{Prompt: input.Text})
 }
@@ -106,19 +114,53 @@ func (a *Agent) Abort() {
 	}
 }
 
-func (a *Agent) start(ctx context.Context) (context.Context, error) {
+// Busy reports whether a prompt currently owns the agent.
+func (a *Agent) Busy() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.busy
+}
+
+// Config returns the provider labels used for future prompts.
+func (a *Agent) Config() Config {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return Config{ProviderID: a.opts.ProviderID, API: a.opts.API, Model: a.opts.Model}
+}
+
+// SetModel updates provider labels for later prompts.
+func (a *Agent) SetModel(providerID string, api string, model string) error {
+	providerID = strings.TrimSpace(providerID)
+	api = strings.TrimSpace(api)
+	model = strings.TrimSpace(model)
+	if providerID == "" || api == "" || model == "" {
+		return fmt.Errorf("set model: provider, api, and model are required")
+	}
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.busy {
-		return nil, ErrBusy
+		return ErrBusy
+	}
+	a.opts.ProviderID = providerID
+	a.opts.API = api
+	a.opts.Model = model
+	return nil
+}
+
+func (a *Agent) start(ctx context.Context) (context.Context, Options, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.busy {
+		return nil, Options{}, ErrBusy
 	}
 	if a.opts.Provider == nil {
-		return nil, fmt.Errorf("agent prompt: missing provider")
+		return nil, Options{}, fmt.Errorf("agent prompt: missing provider")
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	a.busy = true
 	a.cancel = cancel
-	return ctx, nil
+	return ctx, a.opts, nil
 }
 
 func (a *Agent) finish() {
