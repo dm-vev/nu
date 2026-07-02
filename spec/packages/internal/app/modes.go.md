@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: 5d9629b
-Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode now creates an RPC server first and injects an agent emitter. Interactive mode now creates a TUI app first and injects an agent emitter. List-models is being extended to include optional display names.
+Current: IMPLEMENTED
+Implementation Commit: 687e919
+Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode creates an RPC server first and injects an agent emitter. Interactive mode creates a TUI app first and injects an agent emitter. List-models includes optional display names.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 

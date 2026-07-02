@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: 5d9629b
-Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, app dispatch, and is being extended to render selected model display labels.
+Current: IMPLEMENTED
+Implementation Commit: 687e919
+Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, app dispatch, and selected model display labels.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 

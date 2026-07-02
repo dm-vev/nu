@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: 4ddd508
-Implementation Comments: Phase 3 registry covers built-in/custom models, auth filtering, explicit disabled custom models, thinking mappings, and is being extended with configurable display names.
+Current: IMPLEMENTED
+Implementation Commit: 687e919
+Implementation Comments: Phase 3 registry covers built-in/custom models, auth filtering, explicit disabled custom models, thinking mappings, and configurable display names through `display_name`.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
