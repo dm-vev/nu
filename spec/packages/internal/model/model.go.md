@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: 4ddd508
-Implementation Comments: Phase 3 registry covers built-in/custom models, auth filtering, explicit disabled custom models, and thinking mappings.
+Implementation Comments: Phase 3 registry covers built-in/custom models, auth filtering, explicit disabled custom models, thinking mappings, and is being extended with configurable display names.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] Run the targeted package tests.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -29,7 +29,7 @@ maps so CLI/list-models callers get stable fields.
 
 Logic:
 
-- Store id, provider, API kind, aliases, patterns, enabled flag,
+- Store id, provider, API kind, optional display name, aliases, patterns, enabled flag,
   requires-auth flag, capabilities, context window, max output, input/output
   cost per million tokens, and thinking support.
 
@@ -129,6 +129,7 @@ Tests:
 - `TestNUF031ModelPatternSelectsProviderAndModel`
 - `TestNUF031UnavailableModelsHiddenWithoutAuth`
 - `TestNUF031CustomModelsOverrideBuiltins`
+- `TestNUF031CustomModelDisplayNameLoads`
 - `TestCustomModelsCanDisableEntry`
 - `TestNUF032ThinkingLevelMapping`
 - `TestNUF032UnsupportedThinkingLevelFallsBackOrErrors`

@@ -102,13 +102,15 @@ Tests:
 
 Built-in models, custom `models.json`, provider auth state, model pattern
 matching, enabled model cycling, input capability, context window, max output,
-cost, and thinking support are represented in a registry.
+cost, configurable display names, and thinking support are represented in a
+registry.
 
 Tests:
 
 - `TestNUF031ModelPatternSelectsProviderAndModel`
 - `TestNUF031UnavailableModelsHiddenWithoutAuth`
 - `TestNUF031CustomModelsOverrideBuiltins`
+- `TestNUF031CustomModelDisplayNameLoads`
 - `TestCustomModelsCanDisableEntry`
 
 ### NUF-032 Thinking Levels

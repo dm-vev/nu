@@ -2,15 +2,15 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: 5d9629b
-Implementation Comments: Server recognizes the Pi RPC command set, forwards agent events as JSONL, supports prompt busy rejection, steering/follow-up queues, state/model/settings mutation, built-in bash execution, EOF shutdown, and in-memory session/tree responses until the durable session controller is wired.
+Implementation Comments: Server recognizes the Pi RPC command set, forwards agent events as JSONL, supports prompt busy rejection, steering/follow-up queues, state/model/settings mutation, built-in bash execution, EOF shutdown, in-memory session/tree responses, and is being extended with display model labels.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
+- [ ] Run the targeted package tests.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
@@ -32,7 +32,7 @@ prompt start/finish and queue draining.
 Logic:
 
 - Carry stdin, stdout, stderr, cwd, session id/name, provider/api/model labels,
-  and the optional agent pointer.
+  optional display model label, and the optional agent pointer.
 - Keep all fields injectable for tests.
 
 Acceptance:

@@ -22,14 +22,15 @@ var errStop = errors.New("rpc stop")
 
 // Options configures one RPC server.
 type Options struct {
-	Stdin     io.Reader
-	Stdout    io.Writer
-	Stderr    io.Writer
-	CWD       string
-	SessionID string
-	Provider  string
-	API       string
-	Model     string
+	Stdin      io.Reader
+	Stdout     io.Writer
+	Stderr     io.Writer
+	CWD        string
+	SessionID  string
+	Provider   string
+	API        string
+	Model      string
+	ModelLabel string
 }
 
 // Server owns one JSONL RPC session.
@@ -49,6 +50,7 @@ type Server struct {
 	provider         string
 	api              string
 	model            string
+	modelLabel       string
 	thinkingLevel    string
 	steeringMode     string
 	followUpMode     string
@@ -124,6 +126,7 @@ func NewServer(opts Options) *Server {
 		provider:       firstNonEmpty(opts.Provider, "test"),
 		api:            firstNonEmpty(opts.API, "test"),
 		model:          firstNonEmpty(opts.Model, "test"),
+		modelLabel:     firstNonEmpty(opts.ModelLabel, opts.Model, "test"),
 		thinkingLevel:  "off",
 		steeringMode:   "all",
 		followUpMode:   "all",
@@ -564,6 +567,7 @@ func (s *Server) setModel(providerID string, modelID string) error {
 	s.provider = providerID
 	s.api = api
 	s.model = modelID
+	s.modelLabel = modelID
 	return nil
 }
 
@@ -671,10 +675,12 @@ func (s *Server) modelData() map[string]any {
 
 func (s *Server) modelDataLocked() map[string]any {
 	return map[string]any{
-		"provider": s.provider,
-		"api":      s.api,
-		"id":       s.model,
-		"modelId":  s.model,
+		"provider":     s.provider,
+		"api":          s.api,
+		"id":           s.model,
+		"modelId":      s.model,
+		"display_name": s.modelLabel,
+		"displayName":  s.modelLabel,
 	}
 }
 

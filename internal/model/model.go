@@ -27,6 +27,7 @@ type Model struct {
 	ID              string          `json:"id"`
 	Provider        string          `json:"provider"`
 	API             string          `json:"api"`
+	DisplayName     string          `json:"display_name,omitempty"`
 	Aliases         []string        `json:"aliases,omitempty"`
 	Patterns        []string        `json:"patterns,omitempty"`
 	Enabled         bool            `json:"enabled"`

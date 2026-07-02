@@ -13,14 +13,15 @@ import (
 
 // AppOptions configures interactive mode.
 type AppOptions struct {
-	Stdin    io.Reader
-	Stdout   io.Writer
-	Stderr   io.Writer
-	CWD      string
-	Provider string
-	Model    string
-	Width    int
-	Height   int
+	Stdin      io.Reader
+	Stdout     io.Writer
+	Stderr     io.Writer
+	CWD        string
+	Provider   string
+	Model      string
+	ModelLabel string
+	Width      int
+	Height     int
 }
 
 // App wires line input, rendering, and the Nu agent.
@@ -66,7 +67,7 @@ func NewApp(opts AppOptions) *App {
 			Title:    "Nu",
 			CWD:      opts.CWD,
 			Provider: opts.Provider,
-			Model:    opts.Model,
+			Model:    firstNonEmpty(opts.ModelLabel, opts.Model),
 			Status:   "idle",
 		},
 	}

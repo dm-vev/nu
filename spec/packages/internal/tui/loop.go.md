@@ -2,15 +2,15 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: 5d9629b
-Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, and app dispatch with a deliberate line-oriented loop until raw terminal mode is implemented.
+Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, app dispatch, and is being extended to render selected model display labels.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
+- [ ] Run the targeted package tests.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
@@ -30,7 +30,7 @@ agent calls and do not write outside the injected stdout/stderr.
 Logic:
 
 - Own interactive state, editor, agent pointer, IO, cwd/provider/model labels,
-  and terminal size.
+  optional display model label, and terminal size.
 - Expose `Emit` for app-created agents.
 - Expose `SetAgent` after construction.
 

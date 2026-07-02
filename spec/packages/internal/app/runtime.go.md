@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: c64b048
-Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, and Phase 3 provider construction helpers.
+Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, default built-ins, URL-compatible provider support, OpenAI default selection, Phase 3 provider construction helpers, and is being extended with selected model display labels.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] Run the targeted package tests.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -43,14 +43,16 @@ Acceptance:
 Logic:
 
 - Carry argv, environment, cwd, home, stdin, stdout, stderr, version, optional
-  provider settings, tool functions, and optional session id from `cmd/nu`.
+  provider settings, selected model display name, tool functions, and optional
+  session id from `cmd/nu`.
 - Keep options serializable enough for integration tests to construct without process globals.
 - Do not store parsed CLI state here; parsing output belongs to `cli.Request`.
 
 Acceptance:
 
 - carries argv, env, cwd, home, stdin, stdout, stderr, version metadata,
-  optional provider, tool functions, and optional session id.
+  optional provider, selected model display name, tool functions, and optional
+  session id.
 
 ## Functions
 
@@ -80,6 +82,8 @@ Logic:
 - Treat URL `req.Provider` values as OpenAI-compatible Chat Completions
   endpoints and require `req.Model`.
 - Resolve `req.Model` when supplied.
+- Preserve custom `display_name` from selected model metadata for UI/RPC/list
+  output while keeping provider requests on the real model id.
 - Prefer provider-specific defaults such as `openai-default` when only a
   provider is supplied.
 - Prefer `openai-default` when no provider/model is supplied and OpenAI is
@@ -93,6 +97,8 @@ Acceptance:
 - `--print --provider openai --model ...` can create a real provider adapter;
 - `--print --provider http://... --model ...` reaches a compat chat endpoint;
 - `--models` custom entries can affect runtime selection;
+- custom `display_name` entries affect display labels without changing provider
+  model ids;
 - default selection is stable and does not depend on registry sort order.
 
 ### `loadModelRegistry(path string) ([]model.Model, model.Registry, error)`

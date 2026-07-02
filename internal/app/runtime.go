@@ -37,6 +37,7 @@ type Options struct {
 	ProviderID string
 	API        string
 	Model      string
+	ModelLabel string
 	Tools      map[string]agent.ToolFunc
 	SessionID  string
 }
@@ -131,6 +132,7 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 		opts.ProviderID = "compat"
 		opts.API = "chat"
 		opts.Model = strings.TrimSpace(req.Model)
+		opts.ModelLabel = opts.Model
 		return opts, nil
 	}
 
@@ -164,6 +166,7 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 	opts.ProviderID = selected.Provider
 	opts.API = selected.API
 	opts.Model = selected.ID
+	opts.ModelLabel = firstNonEmpty(selected.DisplayName, selected.ID)
 	return opts, nil
 }
 

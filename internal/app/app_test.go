@@ -301,6 +301,27 @@ func TestListModelsUsesCustomModelsPath(t *testing.T) {
 	}
 }
 
+func TestListModelsIncludesDisplayName(t *testing.T) {
+	dir := t.TempDir()
+	modelsPath := filepath.Join(dir, "models.json")
+	raw := `{"models":[{"id":"glm","provider":"fireworks","api":"chat","display_name":"GLM 5.2 Fast","requires_auth":false,"context_window":7,"max_output":3}]}`
+	if err := os.WriteFile(modelsPath, []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	var stdout bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--list-models", "--models", modelsPath},
+		Stdout: &stdout,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
+	}
+	if !strings.Contains(stdout.String(), "fireworks/glm\tchat\t7\t3\tGLM 5.2 Fast") {
+		t.Fatalf("stdout = %q, want display name", stdout.String())
+	}
+}
+
 func TestPrintModeBuildsProviderFromCLI(t *testing.T) {
 	var gotPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

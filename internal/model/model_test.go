@@ -51,6 +51,23 @@ func TestNUF031CustomModelsOverrideBuiltins(t *testing.T) {
 	}
 }
 
+func TestNUF031CustomModelDisplayNameLoads(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "models.json")
+	raw := `{"models":[{"id":"remote-id","provider":"fireworks","api":"chat","display_name":"GLM 5.2 Fast"}]}`
+	if err := os.WriteFile(path, []byte(raw), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	custom, err := LoadCustom(path)
+	if err != nil {
+		t.Fatalf("LoadCustom error = %v", err)
+	}
+	if len(custom) != 1 || custom[0].DisplayName != "GLM 5.2 Fast" {
+		t.Fatalf("custom models = %#v, want display name", custom)
+	}
+}
+
 func TestCustomModelsCanDisableEntry(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "models.json")

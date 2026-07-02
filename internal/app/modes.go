@@ -83,15 +83,18 @@ func runListModels(ctx context.Context, rt *Runtime, req cli.Request) error {
 		return err
 	}
 	for _, entry := range registry.Available(authState) {
-		if _, err := fmt.Fprintf(
-			rt.Options.Stdout,
-			"%s/%s\t%s\t%d\t%d\n",
+		line := fmt.Sprintf(
+			"%s/%s\t%s\t%d\t%d",
 			entry.Provider,
 			entry.ID,
 			entry.API,
 			entry.ContextWindow,
 			entry.MaxOutput,
-		); err != nil {
+		)
+		if strings.TrimSpace(entry.DisplayName) != "" {
+			line += "\t" + strings.TrimSpace(entry.DisplayName)
+		}
+		if _, err := fmt.Fprintln(rt.Options.Stdout, line); err != nil {
 			return fmt.Errorf("write model list: %w", err)
 		}
 	}
@@ -100,14 +103,15 @@ func runListModels(ctx context.Context, rt *Runtime, req cli.Request) error {
 
 func runRPC(ctx context.Context, rt *Runtime, _ cli.Request) error {
 	server := rpc.NewServer(rpc.Options{
-		Stdin:     rt.Options.Stdin,
-		Stdout:    rt.Options.Stdout,
-		Stderr:    rt.Options.Stderr,
-		CWD:       rt.Options.CWD,
-		SessionID: rt.Options.SessionID,
-		Provider:  rt.Options.ProviderID,
-		API:       rt.Options.API,
-		Model:     rt.Options.Model,
+		Stdin:      rt.Options.Stdin,
+		Stdout:     rt.Options.Stdout,
+		Stderr:     rt.Options.Stderr,
+		CWD:        rt.Options.CWD,
+		SessionID:  rt.Options.SessionID,
+		Provider:   rt.Options.ProviderID,
+		API:        rt.Options.API,
+		Model:      rt.Options.Model,
+		ModelLabel: rt.Options.ModelLabel,
 	})
 	a := newAgent(rt.Options, server.Emit)
 	if a == nil {
@@ -119,12 +123,13 @@ func runRPC(ctx context.Context, rt *Runtime, _ cli.Request) error {
 
 func runInteractive(ctx context.Context, rt *Runtime, _ cli.Request) error {
 	ui := tui.NewApp(tui.AppOptions{
-		Stdin:    rt.Options.Stdin,
-		Stdout:   rt.Options.Stdout,
-		Stderr:   rt.Options.Stderr,
-		CWD:      rt.Options.CWD,
-		Provider: rt.Options.ProviderID,
-		Model:    rt.Options.Model,
+		Stdin:      rt.Options.Stdin,
+		Stdout:     rt.Options.Stdout,
+		Stderr:     rt.Options.Stderr,
+		CWD:        rt.Options.CWD,
+		Provider:   rt.Options.ProviderID,
+		Model:      rt.Options.Model,
+		ModelLabel: rt.Options.ModelLabel,
 	})
 	a := newAgent(rt.Options, ui.Emit)
 	if a == nil {

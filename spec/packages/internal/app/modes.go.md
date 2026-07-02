@@ -2,15 +2,15 @@
 
 ## Status
 
-Current: IMPLEMENTED
+Current: IN_PROGRESS
 Implementation Commit: 5d9629b
-Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode now creates an RPC server first and injects an agent emitter. Interactive mode now creates a TUI app first and injects an agent emitter.
+Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode now creates an RPC server first and injects an agent emitter. Interactive mode now creates a TUI app first and injects an agent emitter. List-models is being extended to include optional display names.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
-- [x] Run the targeted package tests.
+- [ ] Run the targeted package tests.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
@@ -53,8 +53,8 @@ Logic:
 - Load auth from `Options.Home` and `Options.Env`.
 - Resolve provider auth state through runtime helpers.
 - Build the model registry from built-ins plus optional `req.ModelsPath`.
-- Print visible models as tab-separated `provider/id`, api, context window, and
-  max output fields.
+- Print visible models as tab-separated `provider/id`, api, context window,
+  max output, and optional display name fields.
 - Keep output deterministic by using registry ordering.
 
 Acceptance:
@@ -62,6 +62,7 @@ Acceptance:
 - authenticated provider models are visible;
 - unauthenticated provider models are hidden;
 - custom `--models` entries are included.
+- custom `display_name` entries are visible in list output.
 
 ### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
 
@@ -131,5 +132,6 @@ Tests:
 - `TestNUF170JSONModeFeedsToolResultBackToProvider`
 - `TestListModelsUsesAuthState`
 - `TestListModelsUsesCustomModelsPath`
+- `TestListModelsIncludesDisplayName`
 - `TestNUF002DispatchRPCMode`
 - `TestNUF002DispatchInteractiveMode`
