@@ -58,4 +58,8 @@ Common style for all Go files:
 - avoid global mutable state;
 - define interfaces in the consuming package;
 - use table tests for parsers, matchers, and protocol conversion;
+- add short in-function intent comments before non-trivial branches, protocol
+  steps, locks, filesystem/process/network side effects, and deliberate
+  simplifications;
+- do not comment obvious assignments or restate the next line of code;
 - keep `cmd/nu` thin.
