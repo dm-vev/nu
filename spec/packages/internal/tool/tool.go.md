@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: -
-Implementation Comments: Phase 2 keeps built-in tools in one file until size or ownership proves a split is needed.
+Current: IMPLEMENTED
+Implementation Commit: 0f96e6e
+Implementation Comments: Phase 2 built-ins live in one stdlib-only file; write/edit use one global mutation lock until throughput proves per-path locks are needed.
 
 ## TODO
 
-- [ ] Add or confirm the failing tests listed in this file.
-- [ ] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Add or confirm the failing tests listed in this file.
+- [x] Implement the file according to the function logic below.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 

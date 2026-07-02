@@ -32,6 +32,8 @@ finish with JSON events.
 
 ## Phase 2: Built-in Tools
 
+Status: implemented in `0f96e6e`.
+
 - read
 - write
 - edit

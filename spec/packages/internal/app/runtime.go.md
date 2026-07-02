@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: 456582c
-Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, and mode-specific emitters.
+Implementation Commit: 0f96e6e
+Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, mode-specific emitters, and default built-ins when no test tools are supplied.
 
 ## TODO
 
@@ -61,12 +61,14 @@ Logic:
 - Return nil when no provider is configured.
 - Create `agent.Agent` with provider id, API, model, and provider stream.
 - Pass configured tool functions through to the agent.
+- Use `tool.Builtins(opts.CWD)` when no tool map is supplied.
 - Install the mode-specific event callback.
 
 Acceptance:
 
 - no provider means no agent;
 - mode-specific emitter receives agent events.
+- default built-ins are available when `Options.Tools` is nil.
 
 ### `newJSONSessionHeader(opts Options) (jsonSessionHeader, error)`
 
@@ -98,3 +100,4 @@ Tests:
 - `TestAppRunPrintModeUsesInjectedRuntime`
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`
 - `TestJSONSessionHeaderDefaults`
+- `TestJSONModeUsesBuiltinToolsByDefault`
