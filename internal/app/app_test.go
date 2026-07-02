@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"nu/internal/agent"
 	"nu/internal/provider"
 	"nu/internal/testkit"
 )
@@ -98,6 +99,63 @@ func TestNUF170JSONModeStdoutIsOnlyJSONL(t *testing.T) {
 	}
 	if last["type"] != "turn_end" {
 		t.Fatalf("Last event = %#v, want turn_end", last)
+	}
+}
+
+func TestNUF170JSONModeFeedsToolResultBackToProvider(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	fake := testkit.NewScriptedProviderScripts(
+		[]provider.Event{
+			{Type: provider.EventStart},
+			{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "fake"},
+			{Type: provider.EventToolCallEnd, Index: 0},
+			{Type: provider.EventDone, StopReason: "tool_use"},
+		},
+		[]provider.Event{
+			{Type: provider.EventStart},
+			{Type: provider.EventText, Delta: "ok"},
+			{Type: provider.EventDone},
+		},
+	)
+	code := Run(context.Background(), Options{
+		Args:     []string{"--mode", "json", "hello"},
+		CWD:      "/tmp/nu-test",
+		Stdout:   &stdout,
+		Stderr:   &stderr,
+		Provider: fake,
+		Tools: map[string]agent.ToolFunc{
+			"fake": func(context.Context, agent.ToolCall) (agent.ToolResult, error) {
+				return agent.ToolResult{Content: "tool result"}, nil
+			},
+		},
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	requests := fake.Requests()
+	if len(requests) != 2 {
+		t.Fatalf("Provider requests = %d, want 2", len(requests))
+	}
+	lastMessage := requests[1].Messages[len(requests[1].Messages)-1]
+	if lastMessage.Role != "tool" || lastMessage.Content != "tool result" {
+		t.Fatalf("Second request last message = %#v, want tool result", lastMessage)
+	}
+	if !strings.Contains(stdout.String(), `"type":"tool_end"`) {
+		t.Fatalf("JSON stdout missing tool_end event: %q", stdout.String())
+	}
+}
+
+func TestJSONSessionHeaderDefaults(t *testing.T) {
+	header, err := newJSONSessionHeader(Options{CWD: "/tmp/nu-test"})
+	if err != nil {
+		t.Fatalf("newJSONSessionHeader error = %v", err)
+	}
+	if len(header.ID) != 36 || header.ID[14] != '4' {
+		t.Fatalf("Session id = %q, want UUIDv4-like id", header.ID)
+	}
+	if header.AppVersion != "dev" {
+		t.Fatalf("AppVersion = %q, want dev", header.AppVersion)
 	}
 }
 

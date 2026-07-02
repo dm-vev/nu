@@ -98,6 +98,12 @@ func handleProviderEvent(state *State, ev provider.Event) error {
 		state.text.WriteString(ev.Delta)
 		emit(state, Event{Type: "message_update", Data: map[string]string{"delta": ev.Delta}})
 	case provider.EventToolCallStart:
+		if ev.ToolCallID == "" {
+			return fmt.Errorf("%w: missing tool call id at index %d", provider.ErrStream, ev.Index)
+		}
+		if ev.ToolName == "" {
+			return fmt.Errorf("%w: missing tool name at index %d", provider.ErrStream, ev.Index)
+		}
 		if _, exists := state.toolCalls[ev.Index]; exists {
 			return fmt.Errorf("%w: duplicate tool call index %d", provider.ErrStream, ev.Index)
 		}
@@ -110,11 +116,17 @@ func handleProviderEvent(state *State, ev provider.Event) error {
 		if !ok {
 			return fmt.Errorf("%w: tool call delta before start %d", provider.ErrStream, ev.Index)
 		}
+		if call.done {
+			return fmt.Errorf("%w: tool call delta after end %d", provider.ErrStream, ev.Index)
+		}
 		call.arguments.WriteString(ev.Delta)
 	case provider.EventToolCallEnd:
 		call, ok := state.toolCalls[ev.Index]
 		if !ok {
 			return fmt.Errorf("%w: tool call end before start %d", provider.ErrStream, ev.Index)
+		}
+		if call.done {
+			return fmt.Errorf("%w: duplicate tool call end %d", provider.ErrStream, ev.Index)
 		}
 		call.call.Arguments = call.arguments.String()
 		call.done = true

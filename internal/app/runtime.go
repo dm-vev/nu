@@ -2,7 +2,6 @@ package app
 
 import (
 	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,6 +27,7 @@ type Options struct {
 	ProviderID string
 	API        string
 	Model      string
+	Tools      map[string]agent.ToolFunc
 	SessionID  string
 }
 
@@ -99,6 +99,7 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 		ProviderID: opts.ProviderID,
 		API:        opts.API,
 		Model:      opts.Model,
+		Tools:      opts.Tools,
 		Emit:       emit,
 	})
 }
@@ -112,6 +113,10 @@ func newJSONSessionHeader(opts Options) (jsonSessionHeader, error) {
 		}
 		id = generated
 	}
+	version := opts.Version.Version
+	if version == "" {
+		version = "dev"
+	}
 	return jsonSessionHeader{
 		Type:       "session",
 		Schema:     1,
@@ -119,7 +124,7 @@ func newJSONSessionHeader(opts Options) (jsonSessionHeader, error) {
 		CreatedAt:  time.Now().UTC(),
 		CWD:        opts.CWD,
 		App:        "nu",
-		AppVersion: opts.Version.Version,
+		AppVersion: version,
 	}, nil
 }
 
@@ -128,7 +133,16 @@ func newSessionID() (string, error) {
 	if _, err := rand.Read(data[:]); err != nil {
 		return "", fmt.Errorf("generate session id: %w", err)
 	}
-	return hex.EncodeToString(data[:]), nil
+	data[6] = (data[6] & 0x0f) | 0x40
+	data[8] = (data[8] & 0x3f) | 0x80
+	return fmt.Sprintf(
+		"%x-%x-%x-%x-%x",
+		data[0:4],
+		data[4:6],
+		data[6:8],
+		data[8:10],
+		data[10:16],
+	), nil
 }
 
 func writeJSONLine(w io.Writer, value any) error {

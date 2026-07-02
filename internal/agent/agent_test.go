@@ -121,6 +121,55 @@ func TestNUF050MissingToolFails(t *testing.T) {
 	}
 }
 
+func TestNUF050RejectsMalformedToolCallStream(t *testing.T) {
+	tests := []struct {
+		name   string
+		events []provider.Event
+		want   string
+	}{
+		{
+			name: "missing id",
+			events: []provider.Event{
+				{Type: provider.EventStart},
+				{Type: provider.EventToolCallStart, Index: 0, ToolName: "fake"},
+			},
+			want: "missing tool call id",
+		},
+		{
+			name: "delta after end",
+			events: []provider.Event{
+				{Type: provider.EventStart},
+				{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "fake"},
+				{Type: provider.EventToolCallEnd, Index: 0},
+				{Type: provider.EventToolCallDelta, Index: 0, Delta: "{}"},
+			},
+			want: "tool call delta after end",
+		},
+		{
+			name: "duplicate end",
+			events: []provider.Event{
+				{Type: provider.EventStart},
+				{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "fake"},
+				{Type: provider.EventToolCallEnd, Index: 0},
+				{Type: provider.EventToolCallEnd, Index: 0},
+			},
+			want: "duplicate tool call end",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fake := testkit.NewScriptedProvider(tt.events...)
+			a := New(Options{Provider: fake})
+
+			err := a.Prompt(context.Background(), Prompt{Text: "hi"})
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("Prompt error = %v, want %q", err, tt.want)
+			}
+		})
+	}
+}
+
 type blockingProvider struct {
 	started chan struct{}
 }
