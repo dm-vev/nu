@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode now creates an RPC server first and injects an agent emitter. Interactive mode now creates a TUI app first and injects an agent emitter.
 
 ## TODO

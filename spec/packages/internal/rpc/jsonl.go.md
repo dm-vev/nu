@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Strict LF JSONL reader/writer uses `bufio.Reader` instead of `Scanner`, strips one CR before LF, emits final unterminated records, and wraps marshal/write errors.
 
 ## TODO

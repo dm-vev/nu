@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Overlay stack uses small comparable handles, restores previous focus on close, and rejects disposed handles.
 
 ## TODO

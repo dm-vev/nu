@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Rune-safe editor buffer supports insert, backspace, clamped movement, undo snapshots, submit, and immutable snapshots without renderer or terminal coupling.
 
 ## TODO

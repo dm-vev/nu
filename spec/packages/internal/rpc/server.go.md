@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Server recognizes the Pi RPC command set, forwards agent events as JSONL, supports prompt busy rejection, steering/follow-up queues, state/model/settings mutation, built-in bash execution, EOF shutdown, and in-memory session/tree responses until the durable session controller is wired.
 
 ## TODO

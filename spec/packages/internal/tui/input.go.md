@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Byte-stream decoder handles split UTF-8, split escape sequences, common control keys, arrow keys, bracketed paste as one event, unknown escapes, and EOF flushing without terminal dependencies.
 
 ## TODO

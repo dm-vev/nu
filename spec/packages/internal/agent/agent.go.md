@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Prompt/abort/event callback remain intact. Agent now exposes mutex-protected Busy, Config, and SetModel so RPC/TUI code can inspect or mutate future provider labels without racing active prompts.
 
 ## TODO

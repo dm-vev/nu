@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: pending
+Implementation Commit: 5d9629b
 Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, and app dispatch with a deliberate line-oriented loop until raw terminal mode is implemented.
 
 ## TODO
