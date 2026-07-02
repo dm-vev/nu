@@ -3,7 +3,7 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: a94e00c
+Implementation Commit: 456582c
 Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events.
 
 ## TODO
@@ -74,3 +74,4 @@ Tests:
 - `TestAppRunPrintModeUsesInjectedRuntime`
 - `TestAppRunPrintModeWithoutHandlerFails`
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`
+- `TestNUF170JSONModeFeedsToolResultBackToProvider`

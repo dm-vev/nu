@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: a94e00c
-Implementation Comments: Provider loop handles text and finalized tool calls before continuing; retry/queues remain future specs.
+Implementation Commit: 456582c
+Implementation Comments: Provider loop handles text and finalized tool calls before continuing, and rejects malformed tool-call ordering; retry/queues remain future specs.
 
 ## TODO
 
@@ -54,6 +54,7 @@ Logic:
 - Emit `message_start` on provider start.
 - Append `text_delta` to the accumulated response text and emit a live update.
 - Assemble tool-call arguments from start/delta/end events by index.
+- Reject missing tool id/name, duplicate end, and deltas after end.
 - Emit `message_end` on provider done.
 - Leave provider error handling to `runTurn`.
 - Return an error for unknown normalized events.
@@ -67,3 +68,4 @@ Tests:
 - `TestNUF050TextOnlyTurnEnds`
 - `TestNUF050ToolCallFeedsResultBackToProvider`
 - `TestNUF050AbortStopsProviderAndTools`
+- `TestNUF050RejectsMalformedToolCallStream`

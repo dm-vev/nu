@@ -3,8 +3,8 @@
 ## Status
 
 Current: IMPLEMENTED
-Implementation Commit: a94e00c
-Implementation Comments: Runtime carries process IO, provider settings, optional session id, and mode-specific emitters.
+Implementation Commit: 456582c
+Implementation Comments: Runtime carries process IO, provider settings, tools, optional session id, and mode-specific emitters.
 
 ## TODO
 
@@ -29,13 +29,13 @@ adapters.
 
 Logic:
 
-- Store normalized process IO, provider settings, and session id.
+- Store normalized process IO, provider settings, tools, and session id.
 - Keep ownership explicit: runtime closes only components it created.
 - Do not start goroutines, TUI loops, RPC loops, or provider streams during construction.
 
 Acceptance:
 
-- contains normalized process IO, provider settings, and session id;
+- contains normalized process IO, provider settings, tools, and session id;
 - has no goroutines after construction.
 
 ### `type Options struct`
@@ -43,14 +43,14 @@ Acceptance:
 Logic:
 
 - Carry argv, environment, cwd, home, stdin, stdout, stderr, version, optional
-  provider settings, and optional session id from `cmd/nu`.
+  provider settings, tool functions, and optional session id from `cmd/nu`.
 - Keep options serializable enough for integration tests to construct without process globals.
 - Do not store parsed CLI state here; parsing output belongs to `cli.Request`.
 
 Acceptance:
 
 - carries argv, env, cwd, home, stdin, stdout, stderr, version metadata,
-  optional provider, and optional session id.
+  optional provider, tool functions, and optional session id.
 
 ## Functions
 
@@ -60,12 +60,26 @@ Logic:
 
 - Return nil when no provider is configured.
 - Create `agent.Agent` with provider id, API, model, and provider stream.
+- Pass configured tool functions through to the agent.
 - Install the mode-specific event callback.
 
 Acceptance:
 
 - no provider means no agent;
 - mode-specific emitter receives agent events.
+
+### `newJSONSessionHeader(opts Options) (jsonSessionHeader, error)`
+
+Logic:
+
+- Use `opts.SessionID` when supplied.
+- Generate a UUIDv4-like id when no session id is supplied.
+- Default empty app version to `dev`.
+- Fill the session header fields used by JSON mode.
+
+Acceptance:
+
+- produces a session header with id, schema, cwd, app, and app version.
 
 ### `writeJSONLine(w io.Writer, value any) error`
 
@@ -83,3 +97,4 @@ Tests:
 
 - `TestAppRunPrintModeUsesInjectedRuntime`
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`
+- `TestJSONSessionHeaderDefaults`
