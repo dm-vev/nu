@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: 2931429
-Implementation Comments: Phase 4 compaction planning and branch-summary metadata are deterministic pure functions over session entries.
+Implementation Comments: Phase 4 compaction planning and branch-summary metadata are deterministic pure functions over session entries; oversize single entries are compacted instead of exceeding budget.
 
 ## TODO
 
@@ -59,12 +59,14 @@ Logic:
   payload JSON size.
 - Keep all entries when the total estimate fits `contextWindow - reserveTokens`.
 - Otherwise keep the newest suffix that fits the budget.
+- If no entry can fit the budget, return an empty keep slice and compact all entries.
 - If the suffix starts with a tool-result message, include the preceding
   assistant tool-call message with the same `tool_call_id`.
 
 Acceptance:
 
 - recent messages remain under budget;
+- oversized entries do not exceed the keep budget;
 - compaction never keeps a tool result without its matching tool call.
 
 ### `BuildBranchSummary(from []session.Entry, to []session.Entry) BranchSummary`
@@ -84,6 +86,7 @@ Acceptance:
 Tests:
 
 - `TestNUF090CompactionKeepsRecentBudget`
+- `TestCompactionCompactsOversizedSingleEntry`
 - `TestNUF090CompactionDoesNotCutBeforeToolResult`
 - `TestNUF091BranchSummaryFindsCommonAncestor`
 - `TestNUF091BranchSummaryTracksFiles`

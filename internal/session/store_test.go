@@ -93,6 +93,36 @@ func TestSessionExportImportRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSessionAppendUsesRefCWD(t *testing.T) {
+	store := OpenStore(t.TempDir())
+	cwd := filepath.Join(t.TempDir(), "work")
+	ref := Ref{ID: "s1", CWD: cwd}
+	if err := store.Append(context.Background(), ref, testEntry("e1", "", KindMessage)); err != nil {
+		t.Fatalf("Append error = %v", err)
+	}
+
+	latest, err := store.LatestByCWD(context.Background(), cwd)
+	if err != nil {
+		t.Fatalf("LatestByCWD error = %v", err)
+	}
+	if latest.ID != "s1" {
+		t.Fatalf("LatestByCWD = %#v, want s1", latest)
+	}
+}
+
+func TestSessionImportRejectsOversizedInput(t *testing.T) {
+	store := OpenStore(t.TempDir())
+	oversized := bytes.Repeat([]byte("x"), maxImportBytes+1)
+
+	_, err := store.Import(context.Background(), bytes.NewReader(oversized), Ref{ID: "big"})
+	if err == nil || !errors.Is(err, ErrImportTooLarge) {
+		t.Fatalf("Import error = %v, want ErrImportTooLarge", err)
+	}
+	if _, statErr := os.Stat(filepath.Join(store.root, "big.jsonl")); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("Import created file for oversized input: %v", statErr)
+	}
+}
+
 func TestNUF081ContinueLatestByCWD(t *testing.T) {
 	dir := t.TempDir()
 	cwd := filepath.Join(dir, "work")

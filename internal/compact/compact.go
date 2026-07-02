@@ -39,7 +39,7 @@ func BuildPlan(entries []session.Entry, contextWindow int, reserveTokens int) Pl
 	cut := len(entries)
 	for i := len(entries) - 1; i >= 0; i-- {
 		cost := estimateTokens(entries[i])
-		if used+cost > budget && used > 0 {
+		if used+cost > budget {
 			break
 		}
 		used += cost

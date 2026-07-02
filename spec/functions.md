@@ -281,6 +281,8 @@ Tests:
 - `TestNUF080SessionAppendBuildsTree`
 - `TestNUF080SessionLoadRejectsBrokenParent`
 - `TestSessionExportImportRoundTrip`
+- `TestSessionAppendUsesRefCWD`
+- `TestSessionImportRejectsOversizedInput`
 
 ### NUF-081 Resume, Fork, Clone
 
@@ -316,6 +318,7 @@ old context while keeping recent messages and valid tool-call boundaries.
 Tests:
 
 - `TestNUF090CompactionKeepsRecentBudget`
+- `TestCompactionCompactsOversizedSingleEntry`
 - `TestNUF090CompactionDoesNotCutBeforeToolResult`
 
 ### NUF-091 Branch Summaries

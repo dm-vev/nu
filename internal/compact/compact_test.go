@@ -23,6 +23,19 @@ func TestNUF090CompactionKeepsRecentBudget(t *testing.T) {
 	}
 }
 
+func TestCompactionCompactsOversizedSingleEntry(t *testing.T) {
+	plan := BuildPlan([]session.Entry{
+		compactEntry("huge", 1000, "", "", nil),
+	}, 100, 20)
+
+	if len(plan.Keep) != 0 {
+		t.Fatalf("Keep = %#v, want empty", plan.Keep)
+	}
+	if len(plan.Compact) != 1 || plan.Compact[0].ID != "huge" {
+		t.Fatalf("Compact = %#v, want huge", plan.Compact)
+	}
+}
+
 func TestNUF090CompactionDoesNotCutBeforeToolResult(t *testing.T) {
 	plan := BuildPlan([]session.Entry{
 		compactEntry("e1", 50, "user", "", nil),

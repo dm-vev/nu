@@ -21,10 +21,16 @@ var ErrSessionNotFound = errors.New("session not found")
 // ErrSessionAmbiguous is returned when a partial selector matches multiple sessions.
 var ErrSessionAmbiguous = errors.New("session selector is ambiguous")
 
+// ErrImportTooLarge is returned before parsing oversized session imports.
+var ErrImportTooLarge = errors.New("session import too large")
+
+const maxImportBytes = 32 * 1024 * 1024
+
 // Ref identifies one session file.
 type Ref struct {
 	ID   string
 	Path string
+	CWD  string
 }
 
 // Store manages append-only session JSONL files.
@@ -99,7 +105,7 @@ func (s *Store) Append(ctx context.Context, ref Ref, entry Entry) error {
 			Schema:     schemaVersion,
 			ID:         ref.ID,
 			CreatedAt:  time.Now().UTC(),
-			CWD:        "",
+			CWD:        cleanOptionalPath(ref.CWD),
 			App:        "nu",
 			AppVersion: "0.0.0",
 		}
@@ -311,9 +317,13 @@ func (s *Store) Import(ctx context.Context, r io.Reader, target Ref) (Ref, error
 	if err := ctx.Err(); err != nil {
 		return Ref{}, fmt.Errorf("import session: %w", err)
 	}
-	data, err := io.ReadAll(r)
+	// Import is a user-controlled input path, so bound memory before JSON validation.
+	data, err := io.ReadAll(io.LimitReader(r, maxImportBytes+1))
 	if err != nil {
 		return Ref{}, fmt.Errorf("read session import: %w", err)
+	}
+	if len(data) > maxImportBytes {
+		return Ref{}, fmt.Errorf("%w: limit %d bytes", ErrImportTooLarge, maxImportBytes)
 	}
 	header, entries, err := parseSession(data)
 	if err != nil {
@@ -334,6 +344,13 @@ func (s *Store) path(ref Ref) string {
 		return filepath.Clean(ref.Path)
 	}
 	return filepath.Join(s.root, ref.ID+".jsonl")
+}
+
+func cleanOptionalPath(path string) string {
+	if strings.TrimSpace(path) == "" {
+		return ""
+	}
+	return filepath.Clean(path)
 }
 
 func (s *Store) resolvePath(selector string) (Ref, bool, error) {

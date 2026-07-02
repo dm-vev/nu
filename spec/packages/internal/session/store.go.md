@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: 2931429
-Implementation Comments: Append/load use direct stdlib filesystem calls with in-process locking; Phase 4 adds lookup/fork/clone/import/export helpers.
+Implementation Comments: Append/load use direct stdlib filesystem calls with in-process locking; Phase 4 adds cwd-aware creation, lookup/fork/clone/import/export helpers, and a bounded import reader.
 
 ## TODO
 
@@ -31,11 +31,13 @@ Logic:
 
 - Identify a session by id.
 - Optionally carry an explicit JSONL path for path-based resume.
+- Optionally carry cwd for new-file header creation.
 - Prefer explicit path when present; otherwise resolve under store root.
 
 Acceptance:
 
-- path resume can load a session outside the root without changing store root.
+- path resume can load a session outside the root without changing store root;
+- newly-created sessions preserve cwd for continue lookup.
 
 ### `OpenStore(root string) *Store`
 
@@ -58,13 +60,15 @@ Logic:
 - Acquire the in-process lock before parent validation and append.
 - Create parent directories.
 - Open file append-only; create header first when creating a new session.
+- Use `ref.CWD` in the new header when supplied.
 - Marshal entry and append LF.
 - Release locks with defer and wrap path-qualified errors.
 
 Acceptance:
 
 - appends one JSONL line;
-- rejects entry with missing id.
+- rejects entry with missing id;
+- new session headers preserve cwd.
 
 ### `(*Store) Resolve(ctx context.Context, selector string) (Ref, error)`
 
@@ -153,7 +157,7 @@ Acceptance:
 
 Logic:
 
-- Read the JSONL payload.
+- Read the JSONL payload with a fixed maximum size.
 - Decode and validate header and entries.
 - Build the tree before writing.
 - Use `target.ID` when supplied, otherwise keep the imported header id.
@@ -161,6 +165,7 @@ Logic:
 
 Acceptance:
 
+- oversized imports fail before validation;
 - invalid imports do not create files;
 - valid imports round-trip through `Load`.
 
@@ -170,7 +175,9 @@ Tests:
 - `TestNUF080SessionLoadRejectsBrokenParent`
 - `TestNUF080SessionAppendRejectsBrokenParent`
 - `TestSessionAppendRejectsDuplicateID`
+- `TestSessionAppendUsesRefCWD`
 - `TestSessionExportImportRoundTrip`
+- `TestSessionImportRejectsOversizedInput`
 - `TestNUF081ContinueLatestByCWD`
 - `TestNUF081ResumeByPathOrPartialID`
 - `TestNUF081ForkStartsNewFileFromUserEntry`
