@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: -
-Implementation Comments: Scripted provider exists for agent tests; richer stream scripts can be added when tool calls land.
+Current: IMPLEMENTED
+Implementation Commit: a94e00c
+Implementation Comments: Scripted provider supports one script per request so agent tool-continuation tests stay deterministic.
 
 ## TODO
 
-- [ ] Add or confirm the failing tests listed in this file.
-- [ ] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Add or confirm the failing tests listed in this file.
+- [x] Implement the file according to the function logic below.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -19,7 +19,8 @@ Fake provider for agent and integration tests.
 
 ## Code Style
 
-Deterministic scripted events. No network.
+Deterministic scripted events. No network. Multiple scripts mean one provider
+response per agent request.
 
 ## Functions
 
@@ -38,6 +39,19 @@ Acceptance:
 - emits scripted events in order;
 - records requests;
 - respects context cancellation.
+
+### `NewScriptedProviderScripts(scripts ...[]provider.Event) *ScriptedProvider`
+
+Logic:
+
+- Copy each request script.
+- Serve one script per provider request in order.
+- Return a setup error if the agent asks for more scripts than the test supplied.
+
+Acceptance:
+
+- supports multi-request agent loops;
+- keeps each recorded request inspectable.
 
 Tests:
 

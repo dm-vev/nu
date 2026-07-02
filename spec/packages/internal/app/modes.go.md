@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IN_PROGRESS
-Implementation Commit: -
+Current: IMPLEMENTED
+Implementation Commit: a94e00c
 Implementation Comments: Help/version/print dispatch exists. JSON mode writes JSONL session header and agent events.
 
 ## TODO
 
-- [ ] Add or confirm the failing tests listed in this file.
-- [ ] Implement the file according to the function logic below.
-- [ ] Run the targeted package tests.
-- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [x] Add or confirm the failing tests listed in this file.
+- [x] Implement the file according to the function logic below.
+- [x] Run the targeted package tests.
+- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 

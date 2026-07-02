@@ -17,6 +17,8 @@ Exit: `nu --help` works and `go test ./...` passes.
 
 ## Phase 1: Headless Agent Spine
 
+Status: implemented in `a94e00c`.
+
 - CLI parse for print and JSON mode
 - message/event types
 - provider interface
