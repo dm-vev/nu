@@ -15,30 +15,6 @@ cmd/nu
 
 The application layer wires dependencies. Lower packages do not import `app`.
 
-## Core Interfaces
-
-These are conceptual shapes; exact Go names are decided when tests are written.
-
-```go
-type Provider interface {
-    Stream(ctx context.Context, req Request) (<-chan Event, error)
-}
-
-type Tool interface {
-    Name() string
-    Schema() Schema
-    Execute(ctx context.Context, call ToolCall) ToolResult
-}
-
-type Store interface {
-    Append(ctx context.Context, entry Entry) error
-    Load(ctx context.Context, id SessionRef) (*Session, error)
-}
-```
-
-Interfaces stay where they are consumed. Provider packages return concrete
-clients.
-
 ## Protocol Contracts
 
 The stable contracts live under `spec/protocols/`:

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	"nu/internal/message"
 	"nu/internal/provider"
 )
 
@@ -19,7 +18,13 @@ type Options struct {
 	ProviderID string
 	API        string
 	Model      string
-	Emit       func(message.Event)
+	Emit       func(Event)
+}
+
+// Event is one agent event emitted to app/RPC boundaries.
+type Event struct {
+	Type string
+	Data any
 }
 
 // Prompt is one user prompt.

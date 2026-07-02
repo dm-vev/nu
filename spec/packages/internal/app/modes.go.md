@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Help/version/print dispatch exists; JSON/RPC/package/share/update modes are pending.
+Implementation Comments: Help/version dispatch exists. Print mode now calls the runtime agent directly.
 
 ## TODO
 
@@ -15,8 +15,7 @@ Implementation Comments: Help/version/print dispatch exists; JSON/RPC/package/sh
 
 ## Purpose
 
-Dispatch resolved CLI requests to interactive, print, JSON, RPC, package,
-config, export, share, and update modes.
+Dispatch resolved CLI requests to the modes implemented in the current slice.
 
 ## Code Style
 
@@ -30,21 +29,31 @@ to exit code stays in `app.go`.
 Logic:
 
 - Check `ctx` before blocking work and pass it to every blocking dependency.
-- Initialize local state, then enter the smallest required loop.
-- Stop on context cancellation, terminal command, or unrecoverable error and clean up owned resources.
-- Dispatches every `NUF-002` mode.
-- Refuse incompatible flag combinations with a clear error.
-- Preserve stdout JSONL purity for JSON/RPC modes.
+- Dispatch help and version without constructing extra state.
+- Dispatch chat print mode to `runPrint`.
+- Return a clear not-implemented error for modes outside the current slice.
 
 Acceptance:
 
-- dispatches every `NUF-002` mode;
-- refuses incompatible flag combinations with a clear error;
-- preserves stdout JSONL purity for JSON/RPC modes.
+- dispatches help, version, and print mode;
+- returns a clear error for unimplemented modes.
+
+### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
+
+Logic:
+
+- Require `rt.Agent`; do not accept an injected print callback.
+- Join prompt args into the prompt text exactly as CLI parsing supplied them.
+- Call `Agent.Prompt` with the caller context.
+- Let the runtime agent emitter own stdout writing.
+
+Acceptance:
+
+- calls the agent provider path for `--print`;
+- fails clearly when no provider-backed agent exists.
 
 Tests:
 
 - `TestNUF002DispatchPrintMode`
-- `TestNUF002DispatchRPCMode`
-- `TestNUF002DispatchPackageCommand`
-- `TestNUF002DispatchShareCommand`
+- `TestAppRunPrintModeUsesInjectedRuntime`
+- `TestAppRunPrintModeWithoutHandlerFails`

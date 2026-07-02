@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Text-only prompt and abort path exist; session/tool/retry/queue integration is pending.
+Implementation Comments: Text-only prompt and abort path exist; session/tool/retry/queue integration is deferred until those specs are reopened.
 
 ## TODO
 
@@ -15,8 +15,8 @@ Implementation Comments: Text-only prompt and abort path exist; session/tool/ret
 
 ## Purpose
 
-Public session controller for sending prompts, aborting work, and observing
-events.
+Public controller for sending prompts, aborting work, and observing events in
+the current text-only slice.
 
 ## Code Style
 
@@ -31,12 +31,12 @@ Logic:
 
 - Copy constructor inputs into a concrete value without starting background work.
 - Apply defaults before returning the constructed value.
-- Initialize provider, tools, session store, queues, retry policy, and hooks.
+- Initialize provider settings and event callback.
 - Start no provider call until `Prompt`.
 
 Acceptance:
 
-- initializes provider, tools, session store, queues, retry policy, and hooks;
+- initializes provider settings and event callback;
 - starts no provider call until `Prompt`.
 
 ### `(*Agent) Prompt(ctx context.Context, input Prompt) error`
@@ -45,13 +45,13 @@ Logic:
 
 - Check `ctx` before blocking work and pass it to every blocking dependency.
 - Reject concurrent prompt without queue behavior.
-- Append user message before provider turn.
-- Emits agent/turn/message events.
+- Start one provider turn from the supplied prompt text.
+- Emit agent/turn/message events through the callback.
 
 Acceptance:
 
 - rejects concurrent prompt without queue behavior;
-- appends user message before provider turn;
+- sends one prompt to provider;
 - emits agent/turn/message events.
 
 ### `(*Agent) Abort()`
@@ -59,14 +59,12 @@ Acceptance:
 Logic:
 
 - Atomically mark the active turn as aborting.
-- Cancel the provider stream context and every running tool context owned by the turn.
-- Leave queued steering/follow-up messages according to queue policy instead of dropping them blindly.
-- Emit abort and queue-state events after cancellation has been requested.
+- Cancel the active provider stream context.
+- Leave idle agents unchanged.
 
 Acceptance:
 
-- cancels active provider stream and running tools;
-- preserves queued messages according to mode.
+- cancels active provider stream.
 
 Tests:
 

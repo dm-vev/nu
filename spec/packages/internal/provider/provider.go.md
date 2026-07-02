@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Basic Streamer and immutable registry exist; model/API integration is pending.
+Implementation Comments: Streamer, request validation, normalized events, and stream collection live here while provider has one consumer.
 
 ## TODO
 
@@ -15,12 +15,13 @@ Implementation Comments: Basic Streamer and immutable registry exist; model/API 
 
 ## Purpose
 
-Define the provider adapter contract consumed by `internal/agent`.
+Define the provider adapter contract and current provider-neutral request/event
+types consumed by `internal/agent`.
 
 ## Code Style
 
-Small consumer-owned interface. Provider implementations return concrete
-clients.
+Keep the package flat while the agent is the only consumer. Split files only
+when adapters add enough parsing code to justify it.
 
 ## Types
 
@@ -31,31 +32,66 @@ Logic:
 - Expose only `Stream(ctx, req)` so adapters stay replaceable in tests.
 - Require adapters to honor context cancellation and close their event channel.
 - Return setup errors before starting a stream when request/auth configuration is invalid.
-- Emit provider-neutral events defined in `stream.go` after streaming begins.
+- Emit provider-neutral events after streaming begins.
 
 Acceptance:
 
 - has `Stream(ctx context.Context, req Request) (<-chan Event, error)`;
 - respects context cancellation.
 
-### `type Registry`
+### `type Request`
 
 Logic:
 
-- Index provider streamers by provider id and API kind.
-- Resolve the adapter selected by model metadata without inspecting CLI flags.
-- Return typed unsupported-provider errors for missing adapter/API combinations.
-- Keep registry immutable after construction so concurrent agent turns can share it.
+- Carry provider id, API kind, model id, and ordered prompt messages.
+- Stay provider-neutral; adapters translate this into HTTP/provider payloads.
+- Leave auth and transport settings outside this struct.
 
 Acceptance:
 
-- resolves adapter by model API/provider.
+- includes provider, API, model, and messages.
+
+### `type Event`
+
+Logic:
+
+- Normalize provider stream chunks into start, text delta, done, or error.
+- Carry only fields the agent can consume now.
+- Keep provider-specific payloads inside adapters until a feature needs them.
+
+Acceptance:
+
+- represents start, text delta, done, and error events.
 
 ## Functions
 
-No provider implementation functions belong in this file. It owns only the
-consumer-facing interface and minimal registry type.
+### `ValidateRequest(req Request) error`
+
+Logic:
+
+- Reject missing provider, API, model, or message list before network work.
+- Return `ErrInvalidRequest` wrapped with field context.
+- Do not validate provider-specific auth here.
+
+Acceptance:
+
+- rejects incomplete requests.
+
+### `Collect(ch <-chan Event) ([]Event, error)`
+
+Logic:
+
+- Drain events in order until `EventDone`.
+- Return collected events and nil on done.
+- Return `ErrStream` on provider error or premature channel close.
+
+Acceptance:
+
+- preserves event order;
+- returns `ErrStream` for error and EOF cases.
 
 Tests:
 
-- covered by agent and provider contract tests.
+- `TestProviderCollectStopsAtDone`
+- `TestProviderCollectRejectsErrorEvent`
+- `TestProviderCollectRejectsUnexpectedEOF`

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"nu/internal/message"
 	"nu/internal/provider"
 	"nu/internal/testkit"
 )
@@ -16,10 +15,10 @@ func TestNUF050TextOnlyTurnEnds(t *testing.T) {
 		provider.Event{Type: provider.EventText, Delta: "hello"},
 		provider.Event{Type: provider.EventDone, StopReason: "stop"},
 	)
-	var events []message.Event
+	var events []Event
 	a := New(Options{
 		Provider: fake,
-		Emit: func(ev message.Event) {
+		Emit: func(ev Event) {
 			events = append(events, ev)
 		},
 	})

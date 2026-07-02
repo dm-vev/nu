@@ -11,7 +11,7 @@ import (
 )
 
 func TestNUF080SessionAppendBuildsTree(t *testing.T) {
-	store := OpenStore(t.TempDir(), nil)
+	store := OpenStore(t.TempDir())
 	ref := Ref{ID: "s1"}
 	root := testEntry("e1", "", KindMessage)
 	child := testEntry("e2", "e1", KindMessage)
@@ -61,14 +61,14 @@ func TestNUF080SessionLoadRejectsBrokenParent(t *testing.T) {
 		t.Fatalf("WriteFile error = %v", err)
 	}
 
-	_, err = OpenStore(dir, nil).Load(context.Background(), Ref{ID: "s1"})
+	_, err = OpenStore(dir).Load(context.Background(), Ref{ID: "s1"})
 	if !errors.Is(err, ErrInvalidTree) {
 		t.Fatalf("Load error = %v, want ErrInvalidTree", err)
 	}
 }
 
 func TestNUF080SessionAppendRejectsBrokenParent(t *testing.T) {
-	store := OpenStore(t.TempDir(), nil)
+	store := OpenStore(t.TempDir())
 	err := store.Append(context.Background(), Ref{ID: "s1"}, testEntry("e1", "missing", KindMessage))
 	if !errors.Is(err, ErrInvalidTree) {
 		t.Fatalf("Append error = %v, want ErrInvalidTree", err)

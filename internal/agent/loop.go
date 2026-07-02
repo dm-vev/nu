@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/message"
 	"nu/internal/provider"
 )
 
@@ -15,7 +14,7 @@ type State struct {
 	ProviderID string
 	API        string
 	Model      string
-	Emit       func(message.Event)
+	Emit       func(Event)
 
 	text strings.Builder
 }
@@ -37,7 +36,7 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 	}
 
 	// Event order mirrors the provider stream contract consumed by JSON/RPC.
-	emit(state, message.Event{Type: "turn_start"})
+	emit(state, Event{Type: "turn_start"})
 	ch, err := state.Provider.Stream(ctx, req)
 	if err != nil {
 		return fmt.Errorf("start provider stream: %w", err)
@@ -48,7 +47,7 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 		}
 		if ev.Type == provider.EventDone {
 			// Final text is emitted once at turn end; deltas already went out live.
-			emit(state, message.Event{Type: "turn_end", Data: map[string]string{"text": state.text.String()}})
+			emit(state, Event{Type: "turn_end", Data: map[string]string{"text": state.text.String()}})
 			return nil
 		}
 		if ev.Type == provider.EventError {
@@ -61,12 +60,12 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 func handleProviderEvent(state *State, ev provider.Event) error {
 	switch ev.Type {
 	case provider.EventStart:
-		emit(state, message.Event{Type: "message_start"})
+		emit(state, Event{Type: "message_start"})
 	case provider.EventText:
 		state.text.WriteString(ev.Delta)
-		emit(state, message.Event{Type: "message_update", Data: map[string]string{"delta": ev.Delta}})
+		emit(state, Event{Type: "message_update", Data: map[string]string{"delta": ev.Delta}})
 	case provider.EventDone:
-		emit(state, message.Event{Type: "message_end"})
+		emit(state, Event{Type: "message_end"})
 	case provider.EventError:
 	default:
 		return fmt.Errorf("%w: unknown event %q", provider.ErrStream, ev.Type)
@@ -74,7 +73,7 @@ func handleProviderEvent(state *State, ev provider.Event) error {
 	return nil
 }
 
-func emit(state *State, ev message.Event) {
+func emit(state *State, ev Event) {
 	if state.Emit != nil {
 		state.Emit(ev)
 	}

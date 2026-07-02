@@ -6,7 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/cli"
+	"nu/internal/provider"
+	"nu/internal/testkit"
 )
 
 func TestAppRunHelp(t *testing.T) {
@@ -25,24 +26,25 @@ func TestAppRunHelp(t *testing.T) {
 
 func TestAppRunPrintModeUsesInjectedRuntime(t *testing.T) {
 	var stdout bytes.Buffer
-	called := false
+	fake := testkit.NewScriptedProvider(
+		provider.Event{Type: provider.EventStart},
+		provider.Event{Type: provider.EventText, Delta: "ok"},
+		provider.Event{Type: provider.EventDone},
+	)
 	code := Run(context.Background(), Options{
-		Args:   []string{"--print", "hello"},
-		Stdout: &stdout,
-		Print: func(rt *Runtime, req cli.Request) error {
-			called = true
-			if len(req.Prompt) != 1 || req.Prompt[0] != "hello" {
-				t.Fatalf("Request prompt = %v, want hello", req.Prompt)
-			}
-			_, err := rt.Options.Stdout.Write([]byte("ok\n"))
-			return err
-		},
+		Args:     []string{"--print", "hello"},
+		Stdout:   &stdout,
+		Provider: fake,
 	})
 	if code != exitOK {
 		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
 	}
-	if !called {
-		t.Fatal("Print handler was not called")
+	requests := fake.Requests()
+	if len(requests) != 1 {
+		t.Fatalf("Provider requests = %d, want 1", len(requests))
+	}
+	if requests[0].Messages[0].Content != "hello" {
+		t.Fatalf("Provider prompt = %q, want hello", requests[0].Messages[0].Content)
 	}
 	if stdout.String() != "ok\n" {
 		t.Fatalf("Run stdout = %q, want ok", stdout.String())

@@ -1,7 +1,7 @@
 # Package File Specs
 
-This tree mirrors the future Go source tree. Every planned Go file gets one
-`*.go.md` spec file in the matching package folder.
+This tree tracks active planned or implemented Go files only. Add a file spec
+immediately before starting a file, not months before the package is ready.
 
 Each file spec must include:
 
@@ -18,9 +18,8 @@ Each file spec must include:
 Implementation rule: do not add a Go file or exported function before its spec
 exists here.
 
-Readiness rule: do not start implementing a subpackage from the initial tree
-blindly. Before the first Go code in a subpackage, re-open every file spec in
-that subpackage and confirm:
+Readiness rule: before the first Go code in a subpackage, re-open every file
+spec in that subpackage and confirm:
 
 - file boundaries still match the protocol specs and phase goal;
 - each function has concrete step-by-step logic, not acceptance criteria copied

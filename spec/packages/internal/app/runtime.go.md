@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Phase 0 runtime carries injected process IO; real stores/registries are pending.
+Implementation Comments: Runtime carries process IO and an optional agent built from an injected provider.
 
 ## TODO
 
@@ -19,8 +19,8 @@ Shared runtime object passed to mode handlers.
 
 ## Code Style
 
-Plain struct with concrete dependencies. Do not hide construction behind
-factories unless tests require alternate implementations.
+Plain structs with concrete dependencies. Construct the agent directly when a
+provider is supplied; do not add registries before there are multiple adapters.
 
 ## Types
 
@@ -28,33 +28,43 @@ factories unless tests require alternate implementations.
 
 Logic:
 
-- Store fully constructed settings, auth store, resource set, model registry, session store, tool registry, provider registry, and process IO.
+- Store normalized process IO and the optional agent used by print mode.
 - Keep ownership explicit: runtime closes only components it created.
 - Do not start goroutines, TUI loops, RPC loops, or provider streams during construction.
 
 Acceptance:
 
-- contains settings, auth store, resource set, model registry, session store,
-  tool registry, provider registry, and process IO;
+- contains normalized process IO and optional agent;
 - has no goroutines after construction.
 
 ### `type Options struct`
 
 Logic:
 
-- Carry argv, environment, cwd, home, stdin, stdout, stderr, version, clock, and filesystem handles from `cmd/nu`.
+- Carry argv, environment, cwd, home, stdin, stdout, stderr, version, and optional provider settings from `cmd/nu`.
 - Keep options serializable enough for integration tests to construct without process globals.
 - Do not store parsed CLI state here; parsing output belongs to `cli.Request`.
 
 Acceptance:
 
-- carries argv, env, cwd, home, stdin, stdout, stderr, and version metadata.
+- carries argv, env, cwd, home, stdin, stdout, stderr, version metadata, and optional provider.
 
 ## Functions
 
-No runtime functions belong in this file. Construction logic stays in
-`app.go`; mode dispatch stays in `modes.go`.
+### `newAgent(opts Options) *agent.Agent`
+
+Logic:
+
+- Return nil when no provider is configured.
+- Create `agent.Agent` with provider id, API, model, and provider stream.
+- Convert the agent `turn_end` event into one stdout line for print mode.
+- Ignore non-final events at this layer.
+
+Acceptance:
+
+- no provider means no agent;
+- final turn text is printed once.
 
 Tests:
 
-- `TestRuntimeConstructionHasNoSideEffects`
+- `TestAppRunPrintModeUsesInjectedRuntime`

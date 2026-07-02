@@ -4,7 +4,7 @@
 
 Current: IN_PROGRESS
 Implementation Commit: -
-Implementation Comments: Append/load with in-process locking exists; fs injection, fsync policy, and state entries are pending.
+Implementation Comments: Append/load use direct stdlib filesystem calls with in-process locking.
 
 ## TODO
 
@@ -25,35 +25,33 @@ for concurrent append in the same process.
 
 ## Functions
 
-### `OpenStore(root string, fs FS) *Store`
+### `OpenStore(root string) *Store`
 
 Logic:
 
-- Clean the root path and store the injected filesystem/process options.
+- Clean the root path.
 - Initialize no session files and start no background work.
-- Set default lock, clock, id, and fsync options when not provided.
-- Return a concrete store safe for temp-home tests.
+- Return a concrete store safe for temp-dir tests.
 
 Acceptance:
 
 - stores no global paths;
-- can be backed by temp filesystem in tests.
+- can be rooted in a temp directory in tests.
 
 ### `(*Store) Append(ctx context.Context, ref Ref, entry Entry) error`
 
 Logic:
 
 - Validate session ref, entry id, schema, kind, and parent id shape.
-- Acquire per-file in-process lock and optional advisory file lock.
+- Acquire the in-process lock before parent validation and append.
 - Create parent directories.
 - Open file append-only; create header first when creating a new session.
-- Marshal entry, append LF, optionally fsync.
+- Marshal entry and append LF.
 - Release locks with defer and wrap path-qualified errors.
 
 Acceptance:
 
 - appends one JSONL line;
-- fsync behavior is configurable for tests/release;
 - rejects entry with missing id.
 
 ### `(*Store) Load(ctx context.Context, ref Ref) (*Session, error)`

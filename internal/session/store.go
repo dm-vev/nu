@@ -11,9 +11,6 @@ import (
 	"time"
 )
 
-// FS is reserved for later filesystem injection.
-type FS interface{}
-
 // Ref identifies one session file.
 type Ref struct {
 	ID string
@@ -44,7 +41,7 @@ type Header struct {
 }
 
 // OpenStore creates a session store rooted at root.
-func OpenStore(root string, _ FS) *Store {
+func OpenStore(root string) *Store {
 	return &Store{root: filepath.Clean(root)}
 }
 

@@ -30,7 +30,6 @@ internal/provider/google       Gemini-compatible API
 internal/provider/bedrock      AWS Bedrock
 internal/provider/compat       OpenAI-compatible custom providers
 internal/agent                 turn loop, tool loop, retry, queues
-internal/message               content blocks, usage, events
 internal/session               JSONL tree storage, resume, fork, clone
 internal/compact               compaction and branch summarization
 internal/tool                  tool registry, schemas, execution contracts
