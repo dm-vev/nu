@@ -127,9 +127,13 @@ func runInteractive(ctx context.Context, rt *Runtime, _ cli.Request) error {
 		Stdout:     rt.Options.Stdout,
 		Stderr:     rt.Options.Stderr,
 		CWD:        rt.Options.CWD,
+		Home:       rt.Options.Home,
 		Provider:   rt.Options.ProviderID,
 		Model:      rt.Options.Model,
 		ModelLabel: rt.Options.ModelLabel,
+		Version:    rt.Options.Version.Version,
+		Context:    rt.Options.ModelContext,
+		Repaint:    true,
 	})
 	a := newAgent(rt.Options, ui.Emit)
 	if a == nil {

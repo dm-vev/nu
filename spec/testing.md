@@ -56,6 +56,8 @@ TUI tests use a fake terminal:
 - raw mode lifecycle assertions.
 
 Tests must assert that rendered lines do not exceed terminal width.
+During Pi-compatible TUI implementation, temporary pty byte-for-byte harnesses
+may be kept under `/tmp`; they are review aids and must not be committed.
 
 ### NUT-005 Provider Contract Tests
 

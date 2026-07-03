@@ -1,6 +1,9 @@
 package tui
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestNUF100RendererDoesNotOverflowWidth(t *testing.T) {
 	frame := Render(State{
@@ -39,5 +42,37 @@ func TestNUF100ResizeInvalidatesLayout(t *testing.T) {
 	}
 	if wide.Lines[1] == narrow.Lines[1] {
 		t.Fatalf("wide and narrow message lines are equal, want resized layout")
+	}
+}
+
+func TestNUF100RendererUsesDarkGreenPalette(t *testing.T) {
+	frame := Render(State{
+		Title:    "Nu",
+		Status:   "idle",
+		Messages: []Message{{Role: "assistant", Text: "hello"}},
+	}, 40, 8)
+
+	got := strings.Join(frame.Lines, "\n")
+	if !strings.Contains(got, ansiDarkGreen) {
+		t.Fatalf("frame = %q, want dark green accent", got)
+	}
+	if strings.Contains(got, "\x1b[35m") || strings.Contains(got, "\x1b[36m") {
+		t.Fatalf("frame = %q, should avoid purple/cyan palette", got)
+	}
+}
+
+func TestNUF100RendererTruncatesVisibleTextWithoutBreakingANSI(t *testing.T) {
+	frame := Render(State{
+		Title:    "Nu",
+		Messages: []Message{{Role: "assistant", Text: "abcdef"}},
+	}, 6, 4)
+
+	for _, line := range frame.Lines {
+		if strings.Contains(line, "\x1b…") {
+			t.Fatalf("line = %q, truncated inside ANSI escape", line)
+		}
+		if got := len([]rune(StripANSI(line))); got > 6 {
+			t.Fatalf("visible width = %d, want <= 6: %q", got, line)
+		}
 	}
 }

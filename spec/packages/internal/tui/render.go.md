@@ -2,9 +2,9 @@
 
 ## Status
 
-Current: IMPLEMENTED
-Implementation Commit: 5d9629b
-Implementation Comments: Renderer builds deterministic frames from state, clamps dimensions, truncates visible text, appends SGR/OSC resets per line, and exposes ANSI stripping for width tests.
+Current: IMPLEMENTED_UNCOMMITTED
+Implementation Commit: pending TUI commit; user requested no commits until TUI is complete.
+Implementation Comments: Renderer builds Pi-style deterministic frames: startup header, compact help, context block, chat/status/widgets, bordered editor, cwd footer, context/model footer, dark green/gray/white palette, visible-width truncation, fixed-width padding, SGR/OSC reset suffixes, and cursor metadata.
 
 ## TODO
 
@@ -29,8 +29,9 @@ Comment truncation and resize cache invalidation decisions.
 
 Logic:
 
-- Carry title, cwd, provider, model, status, messages, editor snapshot,
-  extension widget lines, and overlay titles.
+- Carry title, version, cwd, home, git branch, provider, model display label,
+  context window, auto-compaction flag, context file list, status, messages,
+  editor snapshot, extension widget lines, and overlay titles.
 
 Acceptance:
 
@@ -53,16 +54,22 @@ Acceptance:
 Logic:
 
 - Clamp width and height to useful minimums.
-- Render header, message history, status/widgets, editor, footer, and focused
-  overlay title.
+- Render the Pi-compatible startup surface: blank top spacer, `Nu v...` logo,
+  compact keybinding help, startup hint, onboarding line, `[Context]` block,
+  message history, status/widgets, horizontal editor borders, blank/typed editor
+  row, cwd/branch footer, and right-aligned provider/model footer.
+- Apply the built-in dark green, black-terminal, gray, and white/text palette;
+  avoid purple/cyan as primary UI colors.
 - Truncate by visible width after stripping ANSI/OSC sequences.
-- Ensure every rendered line ends with SGR reset and OSC 8 reset.
+- Pad each rendered line to terminal width before the SGR reset and OSC 8 reset
+  so repaint mode clears previous longer content without `CSI 2J`.
 - Keep cursor metadata inside frame bounds.
 
 Acceptance:
 
 - no ANSI-stripped line exceeds terminal width;
 - resize changes frame dimensions deterministically.
+- rendered frames use only the built-in palette colors.
 
 ### `StripANSI(text string) string`
 
@@ -79,3 +86,5 @@ Tests:
 
 - `TestNUF100RendererDoesNotOverflowWidth`
 - `TestNUF100ResizeInvalidatesLayout`
+- `TestNUF100RendererUsesDarkGreenPalette`
+- `TestNUF100RendererTruncatesVisibleTextWithoutBreakingANSI`

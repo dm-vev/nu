@@ -2,16 +2,16 @@
 
 ## Status
 
-Current: IMPLEMENTED
-Implementation Commit: 687e919
-Implementation Comments: Interactive app wires stdin/stdout, renderer, editor, agent event sink, app dispatch, and selected model display labels.
+Current: IMPLEMENTED_UNCOMMITTED
+Implementation Commit: pending TUI commit; user requested no commits until TUI is complete.
+Implementation Comments: Interactive app wires stdin/stdout, raw TTY input fallback, renderer, editor, terminal writer, agent event sink, app dispatch, selected model display labels, version/home/context metadata, and in-place repaint output.
 
 ## TODO
 
 - [x] Add or confirm the failing tests listed in this file.
 - [x] Implement the file according to the function logic below.
 - [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
 ## Purpose
 
@@ -19,9 +19,8 @@ Wire app interactive mode to the renderer, editor, stdin, stdout, and Nu agent.
 
 ## Code Style
 
-Keep this as a small line-oriented loop until raw terminal support is required
-by tests. Mark that simplification with a `ponytail:` comment. Use context-aware
-agent calls and do not write outside the injected stdout/stderr.
+Keep raw terminal support narrow and stdlib-only. Use context-aware agent calls,
+restore terminal state on exit, and do not write outside injected stdout/stderr.
 
 ## Types
 
@@ -29,8 +28,9 @@ agent calls and do not write outside the injected stdout/stderr.
 
 Logic:
 
-- Own interactive state, editor, agent pointer, IO, cwd/provider/model labels,
-  optional display model label, and terminal size.
+- Own interactive state, editor, agent pointer, IO, cwd/home/branch,
+  provider/model labels, optional display model label, version/context metadata,
+  terminal writer, and terminal size.
 - Expose `Emit` for app-created agents.
 - Expose `SetAgent` after construction.
 
@@ -44,8 +44,11 @@ Acceptance:
 
 Logic:
 
-- Normalize IO and terminal dimensions.
+- Normalize IO and terminal dimensions, using `COLUMNS`/`LINES` before fallback
+  defaults.
 - Seed render state from options.
+- Create a repainting terminal writer for interactive mode.
+- Read `.git/HEAD` directly for branch footer when no branch is supplied.
 - Return without starting provider work.
 
 Acceptance:
@@ -78,10 +81,13 @@ Acceptance:
 
 Logic:
 
-- Render the initial frame.
-- Read line-oriented input from stdin.
-- Treat `/quit` and `/exit` as shutdown.
-- Submit non-empty lines to the injected agent.
+- Enable raw input when stdin is a TTY; otherwise use deterministic line mode
+  for tests and pipes.
+- Render the initial frame and close/restore terminal state on return.
+- In raw mode, handle printable runes, backspace, enter submit, Ctrl-D empty
+  exit, and Ctrl-C exit.
+- In line mode, treat `/quit` and `/exit` as shutdown.
+- Submit non-empty input to the injected agent.
 - Re-render after editor changes and agent events.
 - Return context, scanner, prompt, or stored write errors.
 
@@ -89,7 +95,10 @@ Acceptance:
 
 - `--mode interactive` is wired through app dispatch;
 - tests can run the loop with fake stdin/stdout.
+- repeated streaming updates repaint one terminal frame instead of appending
+  duplicate frames.
 
 Tests:
 
 - `TestNUF002DispatchInteractiveMode`
+- `TestTUIAppRenderUsesTerminalRepaint`

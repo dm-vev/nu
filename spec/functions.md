@@ -337,21 +337,25 @@ Tests:
 
 ### NUF-100 Terminal UI
 
-Interactive mode provides message history, editor, footer, startup header,
-status, tool rendering, thinking rendering, images where supported, selectors,
-overlays, and resize handling.
+Interactive mode provides a Pi-like terminal surface: startup header, compact
+keybinding help, context block, message history, bordered editor, cwd/context
+footer, status, tool rendering, thinking rendering, images where supported,
+selectors, overlays, and resize handling.
 
 The first Go UI implementation must expose the same wiring boundaries as Pi:
 terminal input becomes editor/command actions, agent events update a render
 state, and rendering produces deterministic frames that the terminal driver
-writes. Raw terminal integration can stay narrow, but renderer, input decoder,
-editor buffer, overlay focus, and app-mode wiring are required before further
-interactive features build on them.
+writes in place. Raw terminal integration can stay narrow, but renderer, input
+decoder, editor buffer, overlay focus, and app-mode wiring are required before
+further interactive features build on them.
 
 Tests:
 
 - `TestNUF100RendererDoesNotOverflowWidth`
 - `TestNUF100ResizeInvalidatesLayout`
+- `TestTerminalDrawRepaintsWithANSI`
+- temporary `/tmp/nu-tui-bytecheck/check-byte-ui.py` byte harness during TUI
+  implementation only; it must not be committed.
 - `TestNUF002DispatchInteractiveMode`
 
 ### NUF-101 Editor

@@ -28,21 +28,22 @@ var fireworksBaseURL = "https://api.fireworks.ai/inference/v1"
 
 // Options carries process state into one app invocation.
 type Options struct {
-	Args       []string
-	Env        []string
-	CWD        string
-	Home       string
-	Stdin      io.Reader
-	Stdout     io.Writer
-	Stderr     io.Writer
-	Version    cli.VersionInfo
-	Provider   provider.Streamer
-	ProviderID string
-	API        string
-	Model      string
-	ModelLabel string
-	Tools      map[string]agent.ToolFunc
-	SessionID  string
+	Args         []string
+	Env          []string
+	CWD          string
+	Home         string
+	Stdin        io.Reader
+	Stdout       io.Writer
+	Stderr       io.Writer
+	Version      cli.VersionInfo
+	Provider     provider.Streamer
+	ProviderID   string
+	API          string
+	Model        string
+	ModelLabel   string
+	ModelContext int
+	Tools        map[string]agent.ToolFunc
+	SessionID    string
 }
 
 // Runtime holds dependencies shared by mode handlers.
@@ -136,6 +137,7 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 		opts.API = "chat"
 		opts.Model = strings.TrimSpace(req.Model)
 		opts.ModelLabel = opts.Model
+		opts.ModelContext = 0
 		return opts, nil
 	}
 
@@ -170,6 +172,7 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 	opts.API = selected.API
 	opts.Model = selected.ID
 	opts.ModelLabel = firstNonEmpty(selected.DisplayName, selected.ID)
+	opts.ModelContext = selected.ContextWindow
 	return opts, nil
 }
 

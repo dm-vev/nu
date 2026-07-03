@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Keep terminal behavior deterministic and testable before real terminal
-integration.
+Keep terminal behavior deterministic and testable while matching Pi's terminal
+surface closely enough for byte-level startup checks.
 
 ## Frame Rules
 
@@ -11,6 +11,8 @@ integration.
 - Renderer output is a frame: ordered display lines plus cursor metadata.
 - No rendered line may exceed terminal width after ANSI escape stripping.
 - Each rendered line ends with SGR reset and OSC 8 reset.
+- Pi-compatible startup frames render header/help/context/editor/footer in that
+  order and pad visible rows to terminal width.
 - Resize invalidates component caches before next render.
 - Renderer never writes directly to terminal; `terminal.go` owns writes.
 
@@ -18,8 +20,10 @@ integration.
 
 - Diff may repaint more than strictly necessary.
 - Diff must never leave stale characters on screen.
-- Diff must clear rows that disappeared when content shrinks if clear-on-shrink
-  is enabled.
+- Diff must not use append-only frame output for interactive streaming.
+- Diff should prefer synchronized output plus cursor-home repaint over full
+  `CSI 2J` clear-screen repaint.
+- Diff must clear rows that disappeared when content shrinks.
 
 ## Input Rules
 
@@ -47,6 +51,8 @@ integration.
 ## Tests
 
 - ANSI-stripped render width never exceeds terminal width;
+- temporary pty byte harnesses may live outside the repository for Pi/Nu raw
+  startup comparison and must not be committed;
 - chunked escape sequence decodes correctly;
 - bracketed paste stays one event;
 - editor undo restores previous buffer/cursor;

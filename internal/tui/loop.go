@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -20,17 +22,21 @@ type AppOptions struct {
 	Provider   string
 	Model      string
 	ModelLabel string
+	Version    string
+	Home       string
+	Branch     string
+	Context    int
 	Width      int
 	Height     int
+	Repaint    bool
 }
 
 // App wires line input, rendering, and the Nu agent.
 type App struct {
 	stdin  io.Reader
-	stdout io.Writer
-	stderr io.Writer
 	width  int
 	height int
+	term   *Terminal
 
 	mu       sync.Mutex
 	agent    *agent.Agent
@@ -51,24 +57,32 @@ func NewApp(opts AppOptions) *App {
 		opts.Stderr = io.Discard
 	}
 	if opts.Width <= 0 {
-		opts.Width = 80
+		opts.Width = envInt("COLUMNS", 80)
 	}
 	if opts.Height <= 0 {
-		opts.Height = 24
+		opts.Height = envInt("LINES", 24)
+	}
+	if strings.TrimSpace(opts.Branch) == "" {
+		opts.Branch = currentGitBranch(opts.CWD)
 	}
 	return &App{
 		stdin:  opts.Stdin,
-		stdout: opts.Stdout,
-		stderr: opts.Stderr,
 		width:  opts.Width,
 		height: opts.Height,
+		term:   NewTerminal(opts.Stdout, opts.Repaint),
 		editor: NewEditor(),
 		state: State{
-			Title:    "Nu",
-			CWD:      opts.CWD,
-			Provider: opts.Provider,
-			Model:    firstNonEmpty(opts.ModelLabel, opts.Model),
-			Status:   "idle",
+			Title:         "Nu",
+			Version:       opts.Version,
+			CWD:           opts.CWD,
+			Home:          opts.Home,
+			Branch:        opts.Branch,
+			Provider:      opts.Provider,
+			Model:         firstNonEmpty(opts.ModelLabel, opts.Model),
+			ContextWindow: opts.Context,
+			AutoCompact:   true,
+			ContextFiles:  []string{"AGENTS.md"},
+			Status:        "idle",
 		},
 	}
 }
@@ -102,9 +116,38 @@ func (a *App) Emit(ev agent.Event) {
 	a.render()
 }
 
-// Run starts the line-oriented interactive loop.
-func (a *App) Run(ctx context.Context) error {
+// Run starts the interactive loop.
+func (a *App) Run(ctx context.Context) (runErr error) {
+	restore, raw, err := enableRawInput(a.stdin)
+	if err != nil {
+		return err
+	}
+	if restore != nil {
+		defer func() {
+			if err := restore(); err != nil {
+				a.rememberWriteErr(err)
+				if runErr == nil {
+					runErr = err
+				}
+			}
+		}()
+	}
+	defer func() {
+		if err := a.term.Close(); err != nil {
+			a.rememberWriteErr(err)
+			if runErr == nil {
+				runErr = err
+			}
+		}
+	}()
 	a.render()
+	if raw {
+		return a.runRaw(ctx)
+	}
+	return a.runLine(ctx)
+}
+
+func (a *App) runLine(ctx context.Context) error {
 	scanner := bufio.NewScanner(a.stdin)
 	for scanner.Scan() {
 		if err := ctx.Err(); err != nil {
@@ -129,6 +172,53 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("read tui input: %w", err)
 	}
 	return a.writeErr
+}
+
+func (a *App) runRaw(ctx context.Context) error {
+	reader := bufio.NewReader(a.stdin)
+	for {
+		if err := ctx.Err(); err != nil {
+			return fmt.Errorf("run tui: %w", err)
+		}
+		ch, _, err := reader.ReadRune()
+		if err != nil {
+			if err == io.EOF {
+				return a.writeErr
+			}
+			return fmt.Errorf("read tui input: %w", err)
+		}
+		switch ch {
+		case 0x04:
+			if a.editor.Snapshot().Text == "" {
+				return a.writeErr
+			}
+		case '\r', '\n':
+			text := a.editor.Submit()
+			a.syncEditor()
+			if strings.TrimSpace(text) == "" {
+				a.render()
+				continue
+			}
+			a.addUserMessage(text)
+			a.render()
+			if err := a.prompt(ctx, text); err != nil {
+				return err
+			}
+		case 0x7f, 0x08:
+			a.editor.Backspace()
+			a.syncEditor()
+			a.render()
+		case 0x03:
+			return a.writeErr
+		default:
+			if ch < 0x20 {
+				continue
+			}
+			a.editor.Insert(string(ch))
+			a.syncEditor()
+			a.render()
+		}
+	}
 }
 
 func (a *App) prompt(ctx context.Context, text string) error {
@@ -156,15 +246,27 @@ func (a *App) render() {
 	a.mu.Lock()
 	frame := Render(a.state, a.width, a.height)
 	a.mu.Unlock()
-	for _, line := range frame.Lines {
-		if _, err := fmt.Fprintln(a.stdout, line); err != nil {
-			a.mu.Lock()
-			if a.writeErr == nil {
-				a.writeErr = fmt.Errorf("write tui frame: %w", err)
-			}
-			a.mu.Unlock()
-			return
+	if err := a.term.Draw(frame); err != nil {
+		a.mu.Lock()
+		if a.writeErr == nil {
+			a.writeErr = err
 		}
+		a.mu.Unlock()
+		return
+	}
+}
+
+func (a *App) syncEditor() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.state.Editor = a.editor.Snapshot()
+}
+
+func (a *App) rememberWriteErr(err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.writeErr == nil {
+		a.writeErr = err
 	}
 }
 
@@ -178,6 +280,36 @@ func (a *App) appendAssistantDeltaLocked(delta string) {
 		return
 	}
 	a.state.Messages = append(a.state.Messages, Message{Role: "assistant", Text: delta})
+}
+
+func envInt(name string, fallback int) int {
+	value := strings.TrimSpace(os.Getenv(name))
+	if value == "" {
+		return fallback
+	}
+	var parsed int
+	if _, err := fmt.Sscanf(value, "%d", &parsed); err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func currentGitBranch(cwd string) string {
+	dir := firstNonEmpty(cwd, ".")
+	for {
+		headPath := filepath.Join(dir, ".git", "HEAD")
+		data, err := os.ReadFile(headPath)
+		if err == nil {
+			// Reading .git/HEAD is enough for the footer; shelling out to git would be slower and noisier.
+			head := strings.TrimSpace(string(data))
+			return strings.TrimPrefix(head, "ref: refs/heads/")
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return ""
+		}
+		dir = parent
+	}
 }
 
 func (a *App) replaceLastAssistantLocked(text string) {
