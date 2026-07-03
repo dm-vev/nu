@@ -142,6 +142,8 @@ func (a *App) Run(ctx context.Context) (runErr error) {
 	}()
 	a.render()
 	if raw {
+		stopResize := watchResize(a.render)
+		defer stopResize()
 		return a.runRaw(ctx)
 	}
 	return a.runLine(ctx)
@@ -244,6 +246,7 @@ func (a *App) addUserMessage(text string) {
 
 func (a *App) render() {
 	a.mu.Lock()
+	a.width, a.height = a.term.Size(a.width, a.height)
 	frame := Render(a.state, a.width, a.height)
 	a.mu.Unlock()
 	if err := a.term.Draw(frame); err != nil {

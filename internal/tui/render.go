@@ -71,13 +71,13 @@ func Render(state State, width int, height int) Frame {
 
 	lines := startupLines(state)
 	for _, message := range state.Messages {
-		lines = append(lines, renderMessage(message)...)
+		lines = append(lines, renderMessage(message, width)...)
 	}
 	if state.Status != "" && state.Status != "idle" {
-		lines = append(lines, ansiDim+"status: "+ansiText+singleLine(state.Status))
+		lines = append(lines, wrapStyled(ansiDim+"status: "+ansiText, state.Status, width)...)
 	}
 	for _, widget := range state.Widgets {
-		lines = append(lines, ansiDim+singleLine(widget))
+		lines = append(lines, wrapStyled(ansiDim, widget, width)...)
 	}
 	if len(state.Overlays) > 0 {
 		lines = append(lines, ansiDarkGreen+"overlay: "+ansiText+state.Overlays[len(state.Overlays)-1])
@@ -85,7 +85,8 @@ func Render(state State, width int, height int) Frame {
 
 	editorRow := len(lines) + 1
 	lines = append(lines, ansiBorder+strings.Repeat("─", width))
-	lines = append(lines, ansiText+singleLine(state.Editor.Text))
+	editorLines := wrapStyled(ansiText, state.Editor.Text, width)
+	lines = append(lines, editorLines...)
 	lines = append(lines, ansiBorder+strings.Repeat("─", width))
 	lines = append(lines, footerPathLine(state))
 	lines = append(lines, footerStatsLine(state, width))
@@ -148,15 +149,15 @@ func StripANSI(text string) string {
 	return out.String()
 }
 
-func renderMessage(message Message) []string {
+func renderMessage(message Message, width int) []string {
 	role := strings.ToLower(strings.TrimSpace(message.Role))
 	switch role {
 	case "user":
-		return []string{"", " " + ansiDarkGreen + singleLine(message.Text)}
+		return append([]string{""}, wrapStyled(" "+ansiDarkGreen, message.Text, width)...)
 	case "assistant":
-		return []string{"", " " + ansiText + singleLine(message.Text)}
+		return append([]string{""}, wrapStyled(" "+ansiText, message.Text, width)...)
 	default:
-		return []string{"", ansiDim + role + ": " + ansiText + singleLine(message.Text)}
+		return append([]string{""}, wrapStyled(ansiDim+role+": "+ansiText, message.Text, width)...)
 	}
 }
 
@@ -330,6 +331,85 @@ func ansiEnd(text string, start int) int {
 
 func singleLine(text string) string {
 	return strings.Join(strings.Fields(strings.ReplaceAll(text, "\n", " ")), " ")
+}
+
+func wrapStyled(prefix string, text string, width int) []string {
+	available := width - visibleLen(prefix)
+	if available < 1 {
+		available = 1
+	}
+	wrapped := wrapPlain(text, available)
+	lines := make([]string, 0, len(wrapped))
+	for i, line := range wrapped {
+		if i == 0 {
+			lines = append(lines, prefix+line)
+			continue
+		}
+		lines = append(lines, strings.Repeat(" ", visibleLen(prefix))+line)
+	}
+	return lines
+}
+
+func wrapPlain(text string, width int) []string {
+	if width <= 0 {
+		width = 1
+	}
+	normalized := strings.ReplaceAll(text, "\r\n", "\n")
+	paragraphs := strings.Split(normalized, "\n")
+	lines := []string{}
+	for _, paragraph := range paragraphs {
+		words := strings.Fields(paragraph)
+		if len(words) == 0 {
+			lines = append(lines, "")
+			continue
+		}
+		current := ""
+		for _, word := range words {
+			if current == "" {
+				lines = append(lines, splitLongWord(word, width)...)
+				current = lines[len(lines)-1]
+				lines = lines[:len(lines)-1]
+				continue
+			}
+			if visibleLen(current)+1+visibleLen(word) <= width {
+				current += " " + word
+				continue
+			}
+			lines = append(lines, current)
+			chunks := splitLongWord(word, width)
+			lines = append(lines, chunks[:len(chunks)-1]...)
+			current = chunks[len(chunks)-1]
+		}
+		if current != "" {
+			lines = append(lines, current)
+		}
+	}
+	if len(lines) == 0 {
+		return []string{""}
+	}
+	return lines
+}
+
+func splitLongWord(word string, width int) []string {
+	if visibleLen(word) <= width {
+		return []string{word}
+	}
+	lines := []string{}
+	var current strings.Builder
+	currentWidth := 0
+	for _, r := range word {
+		if currentWidth >= width {
+			lines = append(lines, current.String())
+			current.Reset()
+			currentWidth = 0
+		}
+		current.WriteRune(r)
+		currentWidth++
+	}
+	if current.Len() > 0 {
+		lines = append(lines, current.String())
+	}
+	return lines
 }
 
 func firstNonEmpty(values ...string) string {

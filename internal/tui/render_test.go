@@ -76,3 +76,38 @@ func TestNUF100RendererTruncatesVisibleTextWithoutBreakingANSI(t *testing.T) {
 		}
 	}
 }
+
+func TestNUF100RendererWrapsLongMessages(t *testing.T) {
+	frame := Render(State{
+		Title: "Nu",
+		Messages: []Message{{
+			Role: "assistant",
+			Text: "alpha beta gamma delta epsilon zeta eta theta",
+		}},
+	}, 20, 20)
+
+	plain := strings.Join(stripLines(frame.Lines), "\n")
+	if !strings.Contains(plain, "alpha beta gamma") || !strings.Contains(plain, "delta epsilon zeta") {
+		t.Fatalf("plain frame = %q, want wrapped assistant message", plain)
+	}
+}
+
+func TestNUF100RendererWrapsEditorText(t *testing.T) {
+	frame := Render(State{
+		Title:  "Nu",
+		Editor: EditorSnapshot{Text: "one two three four five six"},
+	}, 16, 20)
+
+	plain := strings.Join(stripLines(frame.Lines), "\n")
+	if !strings.Contains(plain, "one two three") || !strings.Contains(plain, "four five six") {
+		t.Fatalf("plain frame = %q, want wrapped editor text", plain)
+	}
+}
+
+func stripLines(lines []string) []string {
+	out := make([]string, len(lines))
+	for i, line := range lines {
+		out[i] = strings.TrimSpace(StripANSI(line))
+	}
+	return out
+}
