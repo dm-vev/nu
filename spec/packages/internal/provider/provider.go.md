@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: a94e00c
-Implementation Comments: Streamer, request validation, normalized text/tool events, and stream collection live here while provider has one consumer.
+Implementation Comments: Streamer, request validation, normalized text/thinking/tool events, and stream collection live here while provider has one consumer.
 
 ## TODO
 
@@ -33,6 +33,7 @@ Logic:
 - Require adapters to honor context cancellation and close their event channel.
 - Return setup errors before starting a stream when request/auth configuration is invalid.
 - Emit provider-neutral events after streaming begins.
+- Return `ErrRateLimit` or emit `EventError` with `ErrorClass=rate_limit` for retryable rate-limit failures.
 
 Acceptance:
 
@@ -44,25 +45,40 @@ Acceptance:
 Logic:
 
 - Carry provider id, API kind, model id, and ordered prompt messages.
+- Carry optional provider-neutral tool definitions for providers that support
+  function/tool calling.
 - Stay provider-neutral; adapters translate this into HTTP/provider payloads.
 - Leave auth and transport settings outside this struct.
 
 Acceptance:
 
-- includes provider, API, model, and messages.
+- includes provider, API, model, messages, and optional tools.
+
+### `type ToolDefinition`
+
+Logic:
+
+- Describe one callable tool with name, description, and JSON schema parameters.
+- Stay provider-neutral so adapters can translate it into their native tool format.
+
+Acceptance:
+
+- OpenAI-compatible adapters can advertise built-in tools to models.
 
 ### `type Event`
 
 Logic:
 
-- Normalize provider stream chunks into start, text delta, tool call start,
-  tool call delta, tool call end, done, or error.
+- Normalize provider stream chunks into start, text delta, thinking delta, tool
+  call start, tool call delta, tool call end, done, or error.
 - Carry only fields the agent can consume now.
 - Keep provider-specific payloads inside adapters until a feature needs them.
+- Carry `ErrorClass` and optional retry delay metadata for retryable provider errors.
 
 Acceptance:
 
-- represents start, text delta, tool call, done, and error events.
+- represents start, text delta, thinking delta, tool call, done, and error events.
+- represents rate-limit errors without provider-specific branching in the TUI.
 
 ## Functions
 

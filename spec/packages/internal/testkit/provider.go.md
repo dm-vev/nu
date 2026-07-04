@@ -53,6 +53,27 @@ Acceptance:
 - supports multi-request agent loops;
 - keeps each recorded request inspectable.
 
+### `NewScriptedProviderErrors(errors []error, scripts ...[]provider.Event) *ScriptedProvider`
+
+Logic:
+
+- Return configured setup errors for matching request indexes before serving scripts.
+- Serve scripts only for request indexes that did not return setup errors.
+
+Acceptance:
+
+- Agent retry tests can simulate provider setup errors without network.
+
+### `(*ScriptedProvider) errorCountBefore(index int) int`
+
+Logic:
+
+- Count setup-error slots before a request index so successful requests map to the correct script.
+
+Acceptance:
+
+- Scripts remain ordered even when earlier attempts fail before streaming.
+
 Tests:
 
 - used by `internal/agent` and `internal/app` tests.

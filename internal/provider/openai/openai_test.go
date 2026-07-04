@@ -133,6 +133,52 @@ func TestOpenAIChatPayloadIncludesAssistantToolCalls(t *testing.T) {
 	}
 }
 
+func TestOpenAIChatPayloadIncludesToolDefinitions(t *testing.T) {
+	payload, err := BuildChatPayload(provider.Request{
+		Provider: "openai",
+		API:      "chat",
+		Model:    "gpt-4.1",
+		Messages: []provider.Message{{Role: "user", Content: "inspect"}},
+		Tools: []provider.ToolDefinition{{
+			Name:        "bash",
+			Description: "run shell",
+			Parameters:  map[string]any{"type": "object"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("BuildChatPayload error = %v", err)
+	}
+	if payload["tool_choice"] != "auto" {
+		t.Fatalf("payload = %#v, want tool_choice auto", payload)
+	}
+	tools := payload["tools"].([]map[string]any)
+	function := tools[0]["function"].(map[string]any)
+	if tools[0]["type"] != "function" || function["name"] != "bash" {
+		t.Fatalf("tools = %#v, want bash function tool", tools)
+	}
+}
+
+func TestOpenAIResponsesPayloadIncludesToolDefinitions(t *testing.T) {
+	payload, err := BuildResponsesPayload(provider.Request{
+		Provider: "openai",
+		API:      "responses",
+		Model:    "gpt-5.5",
+		Messages: []provider.Message{{Role: "user", Content: "inspect"}},
+		Tools: []provider.ToolDefinition{{
+			Name:        "bash",
+			Description: "run shell",
+			Parameters:  map[string]any{"type": "object"},
+		}},
+	})
+	if err != nil {
+		t.Fatalf("BuildResponsesPayload error = %v", err)
+	}
+	tools := payload["tools"].([]map[string]any)
+	if tools[0]["type"] != "function" || tools[0]["name"] != "bash" {
+		t.Fatalf("tools = %#v, want bash function tool", tools)
+	}
+}
+
 func TestOpenAIResponsesPayloadIncludesFunctionCallHistory(t *testing.T) {
 	payload, err := BuildResponsesPayload(provider.Request{
 		Provider: "openai",

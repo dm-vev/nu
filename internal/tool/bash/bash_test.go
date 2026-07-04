@@ -57,6 +57,31 @@ func TestBashRejectsEmptyCommand(t *testing.T) {
 	}
 }
 
+func TestBashRejectsInteractiveSudo(t *testing.T) {
+	result, err := Run(context.Background(), t.TempDir(), `{"command":"sudo true"}`, 1000)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	got := decodeResult(t, result.Content)
+	if got["exit_code"] != float64(1) || !strings.Contains(got["stderr"].(string), "sudo is disabled") {
+		t.Fatalf("bash result = %#v, want non-interactive sudo failure", got)
+	}
+}
+
+func TestBashAllowsNonInteractiveSudoForms(t *testing.T) {
+	for _, command := range []string{"sudo -n true", "sudo -S true", "sudo --non-interactive true"} {
+		if usesInteractiveSudo(command) {
+			t.Fatalf("usesInteractiveSudo(%q) = true, want false", command)
+		}
+	}
+}
+
+func TestBashKeepsUnrelatedSudoFlagsInteractive(t *testing.T) {
+	if !usesInteractiveSudo("sudo --preserve-env true") {
+		t.Fatalf("usesInteractiveSudo(--preserve-env) = false, want true")
+	}
+}
+
 func decodeResult(t *testing.T, raw string) map[string]any {
 	t.Helper()
 	var got map[string]any

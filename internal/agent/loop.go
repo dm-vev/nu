@@ -2,12 +2,16 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"nu/internal/provider"
 )
+
+const maxRateLimitRetries = 5
 
 // State is the mutable state for one provider turn.
 type State struct {
@@ -16,6 +20,7 @@ type State struct {
 	API        string
 	Model      string
 	Tools      map[string]ToolFunc
+	ToolDefs   []provider.ToolDefinition
 	Emit       func(Event)
 
 	messages  []provider.Message
@@ -25,7 +30,8 @@ type State struct {
 
 // TurnInput is one provider turn input.
 type TurnInput struct {
-	Prompt string
+	Prompt  string
+	History []provider.Message
 }
 
 type pendingToolCall struct {
@@ -35,7 +41,8 @@ type pendingToolCall struct {
 }
 
 func runTurn(ctx context.Context, state *State, input TurnInput) error {
-	state.messages = []provider.Message{{Role: "user", Content: input.Prompt}}
+	state.messages = append([]provider.Message(nil), input.History...)
+	state.messages = append(state.messages, provider.Message{Role: "user", Content: input.Prompt})
 
 	// Event order mirrors the provider stream contract consumed by JSON/RPC.
 	emit(state, Event{Type: "turn_start"})
@@ -46,6 +53,9 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 		}
 		if stopReason != "tool_use" {
 			// Final text is emitted once at turn end; deltas already went out live.
+			if text := state.text.String(); text != "" {
+				state.messages = append(state.messages, provider.Message{Role: "assistant", Content: text})
+			}
 			emit(state, Event{Type: "turn_end", Data: map[string]string{"text": state.text.String()}})
 			return nil
 		}
@@ -60,11 +70,32 @@ func runTurn(ctx context.Context, state *State, input TurnInput) error {
 }
 
 func runProviderStream(ctx context.Context, state *State) (string, error) {
+	for attempt := 0; ; attempt++ {
+		stopReason, err := runProviderStreamOnce(ctx, state)
+		if err == nil {
+			return stopReason, nil
+		}
+		if !errors.Is(err, provider.ErrRateLimit) || attempt >= maxRateLimitRetries {
+			return "", err
+		}
+		emit(state, Event{Type: "rate_limit", Data: map[string]string{
+			"attempt": fmt.Sprintf("%d", attempt+1),
+			"max":     fmt.Sprintf("%d", maxRateLimitRetries),
+		}})
+		// ponytail: fixed short backoff; replace with Retry-After parsing when adapters expose it.
+		if err := sleepContext(ctx, time.Duration(attempt+1)*250*time.Millisecond); err != nil {
+			return "", err
+		}
+	}
+}
+
+func runProviderStreamOnce(ctx context.Context, state *State) (string, error) {
 	req := provider.Request{
 		Provider: state.ProviderID,
 		API:      state.API,
 		Model:    state.Model,
 		Messages: append([]provider.Message(nil), state.messages...),
+		Tools:    append([]provider.ToolDefinition(nil), state.ToolDefs...),
 	}
 	if err := provider.ValidateRequest(req); err != nil {
 		return "", err
@@ -84,10 +115,24 @@ func runProviderStream(ctx context.Context, state *State) (string, error) {
 			return ev.StopReason, nil
 		}
 		if ev.Type == provider.EventError {
+			if ev.ErrorClass == "rate_limit" {
+				return "", fmt.Errorf("%w: %s", provider.ErrRateLimit, ev.Message)
+			}
 			return "", fmt.Errorf("%w: %s", provider.ErrStream, ev.Message)
 		}
 	}
 	return "", fmt.Errorf("%w: provider stream closed before done", provider.ErrStream)
+}
+
+func sleepContext(ctx context.Context, delay time.Duration) error {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("rate limit retry: %w", ctx.Err())
+	case <-timer.C:
+		return nil
+	}
 }
 
 func handleProviderEvent(state *State, ev provider.Event) error {
@@ -97,6 +142,11 @@ func handleProviderEvent(state *State, ev provider.Event) error {
 	case provider.EventText:
 		state.text.WriteString(ev.Delta)
 		emit(state, Event{Type: "message_update", Data: map[string]string{"delta": ev.Delta}})
+	case provider.EventThinking:
+		emit(state, Event{
+			Type: "message_update",
+			Data: map[string]string{"kind": "thinking", "delta": ev.Delta, "thinking_delta": ev.Delta},
+		})
 	case provider.EventToolCallStart:
 		if ev.ToolCallID == "" {
 			return fmt.Errorf("%w: missing tool call id at index %d", provider.ErrStream, ev.Index)
@@ -173,12 +223,27 @@ func executeToolCalls(ctx context.Context, state *State) ([]provider.Message, er
 			ToolCallID: pending.call.ID,
 			Name:       pending.call.Name,
 		})
-		emit(state, Event{Type: "tool_start", Data: map[string]string{"id": pending.call.ID, "name": pending.call.Name}})
+		emit(state, Event{Type: "tool_start", Data: map[string]string{
+			"id":        pending.call.ID,
+			"name":      pending.call.Name,
+			"arguments": pending.call.Arguments,
+		}})
 		result, err := tool(ctx, pending.call)
 		if err != nil {
+			emit(state, Event{Type: "tool_end", Data: map[string]string{
+				"id":     pending.call.ID,
+				"name":   pending.call.Name,
+				"result": err.Error(),
+				"error":  "true",
+			}})
 			return nil, fmt.Errorf("execute tool %s: %w", pending.call.Name, err)
 		}
-		emit(state, Event{Type: "tool_end", Data: map[string]string{"id": pending.call.ID, "name": pending.call.Name}})
+		emit(state, Event{Type: "tool_end", Data: map[string]string{
+			"id":     pending.call.ID,
+			"name":   pending.call.Name,
+			"result": result.Content,
+			"error":  "false",
+		}})
 		results = append(results, provider.Message{
 			Role:       "tool",
 			Content:    result.Content,

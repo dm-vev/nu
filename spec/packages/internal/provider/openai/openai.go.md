@@ -65,13 +65,25 @@ Logic:
 
 - Convert provider messages into Chat Completions messages.
 - Include `model`, `stream: true`, and stream usage options.
+- Include `tools` and `tool_choice: auto` when tool definitions are present.
 - Represent assistant tool-call history as Chat Completions `tool_calls`.
 - Represent tool results as `role: tool` with `tool_call_id`.
 
 Acceptance:
 
 - matches Chat Completions request shape used by tests;
+- advertises function tools for OpenAI-compatible providers such as Fireworks;
 - preserves assistant tool-call history before tool results.
+
+### `chatTools(tools []provider.ToolDefinition) []map[string]any`
+
+Logic:
+
+- Convert provider-neutral tool definitions into Chat Completions function tools.
+
+Acceptance:
+
+- Each tool has `type: function`, name, description, and parameters.
 
 ### `chatMessage(message provider.Message) map[string]any`
 
@@ -92,6 +104,7 @@ Acceptance:
 Logic:
 
 - Convert provider messages into Responses `input` items.
+- Include `tools` when tool definitions are present.
 - Represent assistant tool-call history as `function_call` input items.
 - Represent tool results as `function_call_output` input items.
 - Include `model` and `stream: true`.
@@ -100,6 +113,16 @@ Acceptance:
 
 - matches Responses request shape used by tests;
 - preserves function-call history before function-call output.
+
+### `responsesTools(tools []provider.ToolDefinition) []map[string]any`
+
+Logic:
+
+- Convert provider-neutral tool definitions into Responses function tools.
+
+Acceptance:
+
+- Each tool has `type: function`, name, description, and parameters.
 
 ### `responsesInput(message provider.Message) map[string]any`
 
@@ -122,16 +145,22 @@ Logic:
 - Emit provider `start`.
 - Parse Chat or Responses SSE events into provider-neutral text/tool/done/error
   events.
+- Return `provider.ErrRateLimit` for HTTP 429 before stream setup.
+- Normalize streamed Responses errors containing rate-limit data to
+  `ErrorClass=rate_limit`.
 
 Acceptance:
 
 - Chat request shape is test-covered;
 - Responses function-call streaming becomes tool call start/delta/end and
   terminal `tool_use`.
+- rate-limit failures can be retried by `internal/agent`.
 
 Tests:
 
 - `TestNUF030OpenAIChatRequestShape`
 - `TestNUF030OpenAIResponsesToolCallStream`
 - `TestOpenAIChatPayloadIncludesAssistantToolCalls`
+- `TestOpenAIChatPayloadIncludesToolDefinitions`
 - `TestOpenAIResponsesPayloadIncludesFunctionCallHistory`
+- `TestOpenAIResponsesPayloadIncludesToolDefinitions`

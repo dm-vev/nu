@@ -4,9 +4,11 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -42,7 +44,9 @@ type Options struct {
 	Model        string
 	ModelLabel   string
 	ModelContext int
+	Models       []model.Model
 	Tools        map[string]agent.ToolFunc
+	ToolDefs     []provider.ToolDefinition
 	SessionID    string
 }
 
@@ -72,6 +76,21 @@ type jsonSessionHeader struct {
 	CWD        string    `json:"cwd"`
 	App        string    `json:"app"`
 	AppVersion string    `json:"app_version"`
+}
+
+type providerSetting struct {
+	BaseURL      string `json:"base_url,omitempty"`
+	API          string `json:"api,omitempty"`
+	AuthProvider string `json:"auth_provider,omitempty"`
+	ModelsFile   string `json:"models_file,omitempty"`
+	DefaultModel string `json:"default_model,omitempty"`
+	DisplayName  string `json:"display_name,omitempty"`
+}
+
+type providerSettingsFile struct {
+	DefaultProvider string                     `json:"default_provider,omitempty"`
+	DefaultModel    string                     `json:"default_model,omitempty"`
+	Providers       map[string]providerSetting `json:"providers"`
 }
 
 type printEventWriter struct {
@@ -110,8 +129,12 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 		return nil
 	}
 	tools := opts.Tools
+	toolDefs := opts.ToolDefs
 	if tools == nil {
 		tools = tool.Builtins(opts.CWD)
+	}
+	if toolDefs == nil {
+		toolDefs = tool.Definitions()
 	}
 	return agent.New(agent.Options{
 		Provider:   opts.Provider,
@@ -119,6 +142,7 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 		API:        opts.API,
 		Model:      opts.Model,
 		Tools:      tools,
+		ToolDefs:   toolDefs,
 		Emit:       emit,
 	})
 }
@@ -138,6 +162,13 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 		opts.Model = strings.TrimSpace(req.Model)
 		opts.ModelLabel = opts.Model
 		opts.ModelContext = 0
+		opts.Models = []model.Model{{
+			ID:          opts.Model,
+			Provider:    opts.ProviderID,
+			API:         opts.API,
+			DisplayName: opts.ModelLabel,
+			Enabled:     true,
+		}}
 		return opts, nil
 	}
 
@@ -150,6 +181,10 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 	if err != nil {
 		return Options{}, err
 	}
+	settings, err := loadProviderSettings(opts.Home)
+	if err != nil {
+		return Options{}, err
+	}
 	authState, err := providerAuthState(ctx, store, entries)
 	if err != nil {
 		return Options{}, err
@@ -158,12 +193,13 @@ func configureProvider(ctx context.Context, opts Options, req cli.Request) (Opti
 		// A CLI key proves auth for selection, then the selected provider consumes it.
 		markConfiguredProviders(authState, entries)
 	}
+	opts.Models = registry.Available(authState)
 
-	selected, err := selectModel(registry, authState, req)
+	selected, err := selectModel(registry, authState, req, settings)
 	if err != nil {
 		return Options{}, err
 	}
-	streamer, err := newProviderClient(ctx, opts, store, req, selected)
+	streamer, err := newProviderClient(ctx, opts, store, req, settings, selected)
 	if err != nil {
 		return Options{}, err
 	}
@@ -198,6 +234,87 @@ func modelsPath(home string, explicit string) string {
 	return filepath.Join(home, ".nu", "agent", "models.json")
 }
 
+func loadProviderSettings(home string) (providerSettingsFile, error) {
+	settings := providerSettingsFile{Providers: map[string]providerSetting{}}
+	if strings.TrimSpace(home) == "" {
+		return settings, nil
+	}
+	path := filepath.Join(home, ".nu", "agent", "settings.json")
+	data, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return settings, nil
+	}
+	if err != nil {
+		return providerSettingsFile{}, fmt.Errorf("read provider settings: %w", err)
+	}
+	var file providerSettingsFile
+	if err := json.Unmarshal(data, &file); err != nil {
+		return providerSettingsFile{}, fmt.Errorf("decode provider settings: %w", err)
+	}
+	if file.Providers == nil {
+		file.Providers = map[string]providerSetting{}
+	}
+	return file, nil
+}
+
+func saveSelectedModel(home string, selected model.Model) error {
+	if strings.TrimSpace(home) == "" {
+		return nil
+	}
+	settings, err := loadProviderSettings(home)
+	if err != nil {
+		return err
+	}
+	settings.DefaultProvider = selected.Provider
+	settings.DefaultModel = selected.ID
+	if settings.Providers == nil {
+		settings.Providers = map[string]providerSetting{}
+	}
+	providerSettings := settings.Providers[selected.Provider]
+	providerSettings.DefaultModel = selected.ID
+	if providerSettings.API == "" {
+		providerSettings.API = selected.API
+	}
+	settings.Providers[selected.Provider] = providerSettings
+	return writeProviderSettings(home, settings)
+}
+
+func writeProviderSettings(home string, settings providerSettingsFile) error {
+	dir := filepath.Join(home, ".nu", "agent")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create provider settings dir: %w", err)
+	}
+	data, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode provider settings: %w", err)
+	}
+	data = append(data, '\n')
+	path := filepath.Join(dir, "settings.json")
+	tmp, err := os.CreateTemp(dir, "settings.json.*")
+	if err != nil {
+		return fmt.Errorf("create provider settings temp: %w", err)
+	}
+	tmpName := tmp.Name()
+	if _, err := tmp.Write(data); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("write provider settings temp: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("close provider settings temp: %w", err)
+	}
+	if err := os.Chmod(tmpName, 0o644); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("chmod provider settings temp: %w", err)
+	}
+	if err := os.Rename(tmpName, path); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("replace provider settings: %w", err)
+	}
+	return nil
+}
+
 func providerAuthState(ctx context.Context, store auth.Store, entries []model.Model) (map[string]bool, error) {
 	state := map[string]bool{}
 	seen := map[string]bool{}
@@ -224,7 +341,12 @@ func markConfiguredProviders(state map[string]bool, entries []model.Model) {
 	}
 }
 
-func selectModel(registry model.Registry, authState map[string]bool, req cli.Request) (model.Model, error) {
+func selectModel(
+	registry model.Registry,
+	authState map[string]bool,
+	req cli.Request,
+	settings providerSettingsFile,
+) (model.Model, error) {
 	providerID := strings.TrimSpace(req.Provider)
 	modelID := strings.TrimSpace(req.Model)
 	if modelID != "" {
@@ -236,6 +358,9 @@ func selectModel(registry model.Registry, authState map[string]bool, req cli.Req
 
 	available := registry.Available(authState)
 	if providerID != "" {
+		if selected, ok := configuredDefaultForProvider(registry, authState, providerID, settings); ok {
+			return selected, nil
+		}
 		if selected, ok := defaultModelForProvider(registry, authState, providerID); ok {
 			return selected, nil
 		}
@@ -249,11 +374,47 @@ func selectModel(registry model.Registry, authState map[string]bool, req cli.Req
 	if len(available) == 0 {
 		return model.Model{}, fmt.Errorf("resolve model: no available models")
 	}
+	if selected, ok := configuredDefault(registry, authState, settings); ok {
+		return selected, nil
+	}
 	// The global default should be stable instead of depending on registry sort order.
 	if selected, err := registry.Resolve("openai-default", authState); err == nil {
 		return selected, nil
 	}
 	return available[0], nil
+}
+
+func configuredDefault(registry model.Registry, authState map[string]bool, settings providerSettingsFile) (model.Model, bool) {
+	providerID := strings.TrimSpace(settings.DefaultProvider)
+	modelID := strings.TrimSpace(settings.DefaultModel)
+	if providerID != "" && modelID != "" {
+		if selected, err := selectProviderModel(registry, authState, providerID, modelID); err == nil {
+			return selected, true
+		}
+	}
+	if providerID != "" {
+		return configuredDefaultForProvider(registry, authState, providerID, settings)
+	}
+	if modelID != "" {
+		if selected, err := registry.Resolve(modelID, authState); err == nil {
+			return selected, true
+		}
+	}
+	return model.Model{}, false
+}
+
+func configuredDefaultForProvider(
+	registry model.Registry,
+	authState map[string]bool,
+	providerID string,
+	settings providerSettingsFile,
+) (model.Model, bool) {
+	setting, ok := settings.Providers[providerID]
+	if !ok || strings.TrimSpace(setting.DefaultModel) == "" {
+		return model.Model{}, false
+	}
+	selected, err := selectProviderModel(registry, authState, providerID, setting.DefaultModel)
+	return selected, err == nil
 }
 
 func defaultModelForProvider(registry model.Registry, authState map[string]bool, providerID string) (model.Model, bool) {
@@ -290,8 +451,18 @@ func newProviderClient(
 	opts Options,
 	store auth.Store,
 	req cli.Request,
+	settings providerSettingsFile,
 	selected model.Model,
 ) (provider.Streamer, error) {
+	if setting, ok := settings.Providers[selected.Provider]; ok && strings.TrimSpace(setting.BaseURL) != "" {
+		authProvider := firstNonEmpty(setting.AuthProvider, selected.Provider)
+		key, err := providerAPIKey(ctx, store, req, authProvider)
+		if err != nil {
+			return nil, err
+		}
+		return compat.New(setting.BaseURL, key), nil
+	}
+
 	switch selected.Provider {
 	case "openai":
 		key, err := providerAPIKey(ctx, store, req, selected.Provider)
@@ -323,6 +494,11 @@ func newProviderClient(
 			return nil, err
 		}
 		return compat.New(fireworksBaseURL, key), nil
+	case "compat":
+		if !isProviderURL(req.Provider) {
+			return nil, fmt.Errorf("provider %q requires a provider URL", selected.Provider)
+		}
+		return compat.New(req.Provider, req.APIKey), nil
 	default:
 		return nil, fmt.Errorf("provider %q is not implemented", selected.Provider)
 	}

@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: 687e919
-Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode creates an RPC server first and injects an agent emitter. Interactive mode creates a TUI app first and injects an agent emitter. List-models includes optional display names.
+Implementation Comments: Help/version/print/list-models/JSON dispatch remains intact. RPC mode creates an RPC server first and injects an agent emitter. Interactive mode creates a TUI app first, injects an agent emitter, and wires `/model` selection to provider client reconstruction. List-models includes optional display names.
 
 ## TODO
 
@@ -113,6 +113,9 @@ Acceptance:
 Logic:
 
 - Create a `tui.App` over runtime stdin/stdout/stderr and runtime labels.
+- Pass visible model candidates into the TUI app.
+- Wire TUI model selection to provider settings, `newProviderClient`, and `Agent.SetProviderModel`.
+- Persist successful TUI model selections to `~/.nu/agent/settings.json`.
 - Create a provider-backed agent with `ui.Emit`.
 - Inject the agent into the UI app.
 - Run the UI loop until quit input, stdin EOF, context cancellation, or UI write
@@ -122,6 +125,9 @@ Acceptance:
 
 - `--mode interactive` starts a deterministic UI loop;
 - non-empty submitted lines call the provider-backed agent.
+- `/model` selection changes the provider client used by later prompts.
+- configured providers keep their `base_url` after `/model` selection.
+- `/model` selections are restored after restarting Nu.
 
 Tests:
 

@@ -20,6 +20,7 @@ type Options struct {
 	API        string
 	Model      string
 	Tools      map[string]ToolFunc
+	ToolDefs   []provider.ToolDefinition
 	Emit       func(Event)
 }
 
@@ -60,9 +61,10 @@ type ToolFunc func(context.Context, ToolCall) (ToolResult, error)
 type Agent struct {
 	opts Options
 
-	mu     sync.Mutex
-	busy   bool
-	cancel context.CancelFunc
+	mu      sync.Mutex
+	busy    bool
+	cancel  context.CancelFunc
+	history []provider.Message
 }
 
 // New constructs an idle agent.
@@ -88,7 +90,7 @@ func New(opts Options) *Agent {
 
 // Prompt sends one prompt to the provider.
 func (a *Agent) Prompt(ctx context.Context, input Prompt) error {
-	runCtx, opts, err := a.start(ctx)
+	runCtx, opts, history, err := a.start(ctx)
 	if err != nil {
 		return err
 	}
@@ -100,9 +102,14 @@ func (a *Agent) Prompt(ctx context.Context, input Prompt) error {
 		API:        opts.API,
 		Model:      opts.Model,
 		Tools:      opts.Tools,
+		ToolDefs:   append([]provider.ToolDefinition(nil), opts.ToolDefs...),
 		Emit:       opts.Emit,
 	}
-	return runTurn(runCtx, state, TurnInput{Prompt: input.Text})
+	if err := runTurn(runCtx, state, TurnInput{Prompt: input.Text, History: history}); err != nil {
+		return err
+	}
+	a.replaceHistory(state.messages)
+	return nil
 }
 
 // Abort cancels the active provider stream.
@@ -112,6 +119,13 @@ func (a *Agent) Abort() {
 	if a.cancel != nil {
 		a.cancel()
 	}
+}
+
+// Reset clears remembered prompt history.
+func (a *Agent) Reset() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.history = nil
 }
 
 // Busy reports whether a prompt currently owns the agent.
@@ -130,6 +144,11 @@ func (a *Agent) Config() Config {
 
 // SetModel updates provider labels for later prompts.
 func (a *Agent) SetModel(providerID string, api string, model string) error {
+	return a.SetProviderModel(nil, providerID, api, model)
+}
+
+// SetProviderModel updates the provider stream and labels for later prompts.
+func (a *Agent) SetProviderModel(streamer provider.Streamer, providerID string, api string, model string) error {
 	providerID = strings.TrimSpace(providerID)
 	api = strings.TrimSpace(api)
 	model = strings.TrimSpace(model)
@@ -142,25 +161,28 @@ func (a *Agent) SetModel(providerID string, api string, model string) error {
 	if a.busy {
 		return ErrBusy
 	}
+	if streamer != nil {
+		a.opts.Provider = streamer
+	}
 	a.opts.ProviderID = providerID
 	a.opts.API = api
 	a.opts.Model = model
 	return nil
 }
 
-func (a *Agent) start(ctx context.Context) (context.Context, Options, error) {
+func (a *Agent) start(ctx context.Context) (context.Context, Options, []provider.Message, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.busy {
-		return nil, Options{}, ErrBusy
+		return nil, Options{}, nil, ErrBusy
 	}
 	if a.opts.Provider == nil {
-		return nil, Options{}, fmt.Errorf("agent prompt: missing provider")
+		return nil, Options{}, nil, fmt.Errorf("agent prompt: missing provider")
 	}
 	ctx, cancel := context.WithCancel(ctx)
 	a.busy = true
 	a.cancel = cancel
-	return ctx, a.opts, nil
+	return ctx, a.opts, append([]provider.Message(nil), a.history...), nil
 }
 
 func (a *Agent) finish() {
@@ -171,4 +193,10 @@ func (a *Agent) finish() {
 	}
 	a.cancel = nil
 	a.busy = false
+}
+
+func (a *Agent) replaceHistory(messages []provider.Message) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.history = append(a.history[:0], messages...)
 }

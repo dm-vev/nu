@@ -9,6 +9,7 @@ import (
 	"nu/internal/agent"
 	"nu/internal/auth"
 	"nu/internal/cli"
+	"nu/internal/model"
 	"nu/internal/rpc"
 	"nu/internal/tui"
 )
@@ -121,7 +122,8 @@ func runRPC(ctx context.Context, rt *Runtime, _ cli.Request) error {
 	return server.Run(ctx)
 }
 
-func runInteractive(ctx context.Context, rt *Runtime, _ cli.Request) error {
+func runInteractive(ctx context.Context, rt *Runtime, req cli.Request) error {
+	var a *agent.Agent
 	ui := tui.NewApp(tui.AppOptions{
 		Stdin:      rt.Options.Stdin,
 		Stdout:     rt.Options.Stdout,
@@ -131,11 +133,34 @@ func runInteractive(ctx context.Context, rt *Runtime, _ cli.Request) error {
 		Provider:   rt.Options.ProviderID,
 		Model:      rt.Options.Model,
 		ModelLabel: rt.Options.ModelLabel,
-		Version:    rt.Options.Version.Version,
-		Context:    rt.Options.ModelContext,
-		Repaint:    true,
+		SessionID:  rt.Options.SessionID,
+		Models:     rt.Options.Models,
+		SetModel: func(ctx context.Context, selected model.Model) error {
+			if a == nil {
+				return fmt.Errorf("interactive agent is not ready")
+			}
+			store, err := auth.Load(authFilePath(rt.Options.Home), rt.Options.Env)
+			if err != nil {
+				return err
+			}
+			settings, err := loadProviderSettings(rt.Options.Home)
+			if err != nil {
+				return err
+			}
+			streamer, err := newProviderClient(ctx, rt.Options, store, req, settings, selected)
+			if err != nil {
+				return err
+			}
+			if err := a.SetProviderModel(streamer, selected.Provider, selected.API, selected.ID); err != nil {
+				return err
+			}
+			return saveSelectedModel(rt.Options.Home, selected)
+		},
+		Version: rt.Options.Version.Version,
+		Context: rt.Options.ModelContext,
+		Repaint: true,
 	})
-	a := newAgent(rt.Options, ui.Emit)
+	a = newAgent(rt.Options, ui.Emit)
 	if a == nil {
 		return fmt.Errorf("interactive mode requires agent handler")
 	}

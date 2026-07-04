@@ -37,7 +37,7 @@ internal/tool/builtin          read/write/edit/bash/grep/find/ls
 internal/resource              context files, skills, prompts, themes
 internal/pkgmgr                git/local/npm-like package source handling
 internal/extension             process extension host and event hooks
-internal/tui                   terminal driver, renderer, components
+internal/tui                   app wiring plus terminal/editor/render subpackages
 internal/slash                 slash command parsing and handlers
 internal/rpc                   JSONL RPC server/client protocol
 internal/export                JSONL and HTML export
@@ -103,14 +103,27 @@ host may later adapt Pi TypeScript extensions to this protocol.
 
 ### TUI
 
-The TUI owns terminal raw mode, rendering, input decoding, focus, overlays, and
-components. Agent logic never writes directly to the terminal; it emits events
-that the TUI renders.
+The TUI owns terminal raw mode, rendering, input decoding, focus-capable editor
+state, and reusable components. Agent logic never writes directly to the
+terminal; it emits events that the TUI renders.
 
-The first implemented TUI layer is deterministic rather than raw-terminal
-complete: renderer, input decoder, editor buffer, overlay stack, and app loop
-are implemented with the standard library. Raw mode, diff writing, selectors,
-and full Pi visual components remain separate files under the same package.
+The implemented TUI layer follows Pi's package split in Go:
+
+- `internal/tui` wires Nu app state, agent events, prompt submission, and loop
+  lifecycle;
+- `internal/tui/engine` renders component trees and writes synchronized
+  full/differential terminal updates;
+- `internal/tui/terminal` owns raw mode, terminal size, resize watching, and
+  terminal writes;
+- `internal/tui/input` decodes UTF-8, escape sequences, and bracketed paste;
+- `internal/tui/editor` owns multiline buffer mutation and bordered rendering;
+- `internal/tui/message` stores ordered chat parts for text, thinking, and
+  tool executions;
+- `internal/tui/components/*` owns one component family per subpackage,
+  including Markdown, thinking, and tool execution blocks.
+
+Selectors and extension UI components land as additional component subpackages
+instead of being folded into the top-level app wiring.
 
 ### RPC
 

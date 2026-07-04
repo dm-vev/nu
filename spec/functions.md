@@ -82,15 +82,22 @@ custom providers.
 
 Tool-use continuations preserve the assistant tool-call message before tool
 result messages so provider-specific APIs can build valid follow-up payloads.
+Provider reasoning/thinking stream deltas are preserved as structured provider
+events instead of being merged into final assistant text.
+OpenAI-compatible requests include built-in tool definitions when tools are
+enabled so hosted models can actually choose tool calls.
 
 Tests:
 
 - `TestNUF030OpenAIChatRequestShape`
 - `TestNUF030OpenAIResponsesToolCallStream`
 - `TestOpenAIChatPayloadIncludesAssistantToolCalls`
+- `TestOpenAIChatPayloadIncludesToolDefinitions`
 - `TestOpenAIResponsesPayloadIncludesFunctionCallHistory`
+- `TestOpenAIResponsesPayloadIncludesToolDefinitions`
 - `TestNUF030AnthropicMessagesRequestShape`
 - `TestAnthropicPayloadIncludesAssistantToolUse`
+- `TestAnthropicThinkingDeltaIsPreserved`
 - `TestGoogleGenerateContentRequestShape`
 - `TestGooglePayloadIncludesFunctionCallAndResponse`
 - `TestBedrockConverseRequestShape`
@@ -132,11 +139,16 @@ stops without tool calls, the user aborts, or retry policy is exhausted.
 
 When a provider requests a tool, the next provider request includes both the
 assistant tool-call message and the tool result message in order.
+Tool execution events include raw arguments on start and raw result/error state
+on end so TUI/RPC clients can render command and patch blocks.
+Provider requests include tool definitions from the active tool registry.
 
 Tests:
 
 - `TestNUF050TextOnlyTurnEnds`
+- `TestNUF050ProviderRequestIncludesToolDefinitions`
 - `TestNUF050ToolCallFeedsResultBackToProvider`
+- `TestNUF050ThinkingDeltaEmitsStructuredMessageUpdate`
 - `TestNUF050AbortStopsProviderAndTools`
 
 ### NUF-051 Tool Execution Policy
@@ -163,13 +175,15 @@ Tests:
 
 ### NUF-053 Retry
 
-Transient provider errors use configurable exponential backoff. Provider-level
-retry delays above the configured cap fail fast.
+Provider rate-limit errors retry up to five times before surfacing an error.
+Interactive TUI renders `Rate limit` on the right side of the cwd/footer path
+line while the status spinner shifts through an alert color gradient.
 
 Tests:
 
-- `TestNUF053RetriesTransientError`
-- `TestNUF053LongRetryAfterFailsFast`
+- `TestAgentRetriesRateLimitBeforeFailing`
+- `TestAgentStopsAfterFiveRateLimitRetries`
+- `TestTUIRateLimitShowsFooterNotice`
 
 ## Messages And Events
 
@@ -178,16 +192,23 @@ Tests:
 Nu supports user, assistant, tool result, bash execution, custom, branch summary,
 and compaction summary messages with text, image, thinking, and tool call
 content blocks.
+Interactive TUI message state keeps visible text, model thinking, and tool
+execution blocks as ordered parts instead of one concatenated string.
 
 Tests:
 
 - `TestNUF060MessageJSONRoundTrip`
 - `TestNUF060ImageContentRoundTrip`
+- `TestTUIAppRendersStructuredMessageParts`
 
 ### NUF-061 Event Stream
 
 Nu emits lifecycle, turn, message, tool execution, queue, compaction, retry, and
 session events. JSON mode writes one event per line.
+Message events distinguish visible text deltas from thinking deltas. Tool
+events carry enough data for clients to render pending and completed tool
+blocks. `rate_limit` events carry retry attempt metadata for status/footer
+rendering.
 
 Tests:
 
@@ -233,13 +254,17 @@ Tests:
 
 Runs shell commands in cwd with optional timeout, streams updates, captures
 stdout/stderr, returns exit code, truncates display output, and persists full
-truncated output to a temp file.
+truncated output to a temp file. Interactive `sudo` is rejected before process
+start so password prompts cannot appear in the TUI input row; callers must use
+`sudo -n`, `sudo -S`, or `sudo --non-interactive` explicitly.
 
 Tests:
 
 - `TestNUF073BashCapturesStdoutAndStderr`
 - `TestNUF073BashTimeoutKillsProcess`
 - `TestNUF073BashTruncatesAndPersistsFullOutput`
+- `TestBashRejectsInteractiveSudo`
+- `TestBashAllowsNonInteractiveSudoForms`
 
 ### NUF-074 Grep
 
@@ -338,22 +363,38 @@ Tests:
 ### NUF-100 Terminal UI
 
 Interactive mode provides a Pi-like terminal surface: startup header, compact
-keybinding help, context block, message history, bordered editor, cwd/context
-footer, status, tool rendering, thinking rendering, images where supported,
-selectors, overlays, and resize handling.
+keybinding help, message history, bordered editor, cwd/context footer, status,
+tool rendering, thinking rendering, images where supported, selectors, overlays,
+and resize handling.
+
+The message viewport autoscrolls to the bottom during normal streaming, but
+PageUp/PageDown, End, and mouse wheel input can inspect older output without
+moving the editor/footer away from the bottom anchor. A single reserved status
+row stays directly above the editor and animates short state labels such as
+`running`, `bubbling`, `running tool`, and `aborting`. The footer displays
+estimated context usage against the selected context window until provider
+token-usage events are available.
 
 The first Go UI implementation must expose the same wiring boundaries as Pi:
-terminal input becomes editor/command actions, agent events update a render
+terminal input becomes editor/command actions, agent events update component
 state, and rendering produces deterministic frames that the terminal driver
-writes in place. Raw terminal integration can stay narrow, but renderer, input
-decoder, editor buffer, overlay focus, and app-mode wiring are required before
-further interactive features build on them.
+writes in place. Raw terminal integration can stay narrow, but raw lifecycle,
+diff rendering, input decoder, editor buffer, component subpackages, and
+app-mode wiring are required before further interactive features build on them.
 
 Tests:
 
 - `TestNUF100RendererDoesNotOverflowWidth`
 - `TestNUF100ResizeInvalidatesLayout`
 - `TestTerminalDrawRepaintsWithANSI`
+- `TestTUIAppRendersPiStyleComponentTree`
+- `TestTUIAppAnchorsEditorAndFooterToBottom`
+- `TestTUIAppKeepsStatusLineAboveEditor`
+- `TestTUIHandleRawInputScrollsViewport`
+- `TestEngineRendersComponentTreeAndDiffs`
+- `TestEngineScrollsOverflowingViewport`
+- `TestDecoderReadsPrintableUTF8AndEscapeSequence`
+- `TestEditorHandlesUnicodeCursorAndPaste`
 - temporary `/tmp/nu-tui-bytecheck/check-byte-ui.py` byte harness during TUI
   implementation only; it must not be committed.
 - `TestNUF002DispatchInteractiveMode`
@@ -402,10 +443,27 @@ Nu supports `/login`, `/logout`, `/model`, `/scoped-models`, `/settings`,
 `/compact`, `/copy`, `/export`, `/import`, `/share`, `/reload`, `/hotkeys`,
 `/changelog`, and `/quit`.
 
+`/model` without arguments opens a Pi-style model selector. `/model <query>`
+selects an exact model match when possible, otherwise opens the selector with
+that query prefilled. Selector confirmation updates the footer/status and the
+provider-backed agent used for later prompts.
+
+Every built-in slash command has a local TUI handler. Commands that already
+have enough local state mutate it directly (`/name`, `/new`, `/fork`,
+`/compact`, `/reload`), file commands use current in-memory chat
+(`/export`, `/import`, `/resume`, `/share`), auth/trust commands update the
+same global files used by runtime wiring, and diagnostic commands render
+Markdown output instead of falling through to a backend placeholder.
+
 Tests:
 
-- `TestNUF110SlashCommandDispatch`
-- `TestNUF110UnknownCommandReportsError`
+- `TestBuiltinsCopiesPiCommandSet`
+- `TestTUICommandMenuRendersAndCompletes`
+- `TestTUISlashModelOpensSelectorAndSelectsModel`
+- `TestTUISlashModelExactMatchSelectsWithoutMenu`
+- `TestTUIAllBuiltinSlashCommandsHaveHandlers`
+- `TestTUISlashSessionDoesNotCallAgent`
+- `TestTUISlashQuitRequestsExit`
 
 ## Resources
 

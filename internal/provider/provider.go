@@ -13,12 +13,16 @@ var ErrInvalidRequest = errors.New("invalid provider request")
 // ErrStream is returned for provider stream failures.
 var ErrStream = errors.New("provider stream error")
 
+// ErrRateLimit is returned when a provider asks the client to retry later.
+var ErrRateLimit = errors.New("provider rate limit")
+
 // EventType is a normalized provider stream event type.
 type EventType string
 
 const (
 	EventStart         EventType = "start"
 	EventText          EventType = "text_delta"
+	EventThinking      EventType = "thinking_delta"
 	EventToolCallStart EventType = "tool_call_start"
 	EventToolCallDelta EventType = "tool_call_delta"
 	EventToolCallEnd   EventType = "tool_call_end"
@@ -34,27 +38,36 @@ type Message struct {
 	Name       string
 }
 
+// ToolDefinition describes one callable tool for provider payloads.
+type ToolDefinition struct {
+	Name        string
+	Description string
+	Parameters  map[string]any
+}
+
 // Request is the provider-neutral request consumed by adapters.
 type Request struct {
 	Provider string
 	API      string
 	Model    string
 	Messages []Message
+	Tools    []ToolDefinition
 }
 
 // Event is one normalized provider stream event.
 type Event struct {
-	Type       EventType
-	Provider   string
-	API        string
-	Model      string
-	Index      int
-	Delta      string
-	ToolCallID string
-	ToolName   string
-	StopReason string
-	ErrorClass string
-	Message    string
+	Type         EventType
+	Provider     string
+	API          string
+	Model        string
+	Index        int
+	Delta        string
+	ToolCallID   string
+	ToolName     string
+	StopReason   string
+	ErrorClass   string
+	Message      string
+	RetryAfterMS int
 }
 
 // Streamer is the provider adapter contract consumed by the agent.

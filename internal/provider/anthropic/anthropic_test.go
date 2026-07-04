@@ -91,3 +91,40 @@ func TestAnthropicPayloadIncludesAssistantToolUse(t *testing.T) {
 		t.Fatalf("assistant tool content = %#v", content)
 	}
 }
+
+func TestAnthropicThinkingDeltaIsPreserved(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("event: content_block_delta\n"))
+		_, _ = w.Write([]byte(
+			"data: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"thinking_delta\",\"thinking\":\"plan\"}}\n\n",
+		))
+		_, _ = w.Write([]byte("event: message_stop\n"))
+		_, _ = w.Write([]byte("data: {\"type\":\"message_stop\"}\n\n"))
+	}))
+	defer server.Close()
+
+	client := New(Config{BaseURL: server.URL, APIKey: "anthropic-key", Client: server.Client()})
+	ch, err := client.Stream(context.Background(), provider.Request{
+		Provider: "anthropic",
+		API:      "messages",
+		Model:    "claude-opus-4-8",
+		Messages: []provider.Message{{Role: "user", Content: "hello"}},
+	})
+	if err != nil {
+		t.Fatalf("Stream error = %v", err)
+	}
+	events, err := provider.Collect(ch)
+	if err != nil {
+		t.Fatalf("Collect error = %v", err)
+	}
+	found := false
+	for _, ev := range events {
+		if ev.Type == provider.EventThinking && ev.Delta == "plan" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("events = %#v, want thinking delta", events)
+	}
+}

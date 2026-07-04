@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: 5d9629b
-Implementation Comments: Prompt/abort/event callback remain intact. Agent now exposes mutex-protected Busy, Config, and SetModel so RPC/TUI code can inspect or mutate future provider labels without racing active prompts.
+Implementation Comments: Prompt/abort/event callback remain intact. Agent exposes mutex-protected Busy, Config, SetModel, SetProviderModel, Reset, remembers successful turn history, and forwards provider tool definitions into requests.
 
 ## TODO
 
@@ -32,11 +32,12 @@ Logic:
 - Copy constructor inputs into a concrete value without starting background work.
 - Apply defaults before returning the constructed value.
 - Initialize provider settings, event callback, and in-process test tools.
+- Preserve provider-facing tool definitions for request construction.
 - Start no provider call until `Prompt`.
 
 Acceptance:
 
-- initializes provider settings, event callback, and tools map;
+- initializes provider settings, event callback, tools map, and tool definitions;
 - starts no provider call until `Prompt`.
 
 ### `(*Agent) Prompt(ctx context.Context, input Prompt) error`
@@ -45,7 +46,8 @@ Logic:
 
 - Check `ctx` before blocking work and pass it to every blocking dependency.
 - Reject concurrent prompt without queue behavior.
-- Start one provider turn from the supplied prompt text.
+- Start one provider turn from remembered successful history plus the supplied prompt text.
+- Store the completed turn messages after success so later prompts can answer questions about prior user requests and assistant work.
 - Emit agent/turn/message events through the callback.
 
 Acceptance:
@@ -53,6 +55,18 @@ Acceptance:
 - rejects concurrent prompt without queue behavior;
 - sends one prompt to provider;
 - emits agent/turn/message events.
+- forwards tool definitions to the provider request.
+- `TestAgentPromptIncludesPreviousTurns` fails if the second prompt loses prior user/assistant context.
+
+### `(*Agent) Reset()`
+
+Logic:
+
+- Clear remembered prompt history under the agent mutex.
+
+Acceptance:
+
+- `/new` can start a fresh chat instead of leaking prior context into the next provider request.
 
 ### `(*Agent) Abort()`
 
@@ -92,18 +106,33 @@ Acceptance:
 
 Logic:
 
-- Reject changes while busy.
-- Trim and validate required labels.
-- Update provider id, api, and model under the mutex.
+- Delegate to `SetProviderModel` without changing the existing streamer.
 
 Acceptance:
 
 - RPC model commands can affect later provider requests;
 - active streams keep their existing request labels.
 
+### `(*Agent) SetProviderModel(streamer provider.Streamer, providerID string, api string, model string) error`
+
+Logic:
+
+- Reject changes while busy.
+- Trim and validate required labels.
+- Replace the provider streamer when a non-nil streamer is supplied.
+- Update provider id, api, and model under the mutex.
+
+Acceptance:
+
+- TUI model selection can switch both the displayed model and the provider client used by later prompts.
+- `TestAgentSetProviderModelSwitchesStreamer` fails if prompts still use the previous streamer.
+
 Tests:
 
 - `TestNUF050TextOnlyTurnEnds`
+- `TestAgentPromptIncludesPreviousTurns`
+- `TestNUF050ProviderRequestIncludesToolDefinitions`
 - `TestNUF050ToolCallFeedsResultBackToProvider`
 - `TestNUF050AbortStopsProviderAndTools`
 - `TestAgentSetModelAffectsNextPrompt`
+- `TestAgentSetProviderModelSwitchesStreamer`

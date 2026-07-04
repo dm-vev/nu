@@ -30,6 +30,8 @@ Logic:
 
 - Decode `command` and optional `timeout_ms`.
 - Reject empty commands.
+- Reject interactive `sudo` before starting a process; allow only explicit
+  non-interactive forms `sudo -n`, `sudo -S`, or `sudo --non-interactive`.
 - Create timeout context when requested.
 - Call the platform runner in cwd.
 - Capture stdout, stderr, exit code, and timeout state from the runner.
@@ -42,6 +44,7 @@ Acceptance:
 - captures stdout, stderr, and exit code;
 - kills timed-out commands promptly;
 - persists full output when truncating display output.
+- never lets a password prompt take over the TUI input row.
 
 Tests:
 
@@ -49,6 +52,32 @@ Tests:
 - `TestNUF073BashTimeoutKillsProcess`
 - `TestNUF073BashTruncatesAndPersistsFullOutput`
 - `TestBashRejectsEmptyCommand`
+- `TestBashRejectsInteractiveSudo`
+- `TestBashAllowsNonInteractiveSudoForms`
+
+### `usesInteractiveSudo(command string) bool`
+
+Logic:
+
+- Scan shell words for a `sudo` command token.
+- Return true unless the sudo invocation carries `-n`, `-S`, or
+  `--non-interactive` before the sudo subcommand.
+
+Acceptance:
+
+- Plain `sudo true` is blocked before process start.
+- Non-interactive sudo forms are passed through to the platform runner.
+
+### `sudoNonInteractiveFlag(value string) bool`
+
+Logic:
+
+- Recognize short sudo option groups containing `n` or `S`, and the long
+  `--non-interactive` option.
+
+Acceptance:
+
+- `--preserve-env` and other unrelated long flags do not bypass the guard.
 
 Compile checks:
 

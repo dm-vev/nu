@@ -66,13 +66,22 @@ land.
 ### Current Interactive Mode
 
 ```text
-stdin line -> tui editor -> agent prompt -> agent events -> tui frame
+terminal input -> tui/input -> tui/editor -> agent prompt -> agent events -> tui/engine -> terminal diff
 ```
 
-The current Go UI slice is deterministic and testable: renderer, input decoder,
-editor buffer, overlay focus, and app wiring are split under `internal/tui`.
-Raw terminal mode, terminal diffing, selectors, and rich Pi visual parity are
-the next terminal-driver layer, not hidden in app dispatch.
+The current Go UI slice is split under `internal/tui`:
+
+- top-level `tui` is Nu app wiring only;
+- `tui/engine` renders component trees and writes synchronized diffs;
+- `tui/terminal` owns raw mode, size, resize, and writes;
+- `tui/input` groups raw bytes into key/paste events;
+- `tui/editor` owns multiline buffer state;
+- `tui/message` stores ordered text/thinking/tool message parts;
+- `tui/components/*` keeps each visible component in its own subpackage,
+  including Markdown, thinking, and tool execution blocks.
+
+Selectors and extension UI should be added as component subpackages, not merged
+into the top-level app package.
 
 ## Package Responsibilities
 
@@ -120,11 +129,12 @@ The core never imports extension code.
 Owns raw terminal mode, input parsing, renderer diffing, components, focus,
 overlays, keybindings, and terminal capability detection.
 
-Implemented now: deterministic frames, strict width checks, input decoding,
-editor buffer, overlay focus, and a line-oriented app loop.
+Implemented now: raw terminal lifecycle, synchronized diff writer, strict width
+checks, input decoding, editor buffer, structured message parts, Markdown,
+thinking blocks, tool execution blocks, and Pi-style header/chat/editor/footer
+composition.
 
-Pending: raw terminal lifecycle, diff writer, selector components, theme files,
-and full Pi visual rendering.
+Pending: selector components, theme files, and extension UI components.
 
 ## First Implementation Slice
 

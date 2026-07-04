@@ -145,6 +145,9 @@ func (c *Client) post(ctx context.Context, payload map[string]any) (*http.Respon
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, fmt.Errorf("%w: anthropic http %d: %s", provider.ErrRateLimit, resp.StatusCode, strings.TrimSpace(string(body)))
+		}
 		return nil, fmt.Errorf("anthropic http %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return resp, nil
@@ -209,6 +212,8 @@ func parseMessagesStream(ctx context.Context, body io.Reader, ch chan<- provider
 			switch delta.Delta.Type {
 			case "text_delta":
 				send(ctx, ch, provider.Event{Type: provider.EventText, Index: delta.Index, Delta: delta.Delta.Text})
+			case "thinking_delta":
+				send(ctx, ch, provider.Event{Type: provider.EventThinking, Index: delta.Index, Delta: delta.Delta.Thinking})
 			case "input_json_delta":
 				send(ctx, ch, provider.Event{
 					Type:  provider.EventToolCallDelta,

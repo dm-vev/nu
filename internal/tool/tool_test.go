@@ -24,6 +24,20 @@ func TestBuiltinsExposesEveryPhaseTwoTool(t *testing.T) {
 	}
 }
 
+func TestDefinitionsExposeBashSchema(t *testing.T) {
+	defs := Definitions()
+	for _, def := range defs {
+		if def.Name != "bash" {
+			continue
+		}
+		if def.Description == "" || def.Parameters["type"] != "object" {
+			t.Fatalf("bash definition = %#v, want object schema and description", def)
+		}
+		return
+	}
+	t.Fatalf("Definitions() = %#v, want bash", defs)
+}
+
 func TestBuiltinsReadToolRuns(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("ok"), 0o644); err != nil {

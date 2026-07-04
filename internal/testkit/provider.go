@@ -12,6 +12,7 @@ import (
 type ScriptedProvider struct {
 	mu       sync.Mutex
 	scripts  [][]provider.Event
+	errors   []error
 	requests []provider.Request
 }
 
@@ -29,16 +30,29 @@ func NewScriptedProviderScripts(scripts ...[]provider.Event) *ScriptedProvider {
 	return &ScriptedProvider{scripts: copied}
 }
 
+// NewScriptedProviderErrors creates a fake provider with one start result per request.
+func NewScriptedProviderErrors(errors []error, scripts ...[]provider.Event) *ScriptedProvider {
+	fake := NewScriptedProviderScripts(scripts...)
+	fake.errors = append([]error(nil), errors...)
+	return fake
+}
+
 // Stream records req and emits scripted events.
 func (p *ScriptedProvider) Stream(ctx context.Context, req provider.Request) (<-chan provider.Event, error) {
 	p.mu.Lock()
 	index := len(p.requests)
 	p.requests = append(p.requests, req)
-	if index >= len(p.scripts) {
+	if index < len(p.errors) && p.errors[index] != nil {
+		err := p.errors[index]
 		p.mu.Unlock()
-		return nil, fmt.Errorf("scripted provider: missing script %d", index)
+		return nil, err
 	}
-	events := append([]provider.Event(nil), p.scripts[index]...)
+	scriptIndex := index - p.errorCountBefore(index)
+	if scriptIndex >= len(p.scripts) {
+		p.mu.Unlock()
+		return nil, fmt.Errorf("scripted provider: missing script %d", scriptIndex)
+	}
+	events := append([]provider.Event(nil), p.scripts[scriptIndex]...)
 	p.mu.Unlock()
 
 	ch := make(chan provider.Event)
@@ -53,6 +67,16 @@ func (p *ScriptedProvider) Stream(ctx context.Context, req provider.Request) (<-
 		}
 	}()
 	return ch, nil
+}
+
+func (p *ScriptedProvider) errorCountBefore(index int) int {
+	count := 0
+	for i := 0; i < index && i < len(p.errors); i++ {
+		if p.errors[i] != nil {
+			count++
+		}
+	}
+	return count
 }
 
 // Requests returns recorded provider requests.

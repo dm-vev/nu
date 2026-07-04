@@ -60,12 +60,17 @@ func BuildChatPayload(req provider.Request) (map[string]any, error) {
 	for _, message := range req.Messages {
 		messages = append(messages, chatMessage(message))
 	}
-	return map[string]any{
+	payload := map[string]any{
 		"model":          req.Model,
 		"messages":       messages,
 		"stream":         true,
 		"stream_options": map[string]any{"include_usage": true},
-	}, nil
+	}
+	if len(req.Tools) > 0 {
+		payload["tools"] = chatTools(req.Tools)
+		payload["tool_choice"] = "auto"
+	}
+	return payload, nil
 }
 
 func chatMessage(message provider.Message) map[string]any {
@@ -102,11 +107,43 @@ func BuildResponsesPayload(req provider.Request) (map[string]any, error) {
 	for _, message := range req.Messages {
 		input = append(input, responsesInput(message))
 	}
-	return map[string]any{
+	payload := map[string]any{
 		"model":  req.Model,
 		"input":  input,
 		"stream": true,
-	}, nil
+	}
+	if len(req.Tools) > 0 {
+		payload["tools"] = responsesTools(req.Tools)
+	}
+	return payload, nil
+}
+
+func chatTools(tools []provider.ToolDefinition) []map[string]any {
+	out := make([]map[string]any, 0, len(tools))
+	for _, tool := range tools {
+		out = append(out, map[string]any{
+			"type": "function",
+			"function": map[string]any{
+				"name":        tool.Name,
+				"description": tool.Description,
+				"parameters":  tool.Parameters,
+			},
+		})
+	}
+	return out
+}
+
+func responsesTools(tools []provider.ToolDefinition) []map[string]any {
+	out := make([]map[string]any, 0, len(tools))
+	for _, tool := range tools {
+		out = append(out, map[string]any{
+			"type":        "function",
+			"name":        tool.Name,
+			"description": tool.Description,
+			"parameters":  tool.Parameters,
+		})
+	}
+	return out
 }
 
 func responsesInput(message provider.Message) map[string]any {
@@ -203,6 +240,9 @@ func (c *Client) post(ctx context.Context, path string, payload map[string]any) 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, fmt.Errorf("%w: openai http %d: %s", provider.ErrRateLimit, resp.StatusCode, strings.TrimSpace(string(body)))
+		}
 		return nil, fmt.Errorf("openai http %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return resp, nil
@@ -335,10 +375,17 @@ func parseResponsesStream(ctx context.Context, body io.Reader, ch chan<- provide
 			}
 			send(ctx, ch, provider.Event{Type: provider.EventDone, StopReason: stopReason})
 		case "response.failed", "error":
-			send(ctx, ch, provider.Event{Type: provider.EventError, ErrorClass: "fatal", Message: ev.Data})
+			send(ctx, ch, provider.Event{Type: provider.EventError, ErrorClass: normalizeOpenAIError(ev.Data), Message: ev.Data})
 		}
 		return nil
 	})
+}
+
+func normalizeOpenAIError(value string) string {
+	if strings.Contains(strings.ToLower(value), "rate") {
+		return "rate_limit"
+	}
+	return "fatal"
 }
 
 func normalizeOpenAIStop(reason string) string {

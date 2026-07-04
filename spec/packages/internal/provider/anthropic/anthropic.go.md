@@ -4,7 +4,7 @@
 
 Current: IMPLEMENTED
 Implementation Commit: c64b048
-Implementation Comments: Phase 3 Anthropic Messages adapter covers request shape, assistant tool-use history, tool results, and SSE text/tool parsing.
+Implementation Comments: Phase 3 Anthropic Messages adapter covers request shape, assistant tool-use history, tool results, and SSE text/thinking/tool parsing.
 
 ## TODO
 
@@ -70,13 +70,19 @@ Logic:
 - Add `x-api-key`, `anthropic-version`, and JSON headers.
 - Parse Anthropic SSE `content_block_*`, `message_delta`, `message_stop`, and
   `error` events.
+- Preserve `thinking_delta` blocks as provider `EventThinking`.
+- Return `provider.ErrRateLimit` for HTTP 429 before stream setup.
+- Normalize Anthropic `rate_limit_error` and `overloaded_error` stream errors
+  to `ErrorClass=rate_limit`.
 
 Acceptance:
 
 - request shape is test-covered;
-- text deltas and tool-use deltas normalize to provider events.
+- text, thinking, and tool-use deltas normalize to provider events.
+- rate-limit failures can be retried by `internal/agent`.
 
 Tests:
 
 - `TestNUF030AnthropicMessagesRequestShape`
 - `TestAnthropicPayloadIncludesAssistantToolUse`
+- `TestAnthropicThinkingDeltaIsPreserved`

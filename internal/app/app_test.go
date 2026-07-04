@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"nu/internal/agent"
 	"nu/internal/cli"
+	"nu/internal/model"
 	"nu/internal/provider"
 	"nu/internal/testkit"
 )
@@ -421,6 +423,118 @@ func TestPrintModeBuildsFireworksProviderFromGlobalModels(t *testing.T) {
 	}
 }
 
+func TestPrintModeBuildsProviderFromSettings(t *testing.T) {
+	home := t.TempDir()
+	agentDir := filepath.Join(home, ".nu", "agent")
+	if err := os.MkdirAll(agentDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll agent dir error = %v", err)
+	}
+	modelsRaw := `{"models":[{"id":"local","provider":"geartech","api":"chat","requires_auth":true}]}`
+	if err := os.WriteFile(filepath.Join(agentDir, "models.json"), []byte(modelsRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile models error = %v", err)
+	}
+	authRaw := `{"providers":{"geartech":{"api_key":"key"}}}`
+	if err := os.MkdirAll(filepath.Join(home, ".nu"), 0o755); err != nil {
+		t.Fatalf("MkdirAll auth dir error = %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".nu", "auth.json"), []byte(authRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile auth error = %v", err)
+	}
+
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+	}))
+	defer server.Close()
+
+	settingsRaw := fmt.Sprintf(`{"providers":{"geartech":{"base_url":%q}}}`, server.URL)
+	if err := os.WriteFile(filepath.Join(agentDir, "settings.json"), []byte(settingsRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile settings error = %v", err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--print", "--provider", "geartech", "--model", "local", "hello"},
+		Home:   home,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if gotPath != "/chat/completions" || stdout.String() != "ok\n" {
+		t.Fatalf("path/stdout = %q/%q, want configured compat response", gotPath, stdout.String())
+	}
+}
+
+func TestSavedModelSelectionRestoresDefault(t *testing.T) {
+	home := t.TempDir()
+	agentDir := filepath.Join(home, ".nu", "agent")
+	if err := os.MkdirAll(agentDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll agent dir error = %v", err)
+	}
+	modelsRaw := `{"models":[` +
+		`{"id":"unused","provider":"alpha","api":"chat","requires_auth":false},` +
+		`{"id":"local","provider":"geartech","api":"chat","requires_auth":false}` +
+		`]}`
+	if err := os.WriteFile(filepath.Join(agentDir, "models.json"), []byte(modelsRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile models error = %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(home, ".nu"), 0o755); err != nil {
+		t.Fatalf("MkdirAll auth dir error = %v", err)
+	}
+	authRaw := `{"providers":{"geartech":{"api_key":"key"}}}`
+	if err := os.WriteFile(filepath.Join(home, ".nu", "auth.json"), []byte(authRaw), 0o600); err != nil {
+		t.Fatalf("WriteFile auth error = %v", err)
+	}
+
+	var gotPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
+		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+	}))
+	defer server.Close()
+
+	settingsRaw := fmt.Sprintf(`{"providers":{"geartech":{"base_url":%q}}}`, server.URL)
+	if err := os.WriteFile(filepath.Join(agentDir, "settings.json"), []byte(settingsRaw), 0o644); err != nil {
+		t.Fatalf("WriteFile settings error = %v", err)
+	}
+	if err := saveSelectedModel(home, model.Model{ID: "local", Provider: "geartech", API: "chat"}); err != nil {
+		t.Fatalf("saveSelectedModel error = %v", err)
+	}
+
+	settings, err := loadProviderSettings(home)
+	if err != nil {
+		t.Fatalf("loadProviderSettings error = %v", err)
+	}
+	if settings.DefaultProvider != "geartech" ||
+		settings.DefaultModel != "local" ||
+		settings.Providers["geartech"].DefaultModel != "local" {
+		t.Fatalf("settings = %#v, want saved geartech/local default", settings)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run(context.Background(), Options{
+		Args:   []string{"--print", "hello"},
+		Home:   home,
+		Stdout: &stdout,
+		Stderr: &stderr,
+	})
+	if code != exitOK {
+		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
+	}
+	if gotPath != "/chat/completions" || stdout.String() != "ok\n" {
+		t.Fatalf("path/stdout = %q/%q, want saved model compat response", gotPath, stdout.String())
+	}
+}
+
 func TestSelectModelUsesOpenAIDefaultWhenAPIKeyMarksAllProviders(t *testing.T) {
 	entries, registry, err := loadModelRegistry("")
 	if err != nil {
@@ -429,7 +543,7 @@ func TestSelectModelUsesOpenAIDefaultWhenAPIKeyMarksAllProviders(t *testing.T) {
 	authState := map[string]bool{}
 	markConfiguredProviders(authState, entries)
 
-	selected, err := selectModel(registry, authState, cli.Request{})
+	selected, err := selectModel(registry, authState, cli.Request{}, providerSettingsFile{})
 	if err != nil {
 		t.Fatalf("selectModel error = %v", err)
 	}
@@ -445,7 +559,7 @@ func TestSelectModelUsesOpenAIDefaultForProviderOnly(t *testing.T) {
 	}
 	authState := map[string]bool{"openai": true}
 
-	selected, err := selectModel(registry, authState, cli.Request{Provider: "openai"})
+	selected, err := selectModel(registry, authState, cli.Request{Provider: "openai"}, providerSettingsFile{})
 	if err != nil {
 		t.Fatalf("selectModel error = %v", err)
 	}
