@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"nu/internal/contracts"
+
 	"github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
-	"nu/internal/contracts"
 )
 
 // GitHubContentTool extracts matching files from GitHub repositories.

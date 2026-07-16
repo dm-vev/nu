@@ -17,11 +17,12 @@ Approved owners:
 - `internal/llm`: shared LLM types, retry, and structured output;
 - `internal/llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}`:
   provider clients and streams;
-- `internal/memory`: conversation memory;
+- `internal/memory/{conversation,history,redis,vector,factory}`: conversation
+  context/history, Redis, vector retrieval, and config construction;
 - `internal/multitenancy`: tenancy;
-- `internal/mcp`: MCP features;
-- `internal/tools`: Registry, Calculator, shared helpers, and agent-as-tool
-  orchestration;
+- `internal/mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}`: MCP domains;
+- `internal/tools/{agent,calculator,registry}`: agent-as-tool, Calculator, and
+  registry domains;
 - `internal/tools/coding`: cwd-scoped filesystem/process tools and `Builtins`;
 - `internal/tools/{search,image,graphrag}`: search integrations, image tools and
   sessions, and GraphRAG adapters;
@@ -36,8 +37,9 @@ Approved owners:
 - `internal/task/orchestration`: LLM/code/workflow orchestrators, handoffs, and
   routers;
 - `internal/telemetry` plus `{otel,langfuse}`: shared telemetry and integrations;
-- `internal/transport` plus `{grpc,http,a2a,ui}`: shared transport orchestration
-  and concrete transports;
+- `internal/transport/remote`: remote-agent construction;
+- `internal/transport/{remote,grpc/{client,server,microservice},http/server,a2a/{card,client,server,tool},ui/{server,trace}}`:
+  concrete transport domains;
 - `internal/transport/grpc/pb`: generated protobuf only.
 
 `spec/sdk/README.md` is an ownership index. Preserve every feature/API behavior

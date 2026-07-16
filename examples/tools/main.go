@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/tools"
+	"nu/internal/tools/calculator"
+	"nu/internal/tools/registry"
 )
 
 func main() {
-	registry := tools.NewRegistry()
-	registry.Register(tools.NewCalculator())
+	toolRegistry := registry.NewRegistry()
+	toolRegistry.Register(calculator.NewCalculator())
 
-	tool, _ := registry.Get("calculator")
+	tool, _ := toolRegistry.Get("calculator")
 	result, err := tool.Execute(context.Background(), `{"expression":"6 * 7"}`)
 	if err != nil {
 		log.Fatal(err)

@@ -8,7 +8,7 @@ import (
 	agentconfig "nu/internal/agent/config"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
-	"nu/internal/tools"
+	agenttool "nu/internal/tools/agent"
 )
 
 // WithAgents sets the sub-agents that can be called as tools
@@ -17,7 +17,7 @@ func WithAgents(subAgents ...*Agent) Option {
 		a.subAgents = subAgents
 		// Automatically wrap sub-agents as tools
 		for _, subAgent := range subAgents {
-			agentTool := tools.NewAgentTool(subAgent)
+			agentTool := agenttool.NewAgentTool(subAgent)
 
 			// Pass logger and tracer if available on parent agent
 			// Note: This will be set later in NewAgent after the agent is fully constructed
@@ -35,7 +35,7 @@ func (a *Agent) GetSubAgents() []*Agent {
 func (a *Agent) configureSubAgentTools() {
 	for _, tool := range a.tools {
 		// Check if this is an AgentTool by trying to cast it
-		if agentTool, ok := tool.(*tools.AgentTool); ok {
+		if agentTool, ok := tool.(*agenttool.AgentTool); ok {
 			// Configure with parent agent's logger and tracer
 			if a.tracer != nil {
 				agentTool.WithTracer(a.tracer)

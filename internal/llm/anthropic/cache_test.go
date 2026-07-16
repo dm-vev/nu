@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
+	"nu/internal/contracts"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"nu/internal/contracts"
 )
 
 func TestAnthropicCacheControl_JSON(t *testing.T) {

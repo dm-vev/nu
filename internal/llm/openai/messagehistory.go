@@ -3,9 +3,10 @@ package openai
 import (
 	"context"
 
-	"github.com/openai/openai-go/v2"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
 )
 
 // openAIMessageHistoryBuilder builds OpenAI-compatible message history from memory and current prompt

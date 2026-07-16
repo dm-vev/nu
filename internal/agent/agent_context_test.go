@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"nu/internal/agent"
-	"nu/internal/memory"
-	"nu/internal/tools"
+	memory "nu/internal/memory/conversation"
+	toolregistry "nu/internal/tools/registry"
 )
 
 func TestAgentContext(t *testing.T) {
@@ -69,7 +69,7 @@ func TestAgentContext(t *testing.T) {
 	}
 
 	// Test tools
-	toolRegistry := tools.NewRegistry()
+	toolRegistry := toolregistry.NewRegistry()
 	ctx = ctx.WithTools(toolRegistry)
 	retrievedTools, ok := ctx.Tools()
 	if !ok {

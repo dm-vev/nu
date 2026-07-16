@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"nu/internal/llm/openai"
-	"nu/internal/memory"
-	"nu/internal/tools"
+	memory "nu/internal/memory/conversation"
+	"nu/internal/tools/calculator"
 )
 
 func TestSubAgentsIntegration(t *testing.T) {
@@ -23,7 +23,7 @@ func TestSubAgentsIntegration(t *testing.T) {
 		WithDescription("Expert in mathematical calculations and numerical analysis"),
 		WithLLM(llm),
 		WithMemory(memory.NewConversationBuffer()),
-		WithTools(tools.NewCalculator()),
+		WithTools(calculator.NewCalculator()),
 		WithSystemPrompt("You are a math expert. Solve mathematical problems accurately."),
 		WithRequirePlanApproval(false),
 	)

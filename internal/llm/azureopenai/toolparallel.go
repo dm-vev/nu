@@ -7,8 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/openai/openai-go/v2"
 	"nu/internal/contracts"
+
+	"github.com/openai/openai-go/v2"
 )
 
 type azureOpenAIParallelToolResult struct {

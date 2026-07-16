@@ -6,7 +6,10 @@ import (
 	"slices"
 
 	"nu/internal/contracts"
-	"nu/internal/mcp"
+	mcpbuilder "nu/internal/mcp/builder"
+	mcpconfig "nu/internal/mcp/config"
+	"nu/internal/mcp/lazy"
+	"nu/internal/mcp/tool"
 )
 
 // WithMCPServers sets the MCP servers for the agent
@@ -31,7 +34,7 @@ func WithLazyMCPConfigs(configs []LazyMCPConfig) Option {
 // - mcp://preset-name (for presets)
 func WithMCPURLs(urls ...string) Option {
 	return func(a *Agent) {
-		builder := mcp.NewBuilder()
+		builder := mcpbuilder.NewBuilder()
 		for _, url := range urls {
 			builder.AddServer(url)
 		}
@@ -69,7 +72,7 @@ func WithMCPURLs(urls ...string) Option {
 // WithMCPPresets adds predefined MCP server configurations
 func WithMCPPresets(presetNames ...string) Option {
 	return func(a *Agent) {
-		builder := mcp.NewBuilder()
+		builder := mcpbuilder.NewBuilder()
 		for _, preset := range presetNames {
 			builder.AddPreset(preset)
 		}
@@ -119,7 +122,7 @@ func (a *Agent) collectMCPTools(ctx context.Context) ([]contracts.Tool, error) {
 		// Convert MCP tools to agent tools
 		for _, mcpTool := range tools {
 			// Create a new MCPTool
-			tool := mcp.NewTool(mcpTool.Name, mcpTool.Description, mcpTool.Schema, server)
+			tool := tool.NewTool(mcpTool.Name, mcpTool.Description, mcpTool.Schema, server)
 			mcpTools = append(mcpTools, tool)
 		}
 	}
@@ -135,7 +138,7 @@ func (a *Agent) createLazyMCPTools() []contracts.Tool {
 	for _, config := range a.lazyMCPConfigs {
 		a.logger.Info(context.Background(), fmt.Sprintf("Processing MCP config: %s (type: %s)", config.Name, config.Type), nil)
 		// Create lazy server config
-		lazyServerConfig := mcp.LazyMCPServerConfig{
+		lazyServerConfig := mcpconfig.Config{
 			Name:              config.Name,
 			Type:              config.Type,
 			Command:           config.Command,
@@ -153,7 +156,7 @@ func (a *Agent) createLazyMCPTools() []contracts.Tool {
 
 			// Create a temporary server instance to discover tools
 			ctx := context.Background()
-			server, err := mcp.GetOrCreateServerFromCache(ctx, lazyServerConfig)
+			server, err := lazy.GetOrCreateServerFromCache(ctx, lazyServerConfig)
 			if err != nil {
 				a.logger.Error(ctx, fmt.Sprintf("Failed to create server for tool discovery: %v", err), nil)
 				continue
@@ -188,7 +191,7 @@ func (a *Agent) createLazyMCPTools() []contracts.Tool {
 
 				a.logger.Info(context.Background(), fmt.Sprintf("Creating lazy tool for %s: %s (Schema: %v)", discoveredTool.Name, discoveredTool.Description, discoveredTool.Schema), nil)
 
-				lazyTool := mcp.NewLazyMCPTool(
+				lazyTool := lazy.NewLazyMCPTool(
 					discoveredTool.Name,
 					discoveredTool.Description,
 					discoveredTool.Schema,
@@ -199,7 +202,7 @@ func (a *Agent) createLazyMCPTools() []contracts.Tool {
 		} else {
 			// Create a temporary server instance to discover metadata even for configured tools
 			ctx := context.Background()
-			server, err := mcp.GetOrCreateServerFromCache(ctx, lazyServerConfig)
+			server, err := lazy.GetOrCreateServerFromCache(ctx, lazyServerConfig)
 			if err != nil {
 				a.logger.Warn(context.Background(), fmt.Sprintf("Failed to create server for metadata discovery: %v", err), nil)
 			} else {
@@ -213,7 +216,7 @@ func (a *Agent) createLazyMCPTools() []contracts.Tool {
 			// Create lazy tools for each configured tool
 			for _, toolConfig := range config.Tools {
 				a.logger.Info(context.Background(), fmt.Sprintf("Creating tool: %s", toolConfig.Name), nil)
-				lazyTool := mcp.NewLazyMCPTool(
+				lazyTool := lazy.NewLazyMCPTool(
 					toolConfig.Name,
 					toolConfig.Description,
 					toolConfig.Schema,

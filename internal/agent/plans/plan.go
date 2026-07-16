@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"nu/internal/contracts"
+
+	"github.com/google/uuid"
 )
 
 // ExecutionPlanStatus represents the status of an execution plan

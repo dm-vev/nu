@@ -8,7 +8,7 @@ import (
 
 	"nu/internal/contracts"
 	"nu/internal/llm"
-	"nu/internal/memory"
+	memory "nu/internal/memory/conversation"
 	"nu/internal/multitenancy"
 )
 

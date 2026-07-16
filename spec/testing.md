@@ -76,7 +76,7 @@ Verification must prove:
 - no production Go package remains at the `internal/` root;
 - no compatibility package, alias facade, or forwarding wrapper preserves a
   deleted Nu or upstream SDK path;
-- concrete remote clients are owned by `internal/transport/*`, and
+- concrete remote clients are owned by `internal/transport/{remote,grpc/client,a2a/client}`, and
   `internal/agent` does not import concrete transport packages;
 - `internal/agent/{config,plans,guardrails,prompts}` use ordinary filenames and
   import neither root agent, transport, nor task; root agent imports neither

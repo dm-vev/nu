@@ -8,10 +8,10 @@ import (
 	"nu/internal/agent"
 	"nu/internal/config"
 	"nu/internal/llm/openai"
-	"nu/internal/memory"
+	memory "nu/internal/memory/conversation"
 	"nu/internal/multitenancy"
 	"nu/internal/telemetry"
-	"nu/internal/tools"
+	"nu/internal/tools/registry"
 	"nu/internal/tools/search"
 )
 
@@ -19,16 +19,16 @@ func main() {
 	cfg := config.Get()
 	logger := telemetry.NewLogger()
 	client := openai.NewClient(cfg.LLM.OpenAI.APIKey, openai.WithModel(cfg.LLM.OpenAI.Model), openai.WithLogger(logger))
-	registry := tools.NewRegistry()
+	toolRegistry := registry.NewRegistry()
 	if web := cfg.Tools.WebSearch; web.GoogleAPIKey != "" && web.GoogleSearchEngineID != "" {
-		registry.Register(search.NewWebSearch(web.GoogleAPIKey, web.GoogleSearchEngineID))
+		toolRegistry.Register(search.NewWebSearch(web.GoogleAPIKey, web.GoogleSearchEngineID))
 	}
 	conversation := memory.NewConversationBuffer()
 	researcher, err := agent.NewAgent(
 		agent.WithName("researcher"),
 		agent.WithLLM(client),
 		agent.WithMemory(conversation),
-		agent.WithTools(registry.List()...),
+		agent.WithTools(toolRegistry.List()...),
 		agent.WithSystemPrompt("Research the question and return a concise answer with sources when available."),
 		agent.WithMaxIterations(5),
 		agent.WithLogger(logger),

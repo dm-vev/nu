@@ -18,11 +18,11 @@ may simulate the old API.
 
 | Directory | Balanced API imports | Contract |
 |---|---|---|
-| `research` | `internal/agent`, `internal/config`, `internal/llm/openai`, `internal/memory`, `internal/multitenancy`, `internal/telemetry/otel`, `internal/tools/search` | Construct and run an OpenAI research agent with scoped conversation context. |
+| `research` | `internal/agent`, `internal/config`, `internal/llm/openai`, `internal/memory/conversation`, `internal/multitenancy`, `internal/telemetry/otel`, `internal/tools/{registry,search}` | Construct and run an OpenAI research agent with scoped conversation context. |
 | `providers` | `internal/config`, each applicable `internal/llm/*` provider package | Construct imported providers directly without making model requests. |
-| `tools` | `internal/tools` | Register and execute the root-owned calculator through the shared tool registry. |
-| `memory` | `internal/contracts`, `internal/memory`, `internal/multitenancy` | Store and read messages with organization and conversation context. |
-| `mcp` | `internal/mcp` | Build lazy stdio and HTTP configurations without connecting. |
+| `tools` | `internal/tools/{calculator,registry}` | Register and execute the Calculator through the tool registry. |
+| `memory` | `internal/contracts`, `internal/memory/conversation`, `internal/multitenancy` | Store and read messages with organization and conversation context. |
+| `mcp` | `internal/mcp/builder` | Build lazy stdio and HTTP configurations without connecting. |
 | `task` | `internal/task`, `internal/task/service` | Execute a local task through the task service API. |
 | `tracing` | `internal/telemetry/otel` | Create local OpenTelemetry spans without an exporter. |
 

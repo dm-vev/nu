@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestVLLMNewClient(t *testing.T) {

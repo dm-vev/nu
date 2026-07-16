@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"nu/internal/contracts"
-	"nu/internal/memory"
+	memoryfactory "nu/internal/memory/factory"
 )
 
 // GetMemory returns the memory instance (for use in custom functions)
@@ -66,7 +66,7 @@ func CreateMemoryFromConfig(memoryConfig map[string]interface{}, llmClient contr
 		return nil, fmt.Errorf("memory config is nil")
 	}
 
-	factory := memory.NewFactory()
+	factory := memoryfactory.NewFactory()
 	return factory.CreateMemory(memoryConfig, llmClient)
 }
 

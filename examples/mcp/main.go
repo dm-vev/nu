@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/mcp"
+	"nu/internal/mcp/builder"
 )
 
 func main() {
-	configs, err := mcp.NewBuilder().
+	configs, err := builder.NewBuilder().
 		AddStdioServer("local-tools", "go", "run", "./cmd/mcp-server").
 		AddHTTPServer("remote-tools", "https://mcp.example.test/v1").
 		BuildLazy()

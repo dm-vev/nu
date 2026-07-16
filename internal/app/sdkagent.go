@@ -6,7 +6,7 @@ import (
 	sdkagent "nu/internal/agent"
 	agent "nu/internal/agentui"
 	"nu/internal/contracts"
-	sdkmemory "nu/internal/memory"
+	sdkmemory "nu/internal/memory/conversation"
 	"nu/internal/telemetry"
 	"nu/internal/tools/coding"
 )

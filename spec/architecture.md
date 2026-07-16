@@ -12,8 +12,12 @@ cmd/nu
         -> config plans guardrails prompts
      -> internal/llm                 shared LLM types, retry, structured output
         -> openai anthropic gemini azureopenai deepseek ollama vllm
-     -> internal/tools               shared tool types/registry/orchestration
-        -> coding search image graphrag
+     -> internal/tools               tool domains
+        -> agent calculator registry coding search image graphrag
+     -> internal/memory              memory domains
+        -> conversation history redis vector factory
+     -> internal/mcp                 MCP domains
+        -> builder client config fault lazy preset prompt registry resource retry sampling schema tool transport
      -> internal/data                data package index only
         -> embedding weaviate sql storage
      -> internal/task                task models, executor, planner, contracts/options
@@ -21,8 +25,9 @@ cmd/nu
      -> internal/telemetry           shared telemetry types/orchestration
         -> otel langfuse
      -> internal/transport           shared transport types/orchestration
-        -> grpc -> pb
-        -> http a2a ui
+        -> remote
+        -> grpc/{client,server,microservice} -> pb
+        -> http/server a2a/{card,client,server,tool} ui/{server,trace}
      -> internal/agentui             SDK stream -> Nu TUI/RPC lifecycle
         -> internal/tui              TUI application orchestration
            -> core editor engine input message terminal components
@@ -42,22 +47,24 @@ The approved breaking target is exhaustive:
 app/{auth,cli}
 agent/{config,plans,guardrails,prompts}
 llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
-tools/{coding,search,image,graphrag}
+tools/{agent,calculator,registry,coding,search,image,graphrag}
+memory/{conversation,history,redis,vector,factory}
+mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
 data/{embedding,weaviate/{graph,vector},sql,storage}
 task/{service,workflow,orchestration}
 telemetry/{otel,langfuse}
-transport/{grpc/pb,http,a2a,ui}
+transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}
 tui/{core,editor,engine,input,message,terminal,components}
 
-standalone: agentui config contracts memory multitenancy mcp model rpc session testkit
+standalone: agentui config contracts multitenancy model rpc session testkit
 ```
 
 Every path is below `internal/`; `cmd/nu` remains the only command package. A
-listed root is also a package, but it owns shared types and cross-subpackage
-orchestration only. Provider-, backend-, transport-, or UI-specific behavior
-belongs in its listed cohesive subpackage. The hierarchy is not a compatibility
-layer: old paths are deleted as callers move, with no alias facade, forwarding
-wrapper, or duplicate tree. No feature or API behavior may be deleted.
+listed owner is a package boundary. Family roots such as `transport/grpc` are
+index-only directories; protocol behavior belongs in the listed domain package.
+The hierarchy is not a compatibility layer: old paths are deleted as callers
+move, with no alias facade, forwarding wrapper, or duplicate tree. No feature
+or API behavior may be deleted.
 
 ### Approved Ownership Map
 
@@ -69,7 +76,7 @@ wrapper, or duplicate tree. No feature or API behavior may be deleted.
 | `internal/agent/{config,plans,guardrails,prompts}` | cohesive agent policy/configuration families |
 | `internal/llm` | shared LLM contracts, retry, and structured-output orchestration |
 | `internal/llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}` | provider clients and provider-specific streaming; OpenAI-compatible variants stay with `openai`, and Claude-on-Bedrock stays with `anthropic` |
-| `internal/tools` | Registry, agent-as-tool orchestration, shared helpers, and Calculator |
+| `internal/tools/{agent,calculator,registry}` | agent-as-tool, Calculator, and registry domains |
 | `internal/tools/coding` | all seven cwd-scoped Nu filesystem/process tools and `Builtins(cwd)` |
 | `internal/tools/search` | WebSearch, GitHub content, and HuggingFace integrations |
 | `internal/tools/image` | image generation/edit tools and their sessions |
@@ -86,8 +93,14 @@ wrapper, or duplicate tree. No feature or API behavior may be deleted.
 | `internal/task/orchestration` | LLM/code/workflow orchestrators, handoffs, registries, and routers |
 | `internal/telemetry` | shared telemetry contracts and fan-out orchestration |
 | `internal/telemetry/{otel,langfuse}` | OpenTelemetry/logging and Langfuse integrations |
-| `internal/transport` | transport-neutral shared types and construction orchestration |
-| `internal/transport/{grpc,http,a2a,ui}` | concrete transport families and remote clients |
+| `internal/transport` | transport package marker and transport-neutral ownership |
+| `internal/transport/remote` | remote-agent construction and gRPC client injection |
+| `internal/transport/grpc/client` | remote-agent gRPC client and stream callbacks |
+| `internal/transport/grpc/server` | gRPC agent service and protocol handlers |
+| `internal/transport/grpc/microservice` | local agent microservice lifecycle and management |
+| `internal/transport/a2a/{card,client,server,tool}` | A2A card, client, server, and remote-tool domains |
+| `internal/transport/http/server` | HTTP agent endpoints and SSE responses |
+| `internal/transport/ui/{server,trace}` | UI HTTP server and trace collection |
 
 The agent split is directional: root `agent` owns every factory that constructs
 an `*agent.Agent` and imports `agent/config` and `agent/plans`. `agent/config`
@@ -103,7 +116,9 @@ imports `internal/transport` or `internal/task`.
 | `internal/tui` | terminal application state, slash dispatch, and cross-subpackage orchestration |
 | `internal/tui/{core,editor,engine,input,message,terminal}` | cohesive TUI runtime layers |
 | `internal/tui/components` | every reusable TUI component; no component-per-package tree |
-| standalone packages | `agentui`, `config`, `contracts`, `memory`, `multitenancy`, `mcp`, `model`, `rpc`, `session`, `testkit` |
+| `internal/memory/{conversation,history,redis,vector,factory}` | conversation context/history, Redis, vector retrieval, and config construction |
+| `internal/mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}` | MCP client, transports, retry, lazy servers, management, and protocol domains |
+| standalone packages | `agentui`, `config`, `contracts`, `multitenancy`, `model`, `rpc`, `session`, `testkit` |
 
 Files inside a subpackage use ordinary responsibility names such as `client.go`,
 `stream.go`, and `client_test.go`; they do not repeat the package/provider name.
@@ -117,16 +132,16 @@ extracted to satisfy a size or naming preference.
 | Model/tool agent loop | `internal/agent` SDK fork |
 | LLM clients and provider streaming | `internal/llm/*` SDK fork |
 | Retry and structured-output orchestration | `internal/llm` |
-| Conversation memory and MCP client support | `internal/memory`, `internal/mcp` |
+| Conversation memory and MCP client support | `internal/memory/{conversation,history,redis,vector,factory}`, `internal/mcp/*` |
 | Data and retrieval | `internal/data/{embedding,weaviate/{graph,vector},sql,storage}` |
 | SDK diagnostics and tracing | `internal/telemetry`, `internal/telemetry/*` |
 | Nu process composition, auth/CLI, and model selection | `internal/app`, `internal/app/*`, `internal/model` |
-| SDK tools and Nu coding tools | `internal/tools`, `internal/tools/*` |
+| SDK tools and Nu coding tools | `internal/tools/{agent,calculator,registry,coding,search,image,graphrag}` |
 | TUI/RPC busy, abort, event translation | `internal/agentui` |
 | Terminal UI and slash commands | `internal/tui`, `internal/tui/*` |
 | Local JSONL RPC | `internal/rpc` |
 | Branchable local sessions and compaction | `internal/session` |
-| A2A, gRPC, HTTP/service, UI transport, and remote clients | `internal/transport/*` |
+| A2A, gRPC, HTTP/service, UI transport, and remote clients | `internal/transport/{remote,grpc/*,http/server,a2a/*,ui/*}` |
 | Generated transport protobuf | `internal/transport/grpc/pb` |
 
 One concern has one runtime owner. `internal/agentui` cannot invoke an LLM or a

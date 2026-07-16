@@ -8,12 +8,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/option"
 	"nu/internal/contracts"
 	"nu/internal/llm"
 	provider "nu/internal/llm/openai"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 func TestOpenAIGenerate(t *testing.T) {

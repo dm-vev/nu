@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	agentconfig "nu/internal/agent/config"
 	"nu/internal/contracts"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // MockLLM is a mock implementation of contracts.LLM for testing

@@ -3,9 +3,10 @@ package azureopenai
 import (
 	"context"
 
-	"github.com/openai/openai-go/v2"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
 )
 
 // azureOpenAIMessageHistoryBuilder builds Azure OpenAI-compatible message history from memory and current prompt

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"nu/internal/contracts"
+
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/shared"
-	"nu/internal/contracts"
 )
 
 func (c *Client) generateFinalToolResponse(

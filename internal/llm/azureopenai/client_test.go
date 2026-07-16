@@ -7,10 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/option"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 func TestAzureOpenAINewClient(t *testing.T) {

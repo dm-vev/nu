@@ -11,8 +11,8 @@ limit the complete imported SDK feature set required by `NUF-212`.
 | Gemini | `internal/llm/gemini` | connected |
 | Claude on Bedrock | `internal/llm/anthropic` | connected |
 | Nu coding tools | `internal/tools/coding` -> `contracts.Tool` | connected |
-| Bounded conversation memory | `internal/memory` | connected |
-| MCP client tools/resources/prompts over required transports | `internal/mcp` | specified; configuration exposure pending |
+| Bounded conversation memory | `internal/memory/conversation` | connected |
+| MCP client tools/resources/prompts over required transports | `internal/mcp/{client,transport}` | specified; configuration exposure pending |
 | Retry | `internal/llm` | connected through SDK |
 | Diagnostics-safe logging and tracing | `internal/telemetry/otel` | connected |
 | Branchable Nu sessions | `internal/session` | Nu-owned, partial app integration |

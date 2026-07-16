@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"nu/internal/llm"
 	"nu/internal/telemetry"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 // AnthropicClient implements the LLM interface for Anthropic

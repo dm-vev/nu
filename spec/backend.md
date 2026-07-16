@@ -61,10 +61,10 @@ the pinned upstream commit; do not patch the generated output instead.
 | app | move credential behavior to `app/auth` and CLI parsing/help/request behavior to `app/cli` | keep `app` as process composition/orchestration |
 | agent | move deployment config, plans, guardrails, and prompts to `agent/{config,plans,guardrails,prompts}` | keep agent runtime shared types/orchestration at the root |
 | LLM | move provider implementations to the seven approved `llm/*` packages | use ordinary names such as `client.go`; retain retry/structured-output orchestration at the root |
-| tools and data | move cohesive implementations to `tools/{coding,search,image,graphrag}` and `data/{embedding,weaviate/{graph,vector},sql,storage}` | avoid both one-helper packages and an unrelated flat implementation package |
+| tools, memory, and data | move cohesive implementations to `tools/{agent,calculator,registry,coding,search,image,graphrag}`, `memory/{conversation,history,redis,vector,factory}`, and `data/{embedding,weaviate/{graph,vector},sql,storage}` | avoid both one-helper packages and unrelated flat implementation packages |
 | task | keep models/executors/planners at the root; move services/adapters, workflows, and orchestrators/handoffs/routers to `task/{service,workflow,orchestration}` | completed with direct imports, ordinary filenames, and no root facade |
 | telemetry | move implementations to `telemetry/{otel,langfuse}` | preserve all imported diagnostics behavior |
-| transport | move concrete families to `transport/{grpc,http,a2a,ui}` while retaining transport-neutral orchestration at the root | retain remote behavior without an `agent` import cycle |
+| transport | separate remote wiring, gRPC client/server/microservice, HTTP server, A2A domains, and UI server/tracing under `transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}` | retain remote behavior without an `agent` import cycle |
 | generated protobuf | move schema and generated output from `internal/transportpb` to `internal/transport/grpc/pb` by regeneration | **IMPLEMENTED**; target owns all transport protobuf and generated Go is never hand-edited |
 | TUI | move runtime layers to `tui/{core,editor,engine,input,message,terminal}` and all reusable components to one `tui/components` package | remove prefixed flat filenames without recreating component-per-package fragmentation |
 

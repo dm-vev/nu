@@ -61,7 +61,11 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 	allowed := map[string]bool{
 		"agent": true, "agentui": true, "app": true, "app/auth": true, "app/cli": true, "config": true,
 		"agent/config": true, "agent/plans": true, "agent/guardrails": true, "agent/prompts": true,
-		"contracts": true, "data": true, "llm": true, "mcp": true,
+		"contracts": true, "data": true, "llm": true,
+		"mcp/builder": true, "mcp/client": true, "mcp/config": true, "mcp/fault": true,
+		"mcp/lazy": true, "mcp/preset": true, "mcp/prompt": true, "mcp/registry": true,
+		"mcp/resource": true, "mcp/retry": true, "mcp/sampling": true, "mcp/schema": true,
+		"mcp/testkit": true, "mcp/tool": true, "mcp/transport": true,
 		"data/embedding": true, "data/sql": true, "data/storage": true,
 		"data/weaviate/graph": true, "data/weaviate/graph/entity": true,
 		"data/weaviate/graph/extraction": true, "data/weaviate/graph/relationship": true,
@@ -69,11 +73,17 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		"data/weaviate/vector/metadata": true,
 		"llm/anthropic":                 true, "llm/azureopenai": true, "llm/deepseek": true,
 		"llm/gemini": true, "llm/ollama": true, "llm/openai": true, "llm/vllm": true,
-		"memory": true, "model": true, "multitenancy": true, "rpc": true,
+		"memory/conversation": true, "memory/factory": true, "memory/history": true,
+		"memory/redis": true, "memory/vector": true,
+		"model": true, "multitenancy": true, "rpc": true,
 		"session": true, "task": true, "telemetry": true, "telemetry/otel": true, "telemetry/langfuse": true, "testkit": true,
 		"task/service": true, "task/workflow": true, "task/orchestration": true,
-		"tools": true, "transport": true, "transport/a2a": true, "transport/grpc": true,
-		"transport/grpc/pb": true, "transport/http": true, "transport/ui": true, "tui": true,
+		"tools/agent": true, "tools/calculator": true, "tools/registry": true,
+		"transport": true, "transport/remote": true,
+		"transport/a2a/card": true, "transport/a2a/client": true, "transport/a2a/server": true,
+		"transport/a2a/tool": true, "transport/grpc/client": true, "transport/grpc/server": true,
+		"transport/grpc/microservice": true, "transport/grpc/pb": true,
+		"transport/http/server": true, "transport/ui/server": true, "transport/ui/trace": true, "tui": true,
 		"tui/ansi": true, "tui/core": true, "tui/editor": true, "tui/engine": true,
 		"tui/input": true, "tui/message": true, "tui/terminal": true, "tui/components": true,
 		"tools/coding": true, "tools/search": true, "tools/image": true, "tools/graphrag": true,
@@ -106,6 +116,13 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		}
 		if !seen[dir] {
 			t.Errorf("missing internal package: %s", dir)
+		}
+	}
+	for _, dir := range []string{
+		"memory", "mcp", "tools", "transport/a2a", "transport/grpc", "transport/http", "transport/ui",
+	} {
+		if seen[dir] {
+			t.Errorf("domain family root must not contain production Go files: %s", dir)
 		}
 	}
 }

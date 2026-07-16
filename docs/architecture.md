@@ -9,10 +9,12 @@ cmd/nu -> internal/app
             -> agent/{config,plans,guardrails,prompts}
             -> llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
             -> tools/{coding,search,image,graphrag}
+            -> memory/{conversation,history,redis,vector,factory}
+            -> mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
             -> data/{embedding,weaviate/{graph,vector},sql,storage}
             -> task/{service,workflow,orchestration}
             -> telemetry/{otel,langfuse}
-            -> transport/{grpc/pb,http,a2a,ui}
+            -> transport/{remote,a2a/{card,client,server,tool},grpc/{client,server,microservice,pb},http/server,ui/{server,trace}}
             -> internal/agentui     SDK stream to Nu event adapter
                  -> tui/{core,editor,engine,input,message,terminal,components}
                  -> internal/rpc
@@ -25,14 +27,16 @@ integration, guardrails, tracing, and supporting families. No feature is
 deleted. There is no nested SDK directory, frozen upstream folder mirror, old
 `internal/provider` backend, or wrapper for a superseded import path.
 
-The exact approved roots/subpackages are shown above. Standalone packages are
-`agentui`, `config`, `contracts`, `memory`, `multitenancy`, `mcp`, `model`,
-`rpc`, `session`, and `testkit`; `cmd/nu` is the only command package. Root
+The exact approved roots/subpackages are shown above. Transport-neutral remote
+construction lives in `transport/remote`; the `transport` root is only the
+package marker. Standalone packages are
+`agentui`, `config`, `contracts`, `multitenancy`, `model`, `rpc`, `session`,
+and `testkit`; `cmd/nu` is the only command package. Root
 packages own shared types and cross-subpackage orchestration only.
 
-`internal/tools` owns Registry, Calculator, shared helpers, and agent-as-tool
-orchestration. Its `coding`, `search`, `image`, and `graphrag` children own their
-implementations directly; root does not re-export them. `internal/agent` owns
+`internal/tools/{agent,calculator,registry}` own agent-as-tool, Calculator, and
+registry domains. Its `coding`, `search`, `image`, and `graphrag` children own
+their implementations directly; there is no root tools facade. `internal/agent` owns
 model/tool execution. `internal/agentui` owns only busy, abort,
 reset/model-swap lifecycle and translates SDK events for the existing TUI/RPC.
 Nu coding tools and `Builtins(cwd)` stay together in `internal/tools/coding`. TUI runtime
@@ -53,9 +57,11 @@ stores with focused child packages, SQL owns PostgreSQL/Supabase, and storage
 owns its contract plus local/GCS backends.
 The root data package is an index, not a facade. Task, telemetry, and transport
 implementations follow their listed cohesive packages. Generated
-protobuf lives only in `internal/transport/grpc/pb`. Concrete remote clients
-live outside `internal/agent`; app injects them through transport-neutral contracts so agent and
-transport do not form an import cycle.
+protobuf lives only in `internal/transport/grpc/pb`. Remote-agent wiring lives
+in `internal/transport/remote`; protocol clients and servers live in their
+transport domain packages. Concrete remote clients stay outside
+`internal/agent`; app injects them through transport-neutral contracts so
+agent and transport do not form an import cycle.
 
 Task services and compatibility adapters live in `task/service`, workflow models
 and execution live in `task/workflow`, and orchestrators, handoffs, and routers

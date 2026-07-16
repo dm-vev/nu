@@ -10,9 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"nu/internal/contracts"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"nu/internal/contracts"
 )
 
 // Run with: go test -tags=integration -run TestCacheIntegration -v ./pkg/llm/anthropic/...

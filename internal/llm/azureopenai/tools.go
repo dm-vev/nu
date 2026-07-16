@@ -6,10 +6,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/shared"
 	"nu/internal/contracts"
 	"nu/internal/multitenancy"
+
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/shared"
 )
 
 type azureOpenAIToolExecutionState struct {

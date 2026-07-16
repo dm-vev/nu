@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"nu/internal/contracts"
-	"nu/internal/memory"
+	memory "nu/internal/memory/conversation"
 	"nu/internal/multitenancy"
 )
 

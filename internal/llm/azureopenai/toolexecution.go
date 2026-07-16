@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/openai/openai-go/v2"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
 )
 
 func (c *Client) processToolCalls(

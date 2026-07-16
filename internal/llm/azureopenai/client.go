@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/openai/openai-go/v2"
-	"github.com/openai/openai-go/v2/option"
 	"nu/internal/llm"
 	"nu/internal/telemetry"
+
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 // Define a custom type for context keys to avoid collisions

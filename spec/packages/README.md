@@ -88,13 +88,15 @@ The exhaustive target is:
 app/{auth,cli}
 agent/{config,plans,guardrails,prompts}
 llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
-tools/{coding,search,image,graphrag}
+tools/{agent,calculator,registry,coding,search,image,graphrag}
+memory/{conversation,history,redis,vector,factory}
+mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
 data/{embedding,weaviate/{graph,vector},sql,storage}
 task/{service,workflow,orchestration}
 telemetry/{otel,langfuse}
-transport/{grpc/pb,http,a2a,ui}
+transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}
 tui/{core,editor,engine,input,message,terminal,components}
-standalone: agentui config contracts memory multitenancy mcp model rpc session testkit
+standalone: agentui config contracts multitenancy model rpc session testkit
 ```
 
 - A package is one domain or dependency boundary. Do not preserve an upstream

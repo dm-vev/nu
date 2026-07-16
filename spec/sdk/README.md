@@ -12,13 +12,15 @@ behavior is deleted, and no compatibility wrapper preserves an old import path.
 app/{auth,cli}
 agent/{config,plans,guardrails,prompts}
 llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
-tools/{coding,search,image,graphrag}
+tools/{agent,calculator,registry,coding,search,image,graphrag}
+memory/{conversation,history,redis,vector,factory}
+mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
 data/{embedding,weaviate/{graph,vector},sql,storage}
 task/{service,workflow,orchestration}
 telemetry/{otel,langfuse}
-transport/{grpc/pb,http,a2a,ui}
+transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}
 tui/{core,editor,engine,input,message,terminal,components}
-standalone: agentui config contracts memory multitenancy mcp model rpc session testkit
+standalone: agentui config contracts multitenancy model rpc session testkit
 ```
 
 | Imported feature family | Approved owner | Requirement |
@@ -29,10 +31,10 @@ standalone: agentui config contracts memory multitenancy mcp model rpc session t
 | SDK configuration not specific to one agent | `internal/config` | `NUF-200`, `NUF-212` |
 | Shared LLM types, retry, and structured-output orchestration | `internal/llm` | `NUF-201`, `NUF-203`, `NUF-212` |
 | Providers and provider streaming | `internal/llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}` | `NUF-203`, `NUF-212` |
-| Conversation memory | `internal/memory` | `NUF-210`, `NUF-212` |
+| Conversation memory | `internal/memory/{conversation,history,redis,vector,factory}` | `NUF-210`, `NUF-212` |
 | Tenancy | `internal/multitenancy` | `NUF-212` |
-| MCP client/server, transport, sampling, and management | `internal/mcp` | `NUF-211`, `NUF-212` |
-| Shared tool types, registry, and execution orchestration | `internal/tools` | `NUF-204`, `NUF-211`, `NUF-212` |
+| MCP client/server, transport, sampling, and management | `internal/mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}` | `NUF-211`, `NUF-212` |
+| Agent tools, Calculator, and registry | `internal/tools/{agent,calculator,registry}` | `NUF-204`, `NUF-211`, `NUF-212` |
 | Coding, search, image, and GraphRAG tools | `internal/tools/{coding,search,image,graphrag}` | `NUF-204`, `NUF-212` |
 | Data package index, with no forwarding API | `internal/data` | `NUF-210`, `NUF-212` |
 | Embedders and generic metadata filtering/evaluation | `internal/data/embedding` | `NUF-210`, `NUF-212` |
@@ -46,8 +48,8 @@ standalone: agentui config contracts memory multitenancy mcp model rpc session t
 | LLM/code/workflow orchestrators, handoffs, registries, and routers | `internal/task/orchestration` | `NUF-212` |
 | Shared telemetry contracts and fan-out | `internal/telemetry` | `NUF-201`, `NUF-212` |
 | OpenTelemetry/logging and Langfuse | `internal/telemetry/{otel,langfuse}` | `NUF-201`, `NUF-212` |
-| Shared transport types/construction | `internal/transport` | `NUF-212` |
-| gRPC, HTTP/microservice, A2A, and UI transports | `internal/transport/{grpc,http,a2a,ui}` | `NUF-212` |
+| Transport package marker and neutral ownership | `internal/transport` | `NUF-212` |
+| Remote wiring, gRPC, HTTP, A2A, and UI transport domains | `internal/transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}` | `NUF-212` |
 | Generated protobuf only | `internal/transport/grpc/pb` | `NUF-212` |
 
 Nu-owned `internal/app`, `internal/app/auth`, `internal/app/cli`,
@@ -64,7 +66,7 @@ package at the `internal/` root is part of the approved target. The complete
 imported source and owning tests, rather than table granularity, define the
 feature baseline.
 
-Concrete remote clients belong to their `internal/transport/*` family, while
+Concrete remote clients belong to `internal/transport/{remote,grpc/client,a2a/client}`, while
 `internal/agent` consumes only transport-neutral contracts supplied at
 composition. Generated protobuf belongs to `internal/transport/grpc/pb`; no
 other package owns generated protobuf.

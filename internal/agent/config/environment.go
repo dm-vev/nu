@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"nu/internal/config"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"nu/internal/config"
 )
 
 // LoadDeploymentConfigFromEnvironment loads deployment configuration from environment variables.

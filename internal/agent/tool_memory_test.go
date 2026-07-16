@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"nu/internal/contracts"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // MockMemory implements the Memory interface for testing

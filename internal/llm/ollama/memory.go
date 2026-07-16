@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"nu/internal/contracts"
-	"nu/internal/memory"
+	memory "nu/internal/memory/history"
 )
 
 // buildPromptWithMemory builds a prompt with memory context for prompt-based models

@@ -602,11 +602,14 @@ that pinned baseline remains available; this is a structural reorganization,
 not a feature-reduction project. The final target is the exact balanced hierarchy
 in NUA-011: `app/{auth,cli}`; `agent/{config,plans,guardrails,prompts}`;
 `llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}`;
-`tools/{coding,search,image,graphrag}`; `data/{embedding,weaviate/{graph,vector},sql,storage}`;
+`tools/{agent,calculator,registry,coding,search,image,graphrag}`;
+`memory/{conversation,history,redis,vector,factory}`;
+`mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}`;
+`data/{embedding,weaviate/{graph,vector},sql,storage}`;
 `task/{service,workflow,orchestration}`; `telemetry/{otel,langfuse}`;
-`transport/{grpc/pb,http,a2a,ui}`; and
+`transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}`; and
 `tui/{core,editor,engine,input,message,terminal,components}`. Standalone packages
-are exactly `agentui`, `config`, `contracts`, `memory`, `multitenancy`, `mcp`,
+are exactly `agentui`, `config`, `contracts`, `multitenancy`,
 `model`, `rpc`, `session`, and `testkit`, plus `cmd/nu`. Superseded paths are
 deleted. Old paths receive no compatibility wrappers, aliases, facade package,
 or duplicate backend. No feature or API behavior is deleted. The pinned commit
@@ -665,9 +668,8 @@ Tests:
 
 The seven Nu coding tools and `Builtins(cwd)` live together in
 `internal/tools/coding`; imported SDK tools live in the cohesive
-`internal/tools/{search,image,graphrag}` families. Root `internal/tools` owns
-Registry, Calculator, shared helpers, and agent-as-tool orchestration without
-re-exporting child packages. The Nu tools implement
+`internal/tools/{search,image,graphrag}` families. `internal/tools/{agent,calculator,registry}`
+own agent-as-tool, Calculator, and registry domains without a root facade. The Nu tools implement
 `internal/contracts.Tool` and are
 supplied to the SDK agent. Their filesystem/process behavior and cwd safety
 remain unchanged; the old provider/tool-loop contracts and old `internal/tool`
@@ -683,7 +685,7 @@ Tests:
 
 The active Nu agent uses the SDK bounded in-process conversation memory and Nu
 supplies stable organization/conversation IDs. All other memory behavior remains
-in `internal/memory`; embedding, vector store, datastore, storage, Redis, and
+in `internal/memory/{conversation,history,redis,vector,factory}`; embedding, vector store, datastore, storage, and
 retrieval behavior lives in `internal/data/{embedding,weaviate/{graph,vector},sql,storage}`.
 Embedding owns embedders and generic metadata evaluation; Weaviate owns distinct
 GraphRAG `Store` and vector `Store` implementations in separate
@@ -706,7 +708,7 @@ available at the SDK layer. Nu headless modes keep SDK diagnostics off stdout.
 
 Tests:
 
-- all imported `internal/mcp` tests;
+- all imported `internal/mcp/*` tests;
 - `TestNUF170JSONModeStdoutIsOnlyJSONL`.
 
 ### NUF-212 Full Imported SDK Feature Retention

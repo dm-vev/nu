@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"nu/internal/contracts"
+
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 )
 
 // executeBedrockStreaming handles streaming for AWS Bedrock using the AWS SDK

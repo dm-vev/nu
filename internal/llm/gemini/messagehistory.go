@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"google.golang.org/genai"
 	"nu/internal/contracts"
 	"nu/internal/telemetry"
+
+	"google.golang.org/genai"
 )
 
 // geminiMessageHistoryBuilder builds Gemini-compatible message history from memory and current prompt

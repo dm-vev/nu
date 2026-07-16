@@ -3,8 +3,9 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"nu/internal/contracts"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFormatSystemPromptFromConfig(t *testing.T) {
