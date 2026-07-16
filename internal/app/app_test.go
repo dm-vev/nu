@@ -12,10 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/agent"
-	"nu/internal/cli"
+	"nu/internal/contracts"
 	"nu/internal/model"
-	"nu/internal/provider"
 	"nu/internal/testkit"
 )
 
@@ -35,25 +33,24 @@ func TestAppRunHelp(t *testing.T) {
 
 func TestAppRunPrintModeUsesInjectedRuntime(t *testing.T) {
 	var stdout bytes.Buffer
-	fake := testkit.NewScriptedProvider(
-		provider.Event{Type: provider.EventStart},
-		provider.Event{Type: provider.EventText, Delta: "ok"},
-		provider.Event{Type: provider.EventDone},
+	fake := testkit.NewScriptedAgent(
+		contracts.AgentStreamEvent{Type: contracts.AgentEventContent, Content: "ok"},
+		contracts.AgentStreamEvent{Type: contracts.AgentEventComplete},
 	)
 	code := Run(context.Background(), Options{
-		Args:     []string{"--print", "hello"},
-		Stdout:   &stdout,
-		Provider: fake,
+		Args:   []string{"--print", "hello"},
+		Stdout: &stdout,
+		Runner: fake,
 	})
 	if code != exitOK {
 		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
 	}
-	requests := fake.Requests()
-	if len(requests) != 1 {
-		t.Fatalf("Provider requests = %d, want 1", len(requests))
+	prompts := fake.Prompts()
+	if len(prompts) != 1 {
+		t.Fatalf("Agent prompts = %d, want 1", len(prompts))
 	}
-	if requests[0].Messages[0].Content != "hello" {
-		t.Fatalf("Provider prompt = %q, want hello", requests[0].Messages[0].Content)
+	if prompts[0] != "hello" {
+		t.Fatalf("Agent prompt = %q, want hello", prompts[0])
 	}
 	if stdout.String() != "ok\n" {
 		t.Fatalf("Run stdout = %q, want ok", stdout.String())
@@ -63,17 +60,16 @@ func TestAppRunPrintModeUsesInjectedRuntime(t *testing.T) {
 func TestNUF170JSONModeStdoutIsOnlyJSONL(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	fake := testkit.NewScriptedProvider(
-		provider.Event{Type: provider.EventStart},
-		provider.Event{Type: provider.EventText, Delta: "ok"},
-		provider.Event{Type: provider.EventDone},
+	fake := testkit.NewScriptedAgent(
+		contracts.AgentStreamEvent{Type: contracts.AgentEventContent, Content: "ok"},
+		contracts.AgentStreamEvent{Type: contracts.AgentEventComplete},
 	)
 	code := Run(context.Background(), Options{
 		Args:      []string{"--mode", "json", "hello"},
 		CWD:       "/tmp/nu-test",
 		Stdout:    &stdout,
 		Stderr:    &stderr,
-		Provider:  fake,
+		Runner:    fake,
 		SessionID: "s1",
 	})
 	if code != exitOK {
@@ -109,61 +105,17 @@ func TestNUF170JSONModeStdoutIsOnlyJSONL(t *testing.T) {
 	}
 }
 
-func TestNUF170JSONModeFeedsToolResultBackToProvider(t *testing.T) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	fake := testkit.NewScriptedProviderScripts(
-		[]provider.Event{
-			{Type: provider.EventStart},
-			{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "fake"},
-			{Type: provider.EventToolCallEnd, Index: 0},
-			{Type: provider.EventDone, StopReason: "tool_use"},
-		},
-		[]provider.Event{
-			{Type: provider.EventStart},
-			{Type: provider.EventText, Delta: "ok"},
-			{Type: provider.EventDone},
-		},
-	)
-	code := Run(context.Background(), Options{
-		Args:     []string{"--mode", "json", "hello"},
-		CWD:      "/tmp/nu-test",
-		Stdout:   &stdout,
-		Stderr:   &stderr,
-		Provider: fake,
-		Tools: map[string]agent.ToolFunc{
-			"fake": func(context.Context, agent.ToolCall) (agent.ToolResult, error) {
-				return agent.ToolResult{Content: "tool result"}, nil
-			},
-		},
-	})
-	if code != exitOK {
-		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
-	}
-	requests := fake.Requests()
-	if len(requests) != 2 {
-		t.Fatalf("Provider requests = %d, want 2", len(requests))
-	}
-	lastMessage := requests[1].Messages[len(requests[1].Messages)-1]
-	if lastMessage.Role != "tool" || lastMessage.Content != "tool result" {
-		t.Fatalf("Second request last message = %#v, want tool result", lastMessage)
-	}
-	if !strings.Contains(stdout.String(), `"type":"tool_end"`) {
-		t.Fatalf("JSON stdout missing tool_end event: %q", stdout.String())
-	}
-}
-
 func TestNUF002DispatchRPCMode(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	fake := testkit.NewScriptedProvider()
+	fake := testkit.NewScriptedAgent()
 
 	code := Run(context.Background(), Options{
-		Args:     []string{"--mode", "rpc"},
-		Stdin:    strings.NewReader(`{"id":"s","type":"get_state"}` + "\n" + `{"id":"q","type":"shutdown"}` + "\n"),
-		Stdout:   &stdout,
-		Stderr:   &stderr,
-		Provider: fake,
+		Args:   []string{"--mode", "rpc"},
+		Stdin:  strings.NewReader(`{"id":"s","type":"get_state"}` + "\n" + `{"id":"q","type":"shutdown"}` + "\n"),
+		Stdout: &stdout,
+		Stderr: &stderr,
+		Runner: fake,
 	})
 	if code != exitOK {
 		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
@@ -182,58 +134,21 @@ func TestNUF002DispatchRPCMode(t *testing.T) {
 func TestNUF002DispatchInteractiveMode(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
-	fake := testkit.NewScriptedProvider()
+	fake := testkit.NewScriptedAgent()
 
 	code := Run(context.Background(), Options{
-		Args:     []string{"--mode", "interactive"},
-		Stdin:    strings.NewReader("/quit\n"),
-		Stdout:   &stdout,
-		Stderr:   &stderr,
-		Provider: fake,
-		CWD:      "/tmp/nu-test",
+		Args:   []string{"--mode", "interactive"},
+		Stdin:  strings.NewReader("/quit\n"),
+		Stdout: &stdout,
+		Stderr: &stderr,
+		Runner: fake,
+		CWD:    "/tmp/nu-test",
 	})
 	if code != exitOK {
 		t.Fatalf("Run exit code = %d, want %d; stderr=%q", code, exitOK, stderr.String())
 	}
 	if !strings.Contains(stdout.String(), "Nu") || !strings.Contains(stdout.String(), "/tmp/nu-test") {
 		t.Fatalf("interactive stdout = %q, want rendered frame", stdout.String())
-	}
-}
-
-func TestJSONModeUsesBuiltinToolsByDefault(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("from built-in"), 0o644); err != nil {
-		t.Fatalf("WriteFile error = %v", err)
-	}
-	var stdout bytes.Buffer
-	fake := testkit.NewScriptedProviderScripts(
-		[]provider.Event{
-			{Type: provider.EventStart},
-			{Type: provider.EventToolCallStart, Index: 0, ToolCallID: "call-1", ToolName: "read"},
-			{Type: provider.EventToolCallDelta, Index: 0, Delta: `{"path":"a.txt"}`},
-			{Type: provider.EventToolCallEnd, Index: 0},
-			{Type: provider.EventDone, StopReason: "tool_use"},
-		},
-		[]provider.Event{
-			{Type: provider.EventStart},
-			{Type: provider.EventText, Delta: "ok"},
-			{Type: provider.EventDone},
-		},
-	)
-
-	code := Run(context.Background(), Options{
-		Args:     []string{"--mode", "json", "read"},
-		CWD:      dir,
-		Stdout:   &stdout,
-		Provider: fake,
-	})
-	if code != exitOK {
-		t.Fatalf("Run exit code = %d, want %d", code, exitOK)
-	}
-	requests := fake.Requests()
-	lastMessage := requests[1].Messages[len(requests[1].Messages)-1]
-	if !strings.Contains(lastMessage.Content, "from built-in") {
-		t.Fatalf("tool result = %q, want built-in read content", lastMessage.Content)
 	}
 }
 
@@ -354,8 +269,7 @@ func TestPrintModeBuildsProviderFromCLI(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+		writeOpenAIStream(w)
 	}))
 	defer server.Close()
 
@@ -396,8 +310,7 @@ func TestPrintModeBuildsFireworksProviderFromGlobalModels(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+		writeOpenAIStream(w)
 	}))
 	defer server.Close()
 
@@ -445,8 +358,7 @@ func TestPrintModeBuildsProviderFromSettings(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+		writeOpenAIStream(w)
 	}))
 	defer server.Close()
 
@@ -496,8 +408,7 @@ func TestSavedModelSelectionRestoresDefault(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n"))
-		_, _ = w.Write([]byte("data: {\"choices\":[{\"finish_reason\":\"stop\"}]}\n\n"))
+		writeOpenAIStream(w)
 	}))
 	defer server.Close()
 
@@ -543,13 +454,19 @@ func TestSelectModelUsesOpenAIDefaultWhenAPIKeyMarksAllProviders(t *testing.T) {
 	authState := map[string]bool{}
 	markConfiguredProviders(authState, entries)
 
-	selected, err := selectModel(registry, authState, cli.Request{}, providerSettingsFile{})
+	selected, err := selectModel(registry, authState, Request{}, providerSettingsFile{})
 	if err != nil {
 		t.Fatalf("selectModel error = %v", err)
 	}
 	if selected.Provider != "openai" || selected.ID != "gpt-5.5" {
 		t.Fatalf("selected = %s/%s, want openai/gpt-5.5", selected.Provider, selected.ID)
 	}
+}
+
+func writeOpenAIStream(w http.ResponseWriter) {
+	_, _ = w.Write([]byte("data: {\"id\":\"chatcmpl-test\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"local\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"ok\"},\"finish_reason\":null}]}\n\n"))
+	_, _ = w.Write([]byte("data: {\"id\":\"chatcmpl-test\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"local\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n"))
+	_, _ = w.Write([]byte("data: [DONE]\n\n"))
 }
 
 func TestSelectModelUsesOpenAIDefaultForProviderOnly(t *testing.T) {
@@ -559,7 +476,7 @@ func TestSelectModelUsesOpenAIDefaultForProviderOnly(t *testing.T) {
 	}
 	authState := map[string]bool{"openai": true}
 
-	selected, err := selectModel(registry, authState, cli.Request{Provider: "openai"}, providerSettingsFile{})
+	selected, err := selectModel(registry, authState, Request{Provider: "openai"}, providerSettingsFile{})
 	if err != nil {
 		t.Fatalf("selectModel error = %v", err)
 	}

@@ -2,201 +2,89 @@ package agent
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"strings"
-	"sync"
+	"time"
 
-	"nu/internal/provider"
+	agentconfig "nu/internal/agent/config"
+	"nu/internal/agent/plans"
+	"nu/internal/contracts"
+	"nu/internal/telemetry"
 )
 
-// ErrBusy is returned when a prompt is already running.
-var ErrBusy = errors.New("agent busy")
-
-// Options configures an Agent.
-type Options struct {
-	Provider   provider.Streamer
-	ProviderID string
-	API        string
-	Model      string
-	Tools      map[string]ToolFunc
-	ToolDefs   []provider.ToolDefinition
-	Emit       func(Event)
+// LazyMCPConfig holds configuration for lazy MCP server initialization
+type LazyMCPConfig struct {
+	Name              string
+	Type              string // "stdio" or "http"
+	Command           string
+	Args              []string
+	Env               []string
+	URL               string
+	Token             string // Bearer token for HTTP authentication
+	Tools             []LazyMCPToolConfig
+	HttpTransportMode string   // "sse" or "streamable"
+	AllowedTools      []string // List of allowed tool names for this MCP server
 }
 
-// Config is the provider identity used for future turns.
-type Config struct {
-	ProviderID string
-	API        string
-	Model      string
+// LazyMCPToolConfig holds configuration for a lazy MCP tool
+type LazyMCPToolConfig struct {
+	Name        string
+	Description string
+	Schema      interface{}
 }
 
-// Event is one agent event emitted to app/RPC boundaries.
-type Event struct {
-	Type string `json:"type"`
-	Data any    `json:"data,omitempty"`
-}
+// CustomRunFunction represents a custom function that can replace the default Run behavior
+type CustomRunFunction func(ctx context.Context, input string, agent *Agent) (string, error)
 
-// Prompt is one user prompt.
-type Prompt struct {
-	Text string
-}
+// CustomRunStreamFunction represents a custom function that can replace the default RunStream behavior
+type CustomRunStreamFunction func(ctx context.Context, input string, agent *Agent) (<-chan contracts.AgentStreamEvent, error)
 
-// ToolCall is one finalized provider tool request.
-type ToolCall struct {
-	ID        string
-	Name      string
-	Arguments string
-}
-
-// ToolResult is one tool result fed back to the provider.
-type ToolResult struct {
-	Content string
-}
-
-// ToolFunc executes one tool call.
-type ToolFunc func(context.Context, ToolCall) (ToolResult, error)
-
-// Agent owns prompt execution state.
+// Agent represents an AI agent
 type Agent struct {
-	opts Options
+	llm                  contracts.LLM
+	memory               contracts.Memory
+	datastore            contracts.DataStore     // DataStore for persistent data storage (PostgreSQL, Supabase, etc.)
+	graphRAGStore        contracts.GraphRAGStore // GraphRAG store for knowledge graph operations
+	tools                []contracts.Tool
+	subAgents            []*Agent // Sub-agents that can be called as tools
+	orgID                string
+	tracer               contracts.Tracer
+	guardrails           contracts.Guardrails
+	logger               telemetry.Logger // Logger for the agent
+	systemPrompt         string
+	name                 string                               // Name of the agent, e.g., "PlatformOps", "Math", "Research"
+	description          string                               // Description of what the agent does
+	requirePlanApproval  bool                                 // New field to control whether execution plans require approval
+	planStore            *plans.ExecutionPlanStore            // Store for execution plans
+	planGenerator        *plans.ExecutionPlanGeneratorService // Generator for execution plans
+	planExecutor         *plans.ExecutionPlanExecutor         // Executor for execution plans
+	generatedAgentConfig *agentconfig.AgentConfig
+	generatedTaskConfigs agentconfig.TaskConfigs
+	responseFormat       *contracts.ResponseFormat // Response format for the agent
+	llmConfig            *contracts.LLMConfig
+	mcpServers           []contracts.MCPServer        // MCP servers for the agent
+	lazyMCPConfigs       []LazyMCPConfig              // Lazy MCP server configurations
+	configuredTools      []agentconfig.ToolConfigYAML // Tools applied after all options are known
+	maxIterations        int                          // Maximum number of tool-calling iterations (default: 2)
+	disableFinalSummary  bool                         // When true, skip the final summary LLM call
+	streamConfig         *contracts.StreamConfig      // Streaming configuration for the agent
+	cacheConfig          *contracts.CacheConfig       // Prompt caching configuration (Anthropic only)
 
-	mu      sync.Mutex
-	busy    bool
-	cancel  context.CancelFunc
-	history []provider.Message
+	// Runtime configuration fields
+	memoryConfig   map[string]interface{} // Memory configuration from YAML
+	timeout        time.Duration          // Agent timeout from runtime config
+	tracingEnabled bool                   // Whether tracing is enabled
+	metricsEnabled bool                   // Whether metrics are enabled
+
+	// Remote agent fields
+	isRemote            bool                        // Whether this is a remote agent
+	remoteURL           string                      // URL of the remote agent service
+	remoteTimeout       time.Duration               // Timeout for remote agent operations
+	remoteClient        contracts.RemoteAgentClient // Injected client for remote communication
+	remoteClientFactory func(string) contracts.RemoteAgentClient
+
+	// Custom function fields
+	customRunFunc       CustomRunFunction       // Custom run function to replace default behavior
+	customRunStreamFunc CustomRunStreamFunction // Custom stream function to replace default streaming behavior
 }
 
-// New constructs an idle agent.
-func New(opts Options) *Agent {
-	if opts.ProviderID == "" {
-		opts.ProviderID = "test"
-	}
-	if opts.API == "" {
-		opts.API = "test"
-	}
-	if opts.Model == "" {
-		opts.Model = "test"
-	}
-	if len(opts.Tools) > 0 {
-		tools := make(map[string]ToolFunc, len(opts.Tools))
-		for name, tool := range opts.Tools {
-			tools[name] = tool
-		}
-		opts.Tools = tools
-	}
-	return &Agent{opts: opts}
-}
-
-// Prompt sends one prompt to the provider.
-func (a *Agent) Prompt(ctx context.Context, input Prompt) error {
-	runCtx, opts, history, err := a.start(ctx)
-	if err != nil {
-		return err
-	}
-	defer a.finish()
-
-	state := &State{
-		Provider:   opts.Provider,
-		ProviderID: opts.ProviderID,
-		API:        opts.API,
-		Model:      opts.Model,
-		Tools:      opts.Tools,
-		ToolDefs:   append([]provider.ToolDefinition(nil), opts.ToolDefs...),
-		Emit:       opts.Emit,
-	}
-	if err := runTurn(runCtx, state, TurnInput{Prompt: input.Text, History: history}); err != nil {
-		return err
-	}
-	a.replaceHistory(state.messages)
-	return nil
-}
-
-// Abort cancels the active provider stream.
-func (a *Agent) Abort() {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.cancel != nil {
-		a.cancel()
-	}
-}
-
-// Reset clears remembered prompt history.
-func (a *Agent) Reset() {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.history = nil
-}
-
-// Busy reports whether a prompt currently owns the agent.
-func (a *Agent) Busy() bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.busy
-}
-
-// Config returns the provider labels used for future prompts.
-func (a *Agent) Config() Config {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return Config{ProviderID: a.opts.ProviderID, API: a.opts.API, Model: a.opts.Model}
-}
-
-// SetModel updates provider labels for later prompts.
-func (a *Agent) SetModel(providerID string, api string, model string) error {
-	return a.SetProviderModel(nil, providerID, api, model)
-}
-
-// SetProviderModel updates the provider stream and labels for later prompts.
-func (a *Agent) SetProviderModel(streamer provider.Streamer, providerID string, api string, model string) error {
-	providerID = strings.TrimSpace(providerID)
-	api = strings.TrimSpace(api)
-	model = strings.TrimSpace(model)
-	if providerID == "" || api == "" || model == "" {
-		return fmt.Errorf("set model: provider, api, and model are required")
-	}
-
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.busy {
-		return ErrBusy
-	}
-	if streamer != nil {
-		a.opts.Provider = streamer
-	}
-	a.opts.ProviderID = providerID
-	a.opts.API = api
-	a.opts.Model = model
-	return nil
-}
-
-func (a *Agent) start(ctx context.Context) (context.Context, Options, []provider.Message, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.busy {
-		return nil, Options{}, nil, ErrBusy
-	}
-	if a.opts.Provider == nil {
-		return nil, Options{}, nil, fmt.Errorf("agent prompt: missing provider")
-	}
-	ctx, cancel := context.WithCancel(ctx)
-	a.busy = true
-	a.cancel = cancel
-	return ctx, a.opts, append([]provider.Message(nil), a.history...), nil
-}
-
-func (a *Agent) finish() {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.cancel != nil {
-		a.cancel()
-	}
-	a.cancel = nil
-	a.busy = false
-}
-
-func (a *Agent) replaceHistory(messages []provider.Message) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.history = append(a.history[:0], messages...)
-}
+// Option represents an option for configuring an agent
+type Option func(*Agent)

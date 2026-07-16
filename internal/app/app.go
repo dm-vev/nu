@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/cli"
+	"nu/internal/app/cli"
 )
 
 const (

@@ -2,183 +2,42 @@
 
 ## Status
 
-Current: IMPLEMENTED
-Implementation Commit: 2931429
-Implementation Comments: Append/load use direct stdlib filesystem calls with in-process locking; Phase 4 adds cwd-aware creation, lookup/fork/clone/import/export helpers, and a bounded import reader.
+Current: IMPLEMENTED_UNCOMMITTED
+Implementation Commit: -
+Implementation Comments: Core store append/load/write behavior remains here; types, JSONL, resolution, branches, transfer, and compaction moved to dedicated session files.
 
 ## TODO
 
-- [x] Add or confirm the failing tests listed in this file.
-- [x] Implement the file according to the function logic below.
+- [x] Match the implemented file boundary.
+- [x] Confirm package tests cover the owned behavior.
 - [x] Run the targeted package tests.
-- [x] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
+- [ ] Record the implementation commit after commit.
 
 ## Purpose
 
-Append-only JSONL session storage.
-Implements file rules from `spec/protocols/session-jsonl.md`.
+Open a session store and append, load, validate, or create complete session files.
 
 ## Code Style
 
-Filesystem writes are atomic enough for single-process use. Use explicit locks
-for concurrent append in the same process.
+Use stdlib filesystem calls and one in-process lock around append validation plus write.
 
-## Functions
+## Owned Logic
 
-### `type Ref struct`
+- `OpenStore` cleans the root without filesystem side effects.
+- `Append` validates entries and parent/duplicate constraints before appending, creating a schema header for new sessions.
+- `Load` reads JSONL and reconstructs the tree.
+- Path and write helpers honor explicit paths, clean optional cwd, validate trees, and create targets exclusively.
 
-Logic:
+## Acceptance
 
-- Identify a session by id.
-- Optionally carry an explicit JSONL path for path-based resume.
-- Optionally carry cwd for new-file header creation.
-- Prefer explicit path when present; otherwise resolve under store root.
+- Invalid parents or duplicate IDs are never appended.
+- New files preserve ref cwd and use private permissions.
+- Loaded sessions contain validated entries and tree state.
 
-Acceptance:
-
-- path resume can load a session outside the root without changing store root;
-- newly-created sessions preserve cwd for continue lookup.
-
-### `OpenStore(root string) *Store`
-
-Logic:
-
-- Clean the root path.
-- Initialize no session files and start no background work.
-- Return a concrete store safe for temp-dir tests.
-
-Acceptance:
-
-- stores no global paths;
-- can be rooted in a temp directory in tests.
-
-### `(*Store) Append(ctx context.Context, ref Ref, entry Entry) error`
-
-Logic:
-
-- Validate session ref, entry id, schema, kind, and parent id shape.
-- Acquire the in-process lock before parent validation and append.
-- Create parent directories.
-- Open file append-only; create header first when creating a new session.
-- Use `ref.CWD` in the new header when supplied.
-- Marshal entry and append LF.
-- Release locks with defer and wrap path-qualified errors.
-
-Acceptance:
-
-- appends one JSONL line;
-- rejects entry with missing id;
-- new session headers preserve cwd.
-
-### `(*Store) Resolve(ctx context.Context, selector string) (Ref, error)`
-
-Logic:
-
-- Treat an existing path or `.jsonl` selector as a direct session path.
-- Decode the header to fill the returned ref id.
-- Otherwise match selector as a full or partial session id under the store root.
-- Return not-found or ambiguous errors for zero/multiple matches.
-
-Acceptance:
-
-- resumes by explicit JSONL path;
-- resumes by unambiguous partial id.
-
-### `(*Store) LatestByCWD(ctx context.Context, cwd string) (Ref, error)`
-
-Logic:
-
-- Scan session files under the store root.
-- Decode headers only.
-- Match cleaned `cwd` against header cwd.
-- Pick the newest matching header by `created_at`, breaking ties by id.
-
-Acceptance:
-
-- `--continue` can find the latest session for the current working directory.
-
-### `(*Store) Load(ctx context.Context, ref Ref) (*Session, error)`
-
-Logic:
-
-- Resolve ref to a concrete session file.
-- Read line by line using LF framing.
-- Decode and validate header before entries.
-- Unmarshal entries with line numbers.
-- Pass entries to `BuildTree`.
-- Determine active branch by `spec/protocols/session-jsonl.md` rules.
-- Return loaded session plus diagnostics for optional payload issues.
-
-Acceptance:
-
-- reconstructs tree;
-- rejects broken parent links;
-- returns active branch.
-
-### `(*Store) Fork(ctx context.Context, source Ref, target Ref, entryID string) error`
-
-Logic:
-
-- Load the source session.
-- Build the root-to-entry path for `entryID`.
-- Create a new target session containing exactly that path.
-- Reject an already existing target file.
-
-Acceptance:
-
-- forked session starts at the selected entry and keeps parent links valid.
-
-### `(*Store) Clone(ctx context.Context, source Ref, target Ref) error`
-
-Logic:
-
-- Load the source session.
-- Build the active branch path.
-- Create a new target session containing that active branch.
-- Reject an already existing target file.
-
-Acceptance:
-
-- cloned session contains only the active branch.
-
-### `(*Store) Export(ctx context.Context, ref Ref, w io.Writer) error`
-
-Logic:
-
-- Load the session first to validate it.
-- Copy the original JSONL bytes to `w`.
-- Keep the output byte-for-byte with the stored file.
-
-Acceptance:
-
-- exported sessions can be re-imported.
-
-### `(*Store) Import(ctx context.Context, r io.Reader, target Ref) (Ref, error)`
-
-Logic:
-
-- Read the JSONL payload with a fixed maximum size.
-- Decode and validate header and entries.
-- Build the tree before writing.
-- Use `target.ID` when supplied, otherwise keep the imported header id.
-- Reject an already existing target file.
-
-Acceptance:
-
-- oversized imports fail before validation;
-- invalid imports do not create files;
-- valid imports round-trip through `Load`.
-
-Tests:
+## Tests
 
 - `TestNUF080SessionAppendBuildsTree`
 - `TestNUF080SessionLoadRejectsBrokenParent`
 - `TestNUF080SessionAppendRejectsBrokenParent`
 - `TestSessionAppendRejectsDuplicateID`
 - `TestSessionAppendUsesRefCWD`
-- `TestSessionExportImportRoundTrip`
-- `TestSessionImportRejectsOversizedInput`
-- `TestNUF081ContinueLatestByCWD`
-- `TestNUF081ResumeByPathOrPartialID`
-- `TestNUF081ForkStartsNewFileFromUserEntry`
-- `TestNUF081CloneCopiesActiveBranch`

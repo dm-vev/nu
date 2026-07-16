@@ -1,6 +1,6 @@
 package tui
 
-import "nu/internal/agent"
+import agent "nu/internal/agentui"
 
 // Emit updates UI state from one agent event.
 func (a *App) Emit(ev agent.Event) {

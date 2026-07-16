@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	tuiinput "nu/internal/tui/input"
+	"nu/internal/tui/input"
 	"nu/internal/tui/terminal"
 )
 
@@ -76,7 +76,7 @@ func (a *App) runLine(ctx context.Context) error {
 }
 
 func (a *App) runRaw(ctx context.Context) error {
-	decoder := tuiinput.New(a.term.Stdin())
+	decoder := input.New(a.term.Stdin())
 	for {
 		if err := ctx.Err(); err != nil {
 			return fmt.Errorf("run tui: %w", err)

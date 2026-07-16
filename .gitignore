@@ -1,1 +1,8 @@
-third-party
+/nu
+/bin/
+/coverage.out
+*.test
+.env
+.env.*
+!.env.example
+third-party/

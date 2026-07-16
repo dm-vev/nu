@@ -1,4 +1,4 @@
-# `internal/tui/app_test.go`
+# `internal/tui/tui_app_test.go`
 
 ## Status
 
@@ -8,8 +8,8 @@ Implementation Comments: Verify top-level TUI app rendering, slash command menus
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
-- [x] Test file is runnable with `go test ./internal/tui/...`.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
+- [x] Test file is runnable with `go test ./internal/tui`.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 
@@ -134,7 +134,7 @@ Acceptance:
 ### `func TestTUIAllBuiltinSlashCommandsHaveHandlers(t *testing.T)`
 
 Logic:
-- Submit every command from `slash.Builtins()` with safe arguments where needed.
+- Submit every command from `SlashBuiltins()` with safe arguments where needed.
 - Assert none of them render the old backend placeholder.
 
 Acceptance:

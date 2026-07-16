@@ -1,0 +1,82 @@
+package coding
+
+import (
+	"context"
+	"encoding/base64"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestNUF070ReadTextWithOffsetLimit(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("0123456789"), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	result, err := RunRead(context.Background(), dir, `{"path":"a.txt","offset":2,"limit":4}`, 100)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	got := decodeResult(t, result.Content)
+	if got["content"] != "2345" {
+		t.Fatalf("content = %#v, want 2345", got["content"])
+	}
+}
+
+func TestNUF070ReadTruncatesLargeFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("abcdef"), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	result, err := RunRead(context.Background(), dir, `{"path":"a.txt"}`, 3)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	got := decodeResult(t, result.Content)
+	if got["content"] != "abc" || got["truncated"] != true {
+		t.Fatalf("read result = %#v, want truncated abc", got)
+	}
+}
+
+func TestNUF070ReadImageAttachment(t *testing.T) {
+	dir := t.TempDir()
+	data := []byte{0x89, 'P', 'N', 'G'}
+	if err := os.WriteFile(filepath.Join(dir, "a.png"), data, 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	result, err := RunRead(context.Background(), dir, `{"path":"a.png"}`, 100)
+	if err != nil {
+		t.Fatalf("Run error = %v", err)
+	}
+	got := decodeResult(t, result.Content)
+	if got["mime_type"] != "image/png" || got["data"] != base64.StdEncoding.EncodeToString(data) {
+		t.Fatalf("image result = %#v, want png attachment", got)
+	}
+}
+
+func TestReadRejectsPathEscape(t *testing.T) {
+	_, err := RunRead(context.Background(), t.TempDir(), `{"path":"../x"}`, 100)
+	if err == nil || !strings.Contains(err.Error(), "escapes cwd") {
+		t.Fatalf("Run error = %v, want cwd escape", err)
+	}
+}
+
+func TestReadRejectsSymlinkEscape(t *testing.T) {
+	dir := t.TempDir()
+	outside := t.TempDir()
+	if err := os.WriteFile(filepath.Join(outside, "secret.txt"), []byte("bad"), 0o644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+	if err := os.Symlink(outside, filepath.Join(dir, "link")); err != nil {
+		t.Skipf("Symlink unsupported: %v", err)
+	}
+
+	_, err := RunRead(context.Background(), dir, `{"path":"link/secret.txt"}`, 100)
+	if err == nil || !strings.Contains(err.Error(), "escapes cwd") {
+		t.Fatalf("Run error = %v, want symlink cwd escape", err)
+	}
+}

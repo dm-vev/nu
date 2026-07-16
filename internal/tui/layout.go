@@ -1,17 +1,11 @@
 package tui
 
-import (
-	"nu/internal/tui/components/commandmenu"
-	"nu/internal/tui/components/fill"
-	"nu/internal/tui/components/footer"
-	"nu/internal/tui/components/header"
-	"nu/internal/tui/components/modelmenu"
-)
+import "nu/internal/tui/components"
 
 func (a *App) buildLayout() {
 	a.ui.AddChild(a.header)
 	a.ui.AddChild(a.chat)
-	a.ui.AddChild(fill.New())
+	a.ui.AddChild(components.NewFill())
 	a.ui.AddChild(a.models)
 	a.ui.AddChild(a.menu)
 	a.ui.AddChild(a.status)
@@ -19,8 +13,8 @@ func (a *App) buildLayout() {
 	a.ui.AddChild(a.footer)
 }
 
-func commandMenuOptions() commandmenu.Options {
-	return commandmenu.Options{
+func commandMenuOptions() components.CommandMenuOptions {
+	return components.CommandMenuOptions{
 		MaxItems: 8,
 		Text:     ansiText,
 		Accent:   greenBold,
@@ -28,8 +22,8 @@ func commandMenuOptions() commandmenu.Options {
 	}
 }
 
-func modelMenuOptions() modelmenu.Options {
-	return modelmenu.Options{
+func modelMenuOptions() components.ModelMenuOptions {
+	return components.ModelMenuOptions{
 		MaxVisible: 10,
 		Text:       ansiText,
 		Accent:     greenBold,
@@ -40,12 +34,12 @@ func modelMenuOptions() modelmenu.Options {
 	}
 }
 
-func headerOptions(opts AppOptions) header.Options {
+func headerOptions(opts AppOptions) components.HeaderOptions {
 	separator := " · "
 	if limitedCharset(opts) {
 		separator = " | "
 	}
-	return header.Options{
+	return components.HeaderOptions{
 		AppName:       "Nu",
 		Version:       opts.Version,
 		Accent:        greenBold,
@@ -57,8 +51,8 @@ func headerOptions(opts AppOptions) header.Options {
 	}
 }
 
-func footerOptions(opts AppOptions) footer.Options {
-	return footer.Options{
+func footerOptions(opts AppOptions) components.FooterOptions {
+	return components.FooterOptions{
 		CWD:         opts.CWD,
 		Home:        opts.Home,
 		Branch:      firstNonEmpty(opts.Branch, currentGitBranch(opts.CWD)),

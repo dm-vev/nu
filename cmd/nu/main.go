@@ -7,7 +7,7 @@ import (
 	"os/signal"
 
 	"nu/internal/app"
-	"nu/internal/cli"
+	"nu/internal/app/cli"
 )
 
 var (

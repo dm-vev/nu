@@ -1,136 +1,50 @@
 # Roadmap
 
-This is implementation order, not product scope. Product scope is in
-`spec/functions.md`.
+Product scope is in `spec/functions.md`; this is implementation order.
 
-## Phase 0: Project Skeleton
+## Completed Backend Connection
 
-- `go.mod`
-- `cmd/nu`
-- `internal/app`
-- test harness with temp home/cwd
-- fake provider
-- protocol golden-test fixtures for provider stream, session JSONL, RPC JSONL,
-  extension JSONL, and TUI render/input contracts
+- imported the SDK source baseline at `v0.2.62` directly into `internal/`;
+- rewrote package imports and preserved MIT attribution;
+- replaced Nu provider/agent loop with SDK Agent and LLM packages;
+- adapted Nu coding tools to SDK Tool;
+- connected print, JSON, RPC, and TUI through `internal/agentui`;
+- removed `internal/provider` and scripted-provider testkit.
 
-Exit: `nu --help` works and `go test ./...` passes.
+## In Progress: Balanced Package Hierarchy
 
-## Phase 1: Headless Agent Spine
+- preserve every feature/API behavior and owning test imported from pinned
+  `v0.2.62`;
+- migrate the temporary flat roots to the exact NUA-011 roots/subpackages;
+- keep roots to shared types/orchestration, use normal filenames in subpackages,
+  and reject one-helper packages;
+- keep every TUI component in the single `tui/components` package;
+- delete only superseded paths and add no compatibility wrappers;
+- enforce SDK-to-Nu import direction and the production file-size rule;
+- regenerate any imported protobuf affected by package/schema changes.
 
-Status: implemented through `456582c`.
+Exit: the full imported feature/test inventory remains covered, generated output
+is reproducible under `transport/grpc/pb`, SDK code imports no Nu-owned package,
+the exact package inventory matches, and full tests pass.
 
-- CLI parse for print and JSON mode
-- message/event types
-- provider interface
-- agent loop
-- session append/load
-- one fake tool in tests
-- provider stream assembly contract
+## Next: Session Memory
 
-Exit: a fake provider can stream text, request a tool, receive the result, and
-finish with JSON events.
+- adapt branchable Nu session active path to SDK Memory;
+- preserve tool calls/results and compaction summaries;
+- make `/new`, resume, fork, and clone operate on the same memory source.
 
-## Phase 2: Built-in Tools
+Exit: SDK model context and Nu visible session tree cannot diverge.
 
-Status: implemented through `3d3fb26`.
+## Next: SDK Configuration Exposure
 
-- read
-- write
-- edit
-- bash
-- grep
-- find
-- ls
-- truncation and full-output persistence
-- review fixes for symlink path escapes, multi-edit ordering, long grep lines,
-  and Windows bash package compilation
+- MCP connection config and trust UI;
+- additional imported capability exposure only after its functional requirement
+  is accepted and the ownership index is updated when package ownership changes.
 
-Exit: tools are test-covered without real provider calls.
+Exit: each exposed SDK capability has trust, secret, stdout, and integration
+tests. Package presence alone is not CLI exposure.
 
-## Phase 3: Real Providers And Models
+## Backend Updates
 
-Status: implemented through `c64b048`.
-
-- OpenAI Chat Completions
-- OpenAI Responses
-- Anthropic Messages
-- Google Generative AI
-- Bedrock
-- OpenAI-compatible custom providers
-- auth and model registry
-
-Exit: mocked provider contract tests pass; real smoke tests are opt-in.
-
-## Phase 4: Sessions And Compaction
-
-Status: core implemented through `2931429`.
-
-- resume, continue, fork, clone
-- tree storage
-- import/export JSONL
-- compaction
-- branch summaries
-
-Exit: sessions can branch and compact without losing tool-call integrity.
-
-## Phase 5: Interactive TUI
-
-- terminal raw mode
-- renderer
-- editor
-- keybindings
-- message view
-- footer/status
-- selectors
-- overlays
-- themes
-
-Exit: fake-terminal tests cover input, render width, resize, and basic commands.
-
-## Phase 6: Resources
-
-- context files
-- system prompts
-- skills
-- prompt templates
-- packages
-- project trust
-
-Exit: trusted project resources load; untrusted resources are blocked.
-
-## Phase 7: Extension Host
-
-- JSONL extension process protocol
-- lifecycle hooks
-- tool hooks
-- command registration
-- UI requests
-- state persistence
-- optional Pi TypeScript compatibility host
-
-Exit: a sample extension registers a tool and blocks a dangerous tool call.
-
-## Spec Correction Rule
-
-Each phase is allowed to split, merge, or rename planned files only by changing
-`spec/packages/*` first. Protocol files in `spec/protocols/*` require golden
-test updates for any wire-format change.
-
-## Phase 8: RPC, Export, Update
-
-- full RPC commands
-- HTML export
-- share command
-- self/package update
-- offline mode checks
-
-Exit: headless clients can drive Nu without TUI.
-
-## Phase 9: Compatibility Sweep
-
-- Pi session import
-- Pi settings import
-- Pi skills/prompts/themes import
-- command parity audit against `third-party/pi`
-
-Exit: every `NUF-*` requirement has passing tests or an explicit follow-up.
+Upgrade only through the pinned procedure in `spec/backend.md`. Keep Nu patches
+small and upstream-first; never recreate a removed provider or agent loop.

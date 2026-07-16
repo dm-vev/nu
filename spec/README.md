@@ -1,51 +1,85 @@
-# Nu Spec
+# Nu Canonical Specification
 
-Nu is a Vanilla Go coding-agent harness. The goal is not a small Pi clone: Pi is
-the minimum functional baseline. Every feature starts here as a spec, then gets
-tests, then implementation.
+Status: **agent SDK backend integrated; application features partially implemented**.
 
-## Source Of Truth
+Nu is a local-first coding agent. Pi is the application UX baseline. A curated
+fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62` is the internal backend and
+lives directly under `internal/`.
 
-- `spec/product.md`: product scope and non-negotiable behavior.
-- `spec/architecture.md`: module boundaries and runtime flows.
-- `spec/functions.md`: user-visible functional requirements.
-- `spec/protocols/`: persisted and streamed wire-format contracts.
-- `spec/packages/`: per-subpackage and per-file implementation contracts.
-- `spec/testing.md`: TDD rules and required test shapes.
-- `docs/architecture.md`: implementation-oriented architecture notes.
-- `docs/development.md`: daily development workflow.
+## Precedence
 
-When implementation and spec disagree, the spec wins. Update the spec first
-when the intended behavior changes.
+1. `product.md` for product boundary/security/non-goals.
+2. `architecture.md` and accepted `NUA-*` decisions.
+3. `backend.md` for imported SDK provenance, transformation, and patch ledger.
+4. Owning `protocols/*`, then `functions.md` and `testing.md`.
+5. `examples.md` for runnable Agent SDK examples.
+6. `packages/*` for Nu-owned source-file contracts.
+7. `docs/*` for contributor guidance.
 
-## SDD Workflow
+The full imported SDK feature/API behavior is owned by source plus owning tests.
+`sdk/README.md` indexes ownership families, not allowed capabilities; upstream
+folder/import-path compatibility is not a requirement. Nu-owned adapters and
+modifications require Nu specs.
 
-1. Write or update a requirement in `spec/functions.md`.
-2. Add acceptance criteria and at least one test case name.
-3. Re-check the affected `spec/packages/*` files and make their function logic
-   concrete enough to implement.
-4. Write the failing test.
-5. Implement the smallest code that makes the test pass.
-6. Run the package test, then the relevant integration test.
-7. Update docs only for behavior users or contributors need to know.
+## Reading Order
 
-## Requirement IDs
+1. [Product](product.md), [architecture](architecture.md), and
+   [backend provenance](backend.md).
+2. [Capability matrix](capabilities.md) and [functional requirements](functions.md).
+3. [SDK package index](sdk/README.md) and [agent run flow](flows/agent-run.md).
+4. [Protocols](protocols/README.md), [testing](testing.md), and
+   [implementation status](implementation-status.md).
 
-Use stable IDs in tests and docs:
+## Canonical Owners
+
+| Subject | Owner |
+|---|---|
+| Product scope | `product.md` |
+| Runtime/package boundaries | `architecture.md` |
+| SDK source/version/reorganization/patches | `backend.md` |
+| User-visible requirements | `functions.md` |
+| SDK exact Go API | `internal/*` source and owning tests |
+| Runnable SDK examples | `examples.md` |
+| TUI/RPC SDK adaptation | `packages/internal/agentui/*` |
+| Persisted/wire formats | `protocols/*` |
+| Verification | `testing.md` |
+
+## Status Semantics
+
+- `IMPLEMENTED`: source exists and owning tests pass.
+- `IN_PROGRESS`: the approved target is being implemented and current source may
+  still reflect a documented temporary layout.
+- `PARTIAL`: usable source exists but its product integration is incomplete.
+- `SPECIFIED`: implementation-ready target without source evidence.
+- `PROVISIONAL`: safe default selected pending resolution.
+- `BLOCKED`: implementation cannot proceed.
+- `REMOVED`: superseded source is absent and must not return.
+- `RESOLVED` / `SUPERSEDED`: retained question/decision history.
+
+Every `NUA-*` heading is accepted unless marked otherwise.
+
+## IDs
 
 - `NUF-*`: functional requirements.
-- `NUT-*`: test requirements.
+- `NUT-*`: testing requirements.
 - `NUA-*`: architecture decisions.
+- `NUQ-*`: cross-package questions.
 
-Test names should include the requirement ID when practical, for example
-`TestNUF080SessionAppendBuildsTree`.
+IDs are stable and never reused.
 
-Protocol tests should include the protocol name, for example
-`TestProviderStreamAssemblesInterleavedToolCalls`.
+## Workflow
 
-## Compatibility Rule
+1. Update canonical requirement/architecture.
+2. For SDK code, update `backend.md` and the ownership-family index; for Nu code,
+   update the owning file spec.
+3. Write the smallest failing test.
+4. Implement without recreating an existing SDK capability.
+5. Run narrow tests, imported owner tests, race tests, then full verification.
+6. Update implementation evidence and attribution when the source baseline moves.
 
-Pi compatibility means behavior compatibility, not TypeScript source
-compatibility. Nu must be able to perform the same user jobs and preserve or
-import important Pi data formats where useful. A direct TypeScript runtime inside
-the Go process is not part of the core architecture.
+## Compatibility
+
+Pi compatibility means application behavior/data import, not TypeScript source.
+The internal SDK is a modified, curated MIT fork. Upstream folder and import-path
+compatibility are not promised; imported feature and API behavior remain
+available through the resulting owners.

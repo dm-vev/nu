@@ -1,4 +1,4 @@
-# `internal/tui/layout.go`
+# `internal/tui/tui_layout.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Build the fixed component tree and component options, i
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Implementation is covered by at least one package-level TUI test path.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
@@ -24,7 +24,7 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 ## Acceptance Criteria
 
 - File status is kept current before implementation commit.
-- Behavior is covered by `go test ./internal/tui/...`.
+- Behavior is covered by `go test ./internal/tui`.
 
 ## Functions
 
@@ -36,26 +36,26 @@ Logic:
 - Keep status directly above the editor so streaming state never appears inside the scrollback area.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
-### `func headerOptions(opts AppOptions) header.Options`
+### `func headerOptions(opts AppOptions) HeaderOptions`
 
 Logic:
 - Build header options with Nu label, version, palette callbacks, and one-cell horizontal padding.
 - Use ` | ` as the compact-help separator in limited-character mode, otherwise keep the Pi-style ` · ` separator.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
-### `func footerOptions(opts AppOptions) footer.Options`
+### `func footerOptions(opts AppOptions) FooterOptions`
 
 Logic:
 - Build footer options from cwd/home/branch/provider/model display label/context and dim styling.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
-### `func commandMenuOptions() commandmenu.Options`
+### `func commandMenuOptions() CommandMenuOptions`
 
 Logic:
 - Build command menu options with Pi-style row cap and Nu palette callbacks.
@@ -63,7 +63,7 @@ Logic:
 Acceptance:
 - Command menu renders without touching editor or agent state.
 
-### `func modelMenuOptions() modelmenu.Options`
+### `func modelMenuOptions() ModelMenuOptions`
 
 Logic:
 - Build model selector options with Pi-style row cap and Nu palette callbacks.
