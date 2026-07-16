@@ -1,4 +1,4 @@
-# `internal/tui/util.go`
+# `internal/tui/tui_util.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Small helpers for env integers, window title, and non-e
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Implementation is covered by at least one package-level TUI test path.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
@@ -24,7 +24,7 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 ## Acceptance Criteria
 
 - File status is kept current before implementation commit.
-- Behavior is covered by `go test ./internal/tui/...`.
+- Behavior is covered by `go test ./internal/tui`.
 
 ## Functions
 
@@ -34,7 +34,7 @@ Logic:
 - Parse a positive integer from an environment variable and fall back when missing or invalid.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
 ### `func windowTitle(cwd string) string`
 
@@ -42,7 +42,7 @@ Logic:
 - Build a terminal title from the current directory basename, falling back to `Nu`.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
 ### `func firstNonEmpty(values ...string) string`
 
@@ -50,4 +50,4 @@ Logic:
 - Return the first trimmed non-empty candidate or an empty string.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.

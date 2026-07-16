@@ -10,16 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/agent"
-	"nu/internal/provider"
+	"nu/internal/agentui"
+	"nu/internal/contracts"
 	"nu/internal/testkit"
 )
 
 func TestNUF171RPCPromptResponseCorrelation(t *testing.T) {
-	fake := testkit.NewScriptedProvider(
-		provider.Event{Type: provider.EventStart},
-		provider.Event{Type: provider.EventText, Delta: "ok"},
-		provider.Event{Type: provider.EventDone, StopReason: "stop"},
+	fake := testkit.NewScriptedAgent(
+		contracts.AgentStreamEvent{Type: contracts.AgentEventContent, Content: "ok"},
+		contracts.AgentStreamEvent{Type: contracts.AgentEventComplete},
 	)
 	var stdout bytes.Buffer
 	server := NewServer(Options{
@@ -31,7 +30,7 @@ func TestNUF171RPCPromptResponseCorrelation(t *testing.T) {
 		API:       "test",
 		Model:     "test",
 	})
-	server.SetAgent(agent.New(agent.Options{Provider: fake, Emit: server.Emit}))
+	server.SetAgent(agentui.New(agentui.Options{Runner: fake, Emit: server.Emit}))
 
 	if err := server.Run(context.Background()); err != nil {
 		t.Fatalf("Run error = %v", err)
@@ -53,7 +52,7 @@ func TestNUF171RPCRejectsPromptDuringStreamWithoutBehavior(t *testing.T) {
 		CWD:       "/tmp/nu",
 		SessionID: "s1",
 	})
-	server.SetAgent(agent.New(agent.Options{Provider: fake, Emit: server.Emit}))
+	server.SetAgent(agentui.New(agentui.Options{Runner: fake, Emit: server.Emit}))
 
 	errCh := make(chan error, 1)
 	go func() {
@@ -94,10 +93,9 @@ func TestNUF171RPCShutdownWritesFinalResponse(t *testing.T) {
 }
 
 func TestNUF052SteeringDeliveredBeforeNextProviderCall(t *testing.T) {
-	fake := testkit.NewScriptedProvider(
-		provider.Event{Type: provider.EventStart},
-		provider.Event{Type: provider.EventText, Delta: "ok"},
-		provider.Event{Type: provider.EventDone, StopReason: "stop"},
+	fake := testkit.NewScriptedAgent(
+		contracts.AgentStreamEvent{Type: contracts.AgentEventContent, Content: "ok"},
+		contracts.AgentStreamEvent{Type: contracts.AgentEventComplete},
 	)
 	var stdout bytes.Buffer
 	server := NewServer(Options{
@@ -108,17 +106,17 @@ func TestNUF052SteeringDeliveredBeforeNextProviderCall(t *testing.T) {
 		),
 		Stdout: &stdout,
 	})
-	server.SetAgent(agent.New(agent.Options{Provider: fake, Emit: server.Emit}))
+	server.SetAgent(agentui.New(agentui.Options{Runner: fake, Emit: server.Emit}))
 
 	if err := server.Run(context.Background()); err != nil {
 		t.Fatalf("Run error = %v", err)
 	}
 
-	requests := fake.Requests()
-	if len(requests) != 1 {
-		t.Fatalf("provider requests = %d, want 1", len(requests))
+	prompts := fake.Prompts()
+	if len(prompts) != 1 {
+		t.Fatalf("agent prompts = %d, want 1", len(prompts))
 	}
-	got := requests[0].Messages[0].Content
+	got := prompts[0]
 	if !strings.Contains(got, "remember constraints") || !strings.Contains(got, "implement") {
 		t.Fatalf("prompt = %q, want steering and user prompt", got)
 	}
@@ -166,7 +164,14 @@ func TestNUF171RPCRecognizesPiCommandSet(t *testing.T) {
 		Stdout: &stdout,
 		CWD:    t.TempDir(),
 	})
-	server.SetAgent(agent.New(agent.Options{Provider: testkit.NewScriptedProvider(), Emit: server.Emit}))
+	runner := testkit.NewScriptedAgent()
+	server.SetAgent(agentui.New(agentui.Options{
+		Runner: runner,
+		Builder: func(context.Context, agentui.Config, contracts.Memory) (contracts.StreamingAgent, error) {
+			return runner, nil
+		},
+		Emit: server.Emit,
+	}))
 
 	if err := server.Run(context.Background()); err != nil {
 		t.Fatalf("Run error = %v", err)
@@ -266,17 +271,16 @@ type blockingRPCProvider struct {
 	started chan struct{}
 }
 
-func (p *blockingRPCProvider) Stream(ctx context.Context, _ provider.Request) (<-chan provider.Event, error) {
+func (p *blockingRPCProvider) RunStream(ctx context.Context, _ string) (<-chan contracts.AgentStreamEvent, error) {
 	select {
 	case <-p.started:
 	default:
 		close(p.started)
 	}
-	ch := make(chan provider.Event)
+	ch := make(chan contracts.AgentStreamEvent)
 	go func() {
 		defer close(ch)
 		<-ctx.Done()
-		ch <- provider.Event{Type: provider.EventError, Message: ctx.Err().Error()}
 	}()
 	return ch, nil
 }

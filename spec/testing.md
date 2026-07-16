@@ -2,110 +2,159 @@
 
 ## TDD Rule
 
-For every non-trivial feature:
+Nu-owned changes update `NUF-*`/file specs before tests and implementation.
+SDK-fork changes additionally update `spec/backend.md` and the ownership-family
+index, and keep or adapt owning upstream-style tests for all imported behavior.
 
-1. Add or update `NUF-*` requirement.
-2. Write a failing test named after the requirement.
-3. Implement only enough code to pass.
-4. Refactor while tests stay green.
-
-Docs-only changes do not need Go tests.
+Default tests use no real provider, credential, home directory, remote MCP,
+database, vector store, or cloud service.
 
 ## Test Layers
 
-### NUT-001 Unit Tests
+### NUT-001 Full SDK Baseline Tests
 
-Use stdlib `testing`. Unit tests run without network, real home directory, real
-provider credentials, or long-lived subprocesses.
+Keep the applicable upstream SDK tests for every feature currently imported from
+the pinned baseline. Moves into approved owners may move or adapt tests, but may
+not drop feature/API behavior coverage. Tests requiring external infrastructure
+remain opt-in or use fakes/emulators.
 
-Required fakes live in `internal/testkit`.
+### NUT-002 Nu Integration Tests
 
-### NUT-002 Golden Tests
+Nu-owned tests prove:
 
-Use golden files for stable wire formats:
+- app auth/model selection creates the right SDK client;
+- coding tools in `internal/tools/coding` implement `contracts.Tool`;
+- `agentui` maps SDK streams and cancellation;
+- print/JSON/RPC/TUI modes retain behavior;
+- stdout remains protocol-only.
 
-- provider request JSON;
-- provider stream event conversion;
-- session JSONL records;
-- RPC command/response frames;
-- CLI help output when stable.
+Use `internal/testkit.ScriptedAgent`, not a recreated provider event protocol.
 
-Golden updates must be intentional and reviewed with the spec diff.
+### NUT-003 Protocol Goldens
 
-Protocol golden tests are required before code can rely on these contracts:
-
-- `spec/protocols/provider-stream.md`
-- `spec/protocols/session-jsonl.md`
-- `spec/protocols/rpc-jsonl.md`
-- `spec/protocols/extension-jsonl.md`
-- `spec/protocols/tui-rendering.md`
-
-### NUT-003 Integration Tests
-
-Integration tests run the real `nu` binary or `internal/app` with temp home and
-temp cwd. They use fake providers and fake extension processes by default.
+Golden tests remain required for session JSONL, RPC JSONL, extension JSONL, TUI
+rendering/input, and stable CLI help. SDK provider wire fixtures remain in
+their owning `internal/llm/*` tests.
 
 ### NUT-004 TUI Tests
 
-TUI tests use a fake terminal:
+Use fixed fake terminals, scripted input, captured frames, resize events, and raw
+mode assertions. Rendered lines cannot exceed terminal width.
 
-- fixed width/height;
-- scripted key input;
-- captured frames;
-- resize events;
-- raw mode lifecycle assertions.
+### NUT-005 Tool Tests
 
-Tests must assert that rendered lines do not exceed terminal width.
-During Pi-compatible TUI implementation, temporary pty byte-for-byte harnesses
-may be kept under `/tmp`; they are review aids and must not be committed.
+Nu coding tools use temp directories and fake process runners where practical.
+Imported SDK tool/MCP adapters keep applicable owning tests. No tool test may
+touch user files.
 
-### NUT-005 Provider Contract Tests
+### NUT-006 Race Tests
 
-Provider tests do not hit real APIs by default. They use `httptest.Server` and
-record request bodies, headers, cancellation, retry, and stream parsing.
+At minimum race-test Nu concurrency boundaries:
 
-Real provider smoke tests are opt-in with an env var such as `NU_REAL_API=1`.
+```bash
+go test -race ./internal/agentui ./internal/session ./internal/rpc ./internal/tui/... ./internal/tools/...
+```
 
-### NUT-006 Tool Tests
+Run imported agent/memory/MCP race tests before upgrading the SDK baseline.
 
-Built-in tools use temp directories and explicit fake process runners where
-possible. Bash tests that spawn real commands must use portable shell snippets or
-be platform-scoped.
+### NUT-007 Import/Attribution Checks
 
-### NUT-007 Race Tests
+Verification must prove:
 
-Concurrency-heavy packages must pass targeted `go test -race`:
+- no Go import references `nu/internal/provider` or `internal/agent-go-sdk`;
+- `internal/agent` is the SDK agent package;
+- `internal/AGENT_SDK_LICENSE` and `THIRD_PARTY_NOTICES.md` name the pinned source;
+- every SDK-owned package belongs to an ownership family in `spec/sdk/README.md`;
+- SDK-owned code imports no Nu-owned package;
+- production package directories are exactly `cmd/nu` and the root/subpackage/
+  standalone allowlist in `spec/sdk/README.md`;
+- every domain root owns shared types/orchestration only, with concrete families
+  in their approved subpackages;
+- all reusable TUI components are in `internal/tui/components`, with no nested
+  component package;
+- subpackage filenames do not repeat their package/provider prefix;
+- no production Go package remains at the `internal/` root;
+- no compatibility package, alias facade, or forwarding wrapper preserves a
+  deleted Nu or upstream SDK path;
+- concrete remote clients are owned by `internal/transport/*`, and
+  `internal/agent` does not import concrete transport packages;
+- `internal/agent/{config,plans,guardrails,prompts}` use ordinary filenames and
+  import neither root agent, transport, nor task; root agent imports neither
+  transport nor task;
+- generated protobuf is owned only by `internal/transport/grpc/pb`;
+- imported generated protobuf descriptors initialize without panic and a second
+  generation produces no diff.
 
-- `internal/agent`;
-- `internal/session`;
-- `internal/tui`;
-- `internal/extension`;
-- `internal/tool`.
+### NUT-008 Security And Output
 
-## Standard Commands
+JSON/RPC stdout contains only protocol records. Active SDK agent warnings route
+through the injected logger. Errors and test fixtures do not expose credentials.
+
+### NUT-009 Package And File Structure
+
+Review and CI verification must reject a non-generated production `.go` file
+over 300 lines unless its owning `spec/packages/*` file or `spec/backend.md`
+records a cohesion-based exception. Generated and test files are excluded.
+Package review must also reject one-helper packages and packages that do not
+represent a cohesive domain or dependency boundary. Behavior-neutral package
+splits retain the same owning tests, not duplicate compatibility tests.
+
+The structural ownership test inventories every production Go package and
+compares it to the approved target. It also rejects imports of all superseded
+paths, unapproved nested packages, wrappers that merely forward old APIs, and
+loss of an imported feature's owning tests. Package count alone is not
+feature-retention evidence.
+
+### NUT-010 Agent SDK Examples
+
+`go test ./examples/...` must compile every example. Provider-free examples must
+also run without credentials, subprocesses, or network access. The research
+example is compile-tested by default and is executed manually only with explicit
+provider credentials. Example source must not contain credentials.
+
+## Commands
+
+Develop with the smallest owner set:
+
+```bash
+go test ./internal/agentui ./internal/tools/... ./internal/app/... ./internal/rpc ./internal/tui/...
+go test ./internal/agent/... ./internal/contracts ./internal/llm/...
+go test ./internal/...
+```
+
+Hierarchy migration verification:
+
+```bash
+go list -f '{{if not .ForTest}}{{.ImportPath}}{{end}}' ./cmd/... ./internal/...
+go test ./internal/app/... -run 'TestNUF212Hierarchy|TestNUA009InternalPackages'
+go test ./examples/...
+protoc --go_out=. --go_opt=module=nu \
+  --go-grpc_out=. --go-grpc_opt=module=nu \
+  internal/transport/grpc/pb/agent.proto
+mv internal/transport/grpc/pb/agent_grpc.pb.go internal/transport/grpc/pb/agentgrpc.pb.go
+```
+
+Release verification:
 
 ```bash
 go test ./...
-go test -race ./internal/agent ./internal/session ./internal/extension ./internal/tool
+go test -race ./internal/agentui ./internal/session ./internal/rpc ./internal/tui/... ./internal/tools/...
 go vet ./...
 ```
 
-## Spec Drift Checks
+Commands use an explicit CI timeout. A first SDK build may download the curated
+dependency graph; subsequent narrow runs should use the Go cache.
 
-Before marking any file spec `IMPLEMENTED`:
+## Evidence
 
-- the matching Go file exists;
-- every listed test either exists or is replaced by an equivalent named test in
-  the file spec;
-- protocol golden tests pass when the file touches a protocol;
-- `Implementation Commit` is set after commit.
+Balanced hierarchy migration evidence is **IMPLEMENTED**. The previous flat
+layout's passing tests are baseline evidence only; they do not prove NUA-011.
+Completion requires the exact package inventory, full tests, required race/vet
+commands, provider-free examples, and no-diff protobuf regeneration from
+`internal/transport/grpc/pb/agent.proto`.
 
-## Fixtures
-
-Use `testdata/` under the package that owns the behavior. Shared fixtures belong
-under `internal/testkit/testdata/`.
-
-## Network And Secrets
-
-Default tests must not read real `~/.nu`, `~/.pi`, or process provider keys.
-Tests pass explicit env maps and temp paths.
+An SDK structural change is complete only when the full imported feature/API
+behavior and owning test coverage still pass. A Nu integration is implemented
+only when a Nu-owned test exercises it through the actual SDK interface.
+Documentation, package presence, and compilation alone are not enough for a
+user-facing claim.

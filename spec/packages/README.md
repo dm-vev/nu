@@ -3,6 +3,17 @@
 This tree tracks active planned or implemented Go files only. Add a file spec
 immediately before starting a file, not months before the package is ready.
 
+Balanced hierarchy migration status: **IMPLEMENTED**. Existing file specs that
+still name temporary flat-root files describe current source only; they do not
+approve that path as the final owner. Move/update each affected file spec to its
+approved path before moving the corresponding Go file.
+
+Exception: the curated SDK fork under `internal/` is tracked by
+`spec/backend.md`, `spec/sdk/README.md`, imported upstream tests, license, and
+patch ledger. Do not create duplicate file specs for unchanged imported SDK
+files. Nu-owned adapters and modifications still require file specs here; an SDK
+file over the production line limit records its exception in `spec/backend.md`.
+
 Each file spec must include:
 
 - purpose;
@@ -32,6 +43,8 @@ spec in that subpackage and confirm:
 
 - `TODO`: not implemented.
 - `IN_PROGRESS`: implementation branch/worktree has started.
+- `IMPLEMENTED_UNCOMMITTED`: code and listed tests exist in the worktree, but no
+  implementation commit can yet be recorded.
 - `IMPLEMENTED`: code exists and tests listed in the file pass.
 - `BLOCKED`: cannot proceed without a decision or external dependency.
 
@@ -46,6 +59,10 @@ When a file becomes `IMPLEMENTED`, update that file spec:
 
 If implementation spans multiple commits, record the final commit that made the
 listed tests pass and mention earlier commits in comments only if needed.
+
+New SDK architecture documents do not require speculative file specs. Add the
+smallest public/private file set immediately before each roadmap phase starts,
+then move it through these statuses.
 
 Common style for all Go files:
 
@@ -62,3 +79,42 @@ Common style for all Go files:
   simplifications;
 - do not comment obvious assignments or restate the next line of code;
 - keep `cmd/nu` thin.
+
+## Package And File Boundaries
+
+The exhaustive target is:
+
+```text
+app/{auth,cli}
+agent/{config,plans,guardrails,prompts}
+llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
+tools/{coding,search,image,graphrag}
+data/{embedding,weaviate/{graph,vector},sql,storage}
+task/{service,workflow,orchestration}
+telemetry/{otel,langfuse}
+transport/{grpc/pb,http,a2a,ui}
+tui/{core,editor,engine,input,message,terminal,components}
+standalone: agentui config contracts memory multitenancy mcp model rpc session testkit
+```
+
+- A package is one domain or dependency boundary. Do not preserve an upstream
+  package solely for layout compatibility.
+- Root packages own shared types and cross-subpackage orchestration only.
+- A subpackage must own a cohesive feature family. Do not create one for a
+  helper that belongs with its caller.
+- Inside a subpackage, use normal filenames such as `client.go`, `stream.go`, and
+  `client_test.go`; do not repeat the package/provider name in the filename.
+- Put every reusable TUI component in `internal/tui/components`. Do not create
+  child packages per component.
+- During migration, move behavior only into an approved owner and delete
+  superseded paths after tests move. Changing the target package set requires a
+  new architecture decision. Preserve behavior/tests and add no wrappers.
+- A one-file package is valid only when it is itself a cohesive real boundary,
+  never when it contains one extracted helper.
+- A production file has one cohesive responsibility. Behavior-neutral splits
+  within the same package are allowed and keep the package's existing tests.
+- Split each non-generated production `.go` file over 300 lines or document a
+  cohesion-based exception in its file spec. Generated and test files are
+  excluded from this limit.
+- Regenerate protobuf from source; never specify or perform hand edits to
+  generated Go or descriptor bytes.

@@ -300,8 +300,9 @@ Tests:
 
 ### NUF-080 Session Storage
 
-Sessions are append-only JSONL trees. Entries include schema version, session id,
-cwd, parent id, timestamp, type, and payload.
+Sessions are append-only JSONL trees. The file header includes schema version,
+session id, and cwd; each entry includes schema version, parent id, timestamp,
+kind, and payload according to `protocols/session-jsonl.md`.
 
 Tests:
 
@@ -590,3 +591,192 @@ Tests:
 
 - `TestNUF182OfflineSkipsNetworkChecks`
 - `TestNUF182UpdateLeavesInstallUntouchedOnFailure`
+
+## Integrated Agent SDK Backend
+
+### NUF-200 Curated Internal SDK Fork
+
+Nu contains a curated fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62`
+under `internal/`. Every SDK feature and API behavior currently imported from
+that pinned baseline remains available; this is a structural reorganization,
+not a feature-reduction project. The final target is the exact balanced hierarchy
+in NUA-011: `app/{auth,cli}`; `agent/{config,plans,guardrails,prompts}`;
+`llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}`;
+`tools/{coding,search,image,graphrag}`; `data/{embedding,weaviate/{graph,vector},sql,storage}`;
+`task/{service,workflow,orchestration}`; `telemetry/{otel,langfuse}`;
+`transport/{grpc/pb,http,a2a,ui}`; and
+`tui/{core,editor,engine,input,message,terminal,components}`. Standalone packages
+are exactly `agentui`, `config`, `contracts`, `memory`, `multitenancy`, `mcp`,
+`model`, `rpc`, `session`, and `testkit`, plus `cmd/nu`. Superseded paths are
+deleted. Old paths receive no compatibility wrappers, aliases, facade package,
+or duplicate backend. No feature or API behavior is deleted. The pinned commit
+and MIT license remain recorded in `THIRD_PARTY_NOTICES.md` and
+`internal/AGENT_SDK_LICENSE`.
+
+Tests:
+
+- `go test ./internal/agent/... ./internal/contracts ./internal/llm/...`
+- full imported SDK package tests;
+- structural check that only the approved target package roots exist and the
+  imported feature/test inventory is preserved;
+- `TestSDKForkDoesNotImportNuOwnedPackages`
+
+### NUF-201 SDK Agent Runtime
+
+`internal/agent.Agent` is the sole model/tool agent runtime. Nu constructs it
+with an SDK `LLM`, conversation memory, Nu coding tools, bounded tool iterations,
+streaming enabled, and a diagnostics-safe logger.
+
+Tests:
+
+- upstream `internal/agent` tests;
+- retained retry and telemetry tests under `internal/llm` and
+  `internal/telemetry/...`;
+- `TestPrintModeBuildsProviderFromCLI`;
+- `TestSDKStreamMapsContentThinkingAndTools`.
+
+### NUF-202 TUI Stream Adapter
+
+`internal/agentui` owns only UI lifecycle state and event translation. It maps
+SDK content, thinking, tool call/result, error, and completion events to the
+existing TUI/RPC event shape. It must not call an LLM or execute a tool itself.
+
+Tests:
+
+- `TestSDKStreamMapsContentThinkingAndTools`;
+- `TestAbortCancelsSDKRunner`;
+- existing TUI structured-message tests.
+
+### NUF-203 SDK Providers
+
+Nu model selection constructs SDK OpenAI, Anthropic, Gemini, Claude-on-Bedrock,
+and OpenAI-compatible clients from explicit Nu auth/settings. OpenAI-compatible
+base URLs and Fireworks use the SDK OpenAI client. Provider clients never write
+diagnostics to protocol stdout.
+
+Tests:
+
+- `TestPrintModeBuildsProviderFromCLI`;
+- `TestPrintModeBuildsFireworksProviderFromGlobalModels`;
+- `TestPrintModeBuildsProviderFromSettings`;
+- all provider tests under their owning `internal/llm/*` packages.
+
+### NUF-204 Nu Coding Tools On SDK
+
+The seven Nu coding tools and `Builtins(cwd)` live together in
+`internal/tools/coding`; imported SDK tools live in the cohesive
+`internal/tools/{search,image,graphrag}` families. Root `internal/tools` owns
+Registry, Calculator, shared helpers, and agent-as-tool orchestration without
+re-exporting child packages. The Nu tools implement
+`internal/contracts.Tool` and are
+supplied to the SDK agent. Their filesystem/process behavior and cwd safety
+remain unchanged; the old provider/tool-loop contracts and old `internal/tool`
+import path do not remain.
+
+Tests:
+
+- `TestBuiltinsExposesEveryPhaseTwoTool`;
+- `TestDefinitionsExposeBashSchema`;
+- existing leaf-tool tests.
+
+### NUF-210 SDK Conversation Memory
+
+The active Nu agent uses the SDK bounded in-process conversation memory and Nu
+supplies stable organization/conversation IDs. All other memory behavior remains
+in `internal/memory`; embedding, vector store, datastore, storage, Redis, and
+retrieval behavior lives in `internal/data/{embedding,weaviate/{graph,vector},sql,storage}`.
+Embedding owns embedders and generic metadata evaluation; Weaviate owns distinct
+GraphRAG `Store` and vector `Store` implementations in separate
+`graph` and `vector` packages; SQL owns
+`Postgres*` and `Supabase*` adapters; storage owns the `Storage` contract and
+`Local*`/`GCS*` implementations. Root `internal/data` has no forwarding API.
+GraphRAG tools consume the Weaviate option helpers from their owning package.
+All remain available even when not wired into the Nu CLI.
+
+Tests:
+
+- all imported memory and `internal/data/...` tests.
+
+### NUF-211 SDK MCP Client
+
+Nu exposes configured MCP tools, prompts, and resources over its supported
+client transports. All other MCP behavior imported from the pinned SDK,
+including server, transport, sampling, and management surfaces, remains
+available at the SDK layer. Nu headless modes keep SDK diagnostics off stdout.
+
+Tests:
+
+- all imported `internal/mcp` tests;
+- `TestNUF170JSONModeStdoutIsOnlyJSONL`.
+
+### NUF-212 Full Imported SDK Feature Retention
+
+The imported SDK baseline includes built-in/image tools, guardrails, tracing,
+agent-as-tool, sub-agents, execution plans, task services, orchestration,
+workflows, A2A, gRPC, HTTP/microservice adapters, GraphRAG, embeddings, vector
+stores, datastores, storage, structured output, remote config, multi-tenancy,
+all imported provider clients, and every other source-backed feature currently
+present from pinned `v0.2.62`. Structural work must preserve their API behavior
+and owning test coverage. A Nu user-facing requirement is needed to expose a
+feature through the product, not to keep it available in the SDK fork.
+
+The required structure is exactly NUA-011. Root packages own shared types and
+cross-subpackage orchestration only. Concrete behavior moves to the listed
+cohesive subpackages; ordinary filenames such as `client.go` do not repeat their
+package name. All reusable TUI components share `internal/tui/components` rather
+than one package per component. Generated protobuf lives only in
+`internal/transport/grpc/pb`. The concrete remote clients remain outside
+`agent` to avoid cycles and are injected through transport-neutral contracts.
+No feature is deleted and no old-path wrapper is permitted.
+
+Tests:
+
+- full imported SDK test set passes after package moves/merges;
+- ownership check covers every final SDK package without limiting the feature
+  set;
+- structural check rejects every superseded package path and compatibility
+  wrapper.
+
+### NUF-213 Model Switching And Reset
+
+TUI model switching rebuilds an SDK agent with the selected SDK LLM while
+preserving the same SDK memory. `/new` clears the scoped SDK conversation.
+Concurrent prompts remain rejected by the UI controller and abort cancels the
+active SDK stream context.
+
+Tests:
+
+- `TestAbortCancelsSDKRunner`;
+- RPC model/session command tests;
+- TUI model selector tests.
+
+### NUF-214 No Legacy Backend
+
+The old Nu provider abstraction, provider-specific adapters, scripted-provider
+testkit, and custom agent loop do not exist. `internal/agent` is the imported SDK
+package; `internal/agentui` is the only Nu adapter between SDK streams and TUI/RPC.
+No wrapper package preserves old Nu backend or removed upstream SDK paths,
+including legacy `auth`, `cli`, `slash`, `interfaces`, and any package outside
+the exact NUA-011 hierarchy. Approved child packages are real owners, not
+wrappers for temporary flat-root APIs.
+
+Tests:
+
+- repository import check rejects `nu/internal/provider`;
+- `go build ./cmd/nu`;
+- `go test ./internal/agentui ./internal/app/... ./internal/rpc ./internal/tui/...`;
+- package-root allowlist check for NUF-200.
+
+### NUF-215 Runnable Agent SDK Examples
+
+The repository includes concise `package main` examples for agent construction,
+providers, tools, scoped memory, MCP configuration, tasks, and telemetry. Examples
+import the approved root and cohesive subpackage APIs directly and do not
+introduce wrappers or example-only frameworks. Credentials come only from
+environment configuration. All examples except the research agent run without
+provider requests or external services.
+
+Tests:
+
+- `go test ./examples/...`;
+- local execution commands in `spec/examples.md`.

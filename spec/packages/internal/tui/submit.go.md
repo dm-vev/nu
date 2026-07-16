@@ -1,4 +1,4 @@
-# `internal/tui/submit.go`
+# `internal/tui/tui_submit.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Prompt submission, local slash command dispatch, Pi-sty
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Implementation is covered by at least one package-level TUI test path.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
@@ -24,7 +24,7 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 ## Acceptance Criteria
 
 - File status is kept current before implementation commit.
-- Behavior is covered by `go test ./internal/tui/...`.
+- Behavior is covered by `go test ./internal/tui`.
 ## Functions
 
 ### `func (a *App) submit(value string) error`
@@ -159,12 +159,12 @@ Logic:
 - Store the first render/write error so `Run` can return it after input exits.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.
 
 ### `func (a *App) render()`
 
 Logic:
-- Delegate rendering to `engine.TUI.RenderNow` and remember the first render error.
+- Delegate rendering to `TUI.RenderNow` and remember the first render error.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.

@@ -4,35 +4,30 @@ import (
 	"context"
 	"sync"
 
-	"nu/internal/agent"
+	"nu/internal/agentui"
 	"nu/internal/model"
-	"nu/internal/slash"
-	"nu/internal/tui/components/commandmenu"
-	"nu/internal/tui/components/footer"
-	"nu/internal/tui/components/header"
-	"nu/internal/tui/components/modelmenu"
-	"nu/internal/tui/components/status"
+	"nu/internal/tui/components"
 	"nu/internal/tui/core"
 	"nu/internal/tui/editor"
 	"nu/internal/tui/engine"
-	tuimessage "nu/internal/tui/message"
+	"nu/internal/tui/message"
 	"nu/internal/tui/terminal"
 )
 
 // App wires Nu agent events into the component TUI.
 type App struct {
 	mu     sync.Mutex
-	agent  *agent.Agent
+	agent  *agentui.Agent
 	term   *terminal.Terminal
 	ui     *engine.TUI
 	editor *editor.Editor
 
-	header *header.Header
+	header *components.Header
 	chat   *core.Container
-	menu   *commandmenu.Menu
-	models *modelmenu.Menu
-	status *status.Status
-	footer *footer.Footer
+	menu   *components.CommandMenu
+	models *components.ModelMenu
+	status *components.Status
+	footer *components.Footer
 
 	cwd         string
 	home        string
@@ -46,7 +41,7 @@ type App struct {
 	context     int
 	available   []model.Model
 	setModel    func(context.Context, model.Model) error
-	messages    []tuimessage.Message
+	messages    []message.Message
 	writeErr    error
 	quit        bool
 	promptWG    sync.WaitGroup
@@ -63,12 +58,12 @@ func NewApp(opts AppOptions) *App {
 		term:        term,
 		ui:          ui,
 		editor:      editor.New(),
-		header:      header.New(headerOptions(opts)),
+		header:      components.NewHeader(headerOptions(opts)),
 		chat:        &core.Container{},
-		menu:        commandmenu.New(slash.Builtins(), commandMenuOptions()),
-		models:      modelmenu.New(choices, modelMenuOptions()),
-		status:      status.New(muted, statusFrames(opts)...),
-		footer:      footer.New(footerOptions(opts)),
+		menu:        components.NewCommandMenu(components.SlashBuiltins(), commandMenuOptions()),
+		models:      components.NewModelMenu(choices, modelMenuOptions()),
+		status:      components.NewStatus(muted, statusFrames(opts)...),
+		footer:      components.NewFooter(footerOptions(opts)),
 		cwd:         opts.CWD,
 		home:        opts.Home,
 		branch:      firstNonEmpty(opts.Branch, currentGitBranch(opts.CWD)),
@@ -111,8 +106,8 @@ func modelChoices(opts AppOptions) []model.Model {
 	}}
 }
 
-// SetAgent injects the provider-backed agent.
-func (a *App) SetAgent(agentRef *agent.Agent) {
+// SetAgent injects the provider-backed agentui.
+func (a *App) SetAgent(agentRef *agentui.Agent) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.agent = agentRef

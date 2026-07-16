@@ -1,4 +1,4 @@
-# `internal/tui/git.go`
+# `internal/tui/tui_git.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Read git branch metadata for the footer without shellin
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Implementation is covered by at least one package-level TUI test path.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
@@ -24,7 +24,7 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 ## Acceptance Criteria
 
 - File status is kept current before implementation commit.
-- Behavior is covered by `go test ./internal/tui/...`.
+- Behavior is covered by `go test ./internal/tui`.
 ## Functions
 
 ### `func currentGitBranch(cwd string) string`
@@ -33,4 +33,4 @@ Logic:
 - Read local state directly and return an empty value when unavailable.
 
 Acceptance:
-- Covered by the package tests and `go test ./internal/tui/...`.
+- Covered by the package tests and `go test ./internal/tui`.

@@ -1,4 +1,4 @@
-# `internal/tui/app.go`
+# `internal/tui/tui_app.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Define the interactive App state, model selector state,
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Implementation is covered by at least one package-level TUI test path.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
@@ -24,7 +24,7 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 ## Acceptance Criteria
 
 - File status is kept current before implementation commit.
-- Behavior is covered by `go test ./internal/tui/...`.
+- Behavior is covered by `go test ./internal/tui`.
 
 ## Types
 
@@ -33,13 +33,14 @@ Keep this file small, stdlib-only, and covered by narrow tests. Add comments onl
 Logic:
 - Own the top-level interactive state: agent pointer, terminal, engine, editor,
   header/chat/command menu/model selector/status/footer components, cwd/provider/model metadata, structured
-  `internal/tui/message` chat state, pending prompt wait group, and last write
+  `internal/tui` chat state, pending prompt wait group, and last write
   error.
 - Track raw model id separately from the display label so footer text can use custom names while provider requests use real ids.
 - Track session id/name labels for local `/session` and `/name`.
 
 Acceptance:
-- No reusable component, editor, terminal, or renderer logic is added here; those stay in subpackages.
+- Reusable component, editor, terminal, and renderer logic stays in its
+  approved TUI subpackages, with all reusable components in `tui/components`.
 
 ## Functions
 

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/agent"
+	"nu/internal/agentui"
 	"nu/internal/model"
-	"nu/internal/slash"
 	"nu/internal/tui/ansi"
-	tuimessage "nu/internal/tui/message"
+	"nu/internal/tui/components"
+	"nu/internal/tui/message"
 )
 
 func TestTUIAppRendersPiStyleComponentTree(t *testing.T) {
@@ -27,8 +27,8 @@ func TestTUIAppRendersPiStyleComponentTree(t *testing.T) {
 		Repaint:    true,
 	})
 
-	app.Emit(agent.Event{Type: "turn_start"})
-	app.Emit(agent.Event{Type: "message_update", Data: map[string]string{"delta": "hello"}})
+	app.Emit(agentui.Event{Type: "turn_start"})
+	app.Emit(agentui.Event{Type: "message_update", Data: map[string]string{"delta": "hello"}})
 
 	got := out.String()
 	if strings.Count(got, "\x1b[?2026h") < 2 {
@@ -56,16 +56,16 @@ func TestTUIAppRendersStructuredMessageParts(t *testing.T) {
 		Repaint:    true,
 	})
 
-	app.Emit(agent.Event{Type: "turn_start"})
-	app.Emit(agent.Event{
+	app.Emit(agentui.Event{Type: "turn_start"})
+	app.Emit(agentui.Event{
 		Type: "message_update",
 		Data: map[string]string{"kind": "thinking", "thinking_delta": "I should inspect **state**."},
 	})
-	app.Emit(agent.Event{
+	app.Emit(agentui.Event{
 		Type: "tool_start",
 		Data: map[string]string{"id": "call-1", "name": "bash", "arguments": `{"command":"pwd"}`},
 	})
-	app.Emit(agent.Event{
+	app.Emit(agentui.Event{
 		Type: "tool_end",
 		Data: map[string]string{
 			"id":     "call-1",
@@ -74,7 +74,7 @@ func TestTUIAppRendersStructuredMessageParts(t *testing.T) {
 			"error":  "false",
 		},
 	})
-	app.Emit(agent.Event{Type: "message_update", Data: map[string]string{"delta": "Final `answer`."}})
+	app.Emit(agentui.Event{Type: "message_update", Data: map[string]string{"delta": "Final `answer`."}})
 
 	got := out.String()
 	plain := ansi.Strip(got)
@@ -94,7 +94,7 @@ func TestTUIAppRendersUserMessageTextWhite(t *testing.T) {
 	var out bytes.Buffer
 	app := NewApp(AppOptions{Stdout: &out, Width: 80, Height: 12})
 
-	app.messages = append(app.messages, tuimessage.NewUser("привет"))
+	app.messages = append(app.messages, message.NewUser("привет"))
 	app.rebuildChatLocked()
 	app.render()
 
@@ -141,7 +141,7 @@ func TestTUIAppKeepsStatusLineAboveEditor(t *testing.T) {
 		Repaint: true,
 	})
 
-	app.Emit(agent.Event{Type: "turn_start"})
+	app.Emit(agentui.Event{Type: "turn_start"})
 
 	lines := strings.Split(ansi.Strip(out.String()), "\r\n")
 	if len(lines) != 12 {
@@ -169,7 +169,7 @@ func TestTUIAppUsesLimitedCharsetWhenRequested(t *testing.T) {
 		ASCII:   true,
 	})
 
-	app.Emit(agent.Event{Type: "turn_start"})
+	app.Emit(agentui.Event{Type: "turn_start"})
 
 	got := out.String()
 	plain := ansi.Strip(got)
@@ -202,7 +202,7 @@ func TestTUIHandleRawInputScrollsViewport(t *testing.T) {
 	var out bytes.Buffer
 	app := NewApp(AppOptions{Stdout: &out, Width: 80, Height: 8, Repaint: true})
 	for _, text := range []string{"one", "two", "three", "four", "five"} {
-		app.messages = append(app.messages, tuimessage.NewAssistantText(text))
+		app.messages = append(app.messages, message.NewAssistantText(text))
 	}
 	app.rebuildChatLocked()
 	app.render()
@@ -225,7 +225,7 @@ func TestTUIRateLimitShowsFooterNotice(t *testing.T) {
 	var out bytes.Buffer
 	app := NewApp(AppOptions{Stdout: &out, Width: 80, Height: 12, Repaint: true})
 
-	app.Emit(agent.Event{Type: "rate_limit", Data: map[string]string{"attempt": "1", "max": "5"}})
+	app.Emit(agentui.Event{Type: "rate_limit", Data: map[string]string{"attempt": "1", "max": "5"}})
 
 	got := out.String()
 	if !strings.Contains(ansi.Strip(got), "Rate limit") {
@@ -409,7 +409,7 @@ func TestTUIAllBuiltinSlashCommandsHaveHandlers(t *testing.T) {
 		Height:  24,
 		Repaint: true,
 	})
-	app.messages = []tuimessage.Message{tuimessage.NewUser("hello"), tuimessage.NewAssistantText("hi")}
+	app.messages = []message.Message{message.NewUser("hello"), message.NewAssistantText("hi")}
 	app.rebuildChatLocked()
 
 	args := map[string]string{
@@ -420,7 +420,7 @@ func TestTUIAllBuiltinSlashCommandsHaveHandlers(t *testing.T) {
 		"logout": "fireworks",
 		"resume": importPath,
 	}
-	for _, command := range slash.Builtins() {
+	for _, command := range components.SlashBuiltins() {
 		input := "/" + command.Name
 		if value := args[command.Name]; value != "" {
 			input += " " + value

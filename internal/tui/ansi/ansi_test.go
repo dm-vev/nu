@@ -12,7 +12,7 @@ func TestWrapTextWrapsInsteadOfTruncating(t *testing.T) {
 	}
 }
 
-func TestVisibleWidthIgnoresANSI(t *testing.T) {
+func TestVisibleWidthIgnoresEscapes(t *testing.T) {
 	got := VisibleWidth(Green + "abc" + Reset)
 	if got != 3 {
 		t.Fatalf("VisibleWidth = %d, want 3", got)

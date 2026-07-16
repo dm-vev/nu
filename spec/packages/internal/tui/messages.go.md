@@ -1,4 +1,4 @@
-# `internal/tui/messages.go`
+# `internal/tui/tui_messages.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Rebuilds chat from structured message parts.
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Structured text/thinking/tool paths are covered by TUI tests.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash.
@@ -20,7 +20,7 @@ Translate TUI message state into user and assistant components.
 ## Code Style
 
 Keep app-state mutation here small and explicit. Rendering decisions belong in
-component subpackages.
+the shared `tui/components` package after migration.
 
 ## Acceptance Criteria
 
@@ -87,7 +87,7 @@ Logic:
 Acceptance:
 - `tool_end` updates the visible block with output and success/error state.
 
-### `func firstText(value tuimessage.Message) string`
+### `func firstText(value Message) string`
 
 Logic:
 - Return the first text part from a message.
@@ -95,7 +95,7 @@ Logic:
 Acceptance:
 - User message rendering gets prompt text without inspecting other part kinds.
 
-### `func hasToolPart(value tuimessage.Message) bool`
+### `func hasToolPart(value Message) bool`
 
 Logic:
 - Report whether a message contains at least one tool part.
@@ -103,7 +103,7 @@ Logic:
 Acceptance:
 - Final text replacement can avoid tool-related duplication.
 
-### `func estimateContextTokens(messages []tuimessage.Message) int`
+### `func estimateContextTokens(messages []Message) int`
 
 Logic:
 - Sum visible text, tool arguments, and tool results in runes.

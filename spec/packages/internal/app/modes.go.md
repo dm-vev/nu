@@ -24,7 +24,7 @@ to exit code stays in `app.go`.
 
 ## Functions
 
-### `runMode(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runMode(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
@@ -46,7 +46,7 @@ Acceptance:
 - configured real providers are reachable from print and JSON modes;
 - returns a clear error for unimplemented modes.
 
-### `runListModels(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runListModels(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
@@ -64,7 +64,7 @@ Acceptance:
 - custom `--models` entries are included.
 - custom `display_name` entries are visible in list output.
 
-### `runPrint(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runPrint(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
@@ -78,7 +78,7 @@ Acceptance:
 - calls the agent provider path for `--print`;
 - fails clearly when no provider-backed agent exists.
 
-### `runJSON(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runJSON(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
@@ -93,7 +93,7 @@ Acceptance:
 - first line is the session header;
 - later lines are agent events in emission order.
 
-### `runRPC(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runRPC(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
@@ -108,13 +108,14 @@ Acceptance:
 - `--mode rpc` accepts JSONL commands from stdin;
 - stdout contains only JSONL responses/events.
 
-### `runInteractive(ctx context.Context, rt *Runtime, req cli.Request) error`
+### `runInteractive(ctx context.Context, rt *Runtime, req Request) error`
 
 Logic:
 
 - Create a `tui.App` over runtime stdin/stdout/stderr and runtime labels.
 - Pass visible model candidates into the TUI app.
-- Wire TUI model selection to provider settings, `newProviderClient`, and `Agent.SetProviderModel`.
+- Wire TUI model selection to `agentui.Controller.SetModel`; the controller uses
+  the runtime SDK builder and preserves memory/tools while rebuilding Agent.
 - Persist successful TUI model selections to `~/.nu/agent/settings.json`.
 - Create a provider-backed agent with `ui.Emit`.
 - Inject the agent into the UI app.

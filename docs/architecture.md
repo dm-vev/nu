@@ -1,150 +1,87 @@
 # Nu Architecture
 
-Nu is built as a Go application with a small executable entry point and private
-packages under `internal/`.
-
-## Layers
+Nu combines its Go CLI/TUI with a curated internal fork of
+`Ingenimax/agent-sdk-go` `v0.2.62`.
 
 ```text
-cmd/nu
-  -> internal/app
-     -> cli/config/auth/resource/model
-     -> agent/session/tool/provider/compact
-     -> tui or json/rpc/export/share/update
+cmd/nu -> internal/app
+            -> app/{auth,cli}
+            -> agent/{config,plans,guardrails,prompts}
+            -> llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
+            -> tools/{coding,search,image,graphrag}
+            -> data/{embedding,weaviate/{graph,vector},sql,storage}
+            -> task/{service,workflow,orchestration}
+            -> telemetry/{otel,langfuse}
+            -> transport/{grpc/pb,http,a2a,ui}
+            -> internal/agentui     SDK stream to Nu event adapter
+                 -> tui/{core,editor,engine,input,message,terminal,components}
+                 -> internal/rpc
 ```
 
-The application layer wires dependencies. Lower packages do not import `app`.
+The full feature set currently imported from pinned SDK `v0.2.62` lives directly
+under `internal/`: agent runtime and contracts, all imported providers, memory
+and retrieval, MCP and tools, orchestration/workflows/tasks, A2A/gRPC/service
+integration, guardrails, tracing, and supporting families. No feature is
+deleted. There is no nested SDK directory, frozen upstream folder mirror, old
+`internal/provider` backend, or wrapper for a superseded import path.
 
-## Protocol Contracts
+The exact approved roots/subpackages are shown above. Standalone packages are
+`agentui`, `config`, `contracts`, `memory`, `multitenancy`, `mcp`, `model`,
+`rpc`, `session`, and `testkit`; `cmd/nu` is the only command package. Root
+packages own shared types and cross-subpackage orchestration only.
 
-The stable contracts live under `spec/protocols/`:
+`internal/tools` owns Registry, Calculator, shared helpers, and agent-as-tool
+orchestration. Its `coding`, `search`, `image`, and `graphrag` children own their
+implementations directly; root does not re-export them. `internal/agent` owns
+model/tool execution. `internal/agentui` owns only busy, abort,
+reset/model-swap lifecycle and translates SDK events for the existing TUI/RPC.
+Nu coding tools and `Builtins(cwd)` stay together in `internal/tools/coding`. TUI runtime
+layers use the approved child packages, and every reusable component shares the
+single `internal/tui/components` package.
 
-- provider streams: normalized event ordering and tool-call assembly;
-- session JSONL: append-only tree storage;
-- RPC JSONL: headless stdin/stdout framing;
-- extension JSONL: process extension handshake, registration, hooks, UI, and
-  shutdown;
-- TUI rendering/input: frame width, diff, input, editor, and overlay invariants.
+CLI parsing and credentials are Nu-owned in `internal/app/{cli,auth}`;
+composition remains in `internal/app`, and model metadata remains in
+`internal/model`. Switching models rebuilds the SDK agent
+with the same memory and tools. Print/JSON/RPC inject telemetry that cannot write
+SDK diagnostics to stdout.
 
-Package specs can change as implementation teaches us more. Protocol specs need
-golden-test updates before any wire or persisted format changes.
+SDK providers live in their `internal/llm/*` packages while shared retry and
+structured-output orchestration remain at the root. Data implementations live
+only in `internal/data/{embedding,weaviate/{graph,vector},sql,storage}`: embedding
+owns generic metadata filtering, Weaviate exposes distinct GraphRAG and vector
+stores with focused child packages, SQL owns PostgreSQL/Supabase, and storage
+owns its contract plus local/GCS backends.
+The root data package is an index, not a facade. Task, telemetry, and transport
+implementations follow their listed cohesive packages. Generated
+protobuf lives only in `internal/transport/grpc/pb`. Concrete remote clients
+live outside `internal/agent`; app injects them through transport-neutral contracts so agent and
+transport do not form an import cycle.
 
-## Data Flow
+Task services and compatibility adapters live in `task/service`, workflow models
+and execution live in `task/workflow`, and orchestrators, handoffs, and routers
+live in `task/orchestration`. The root keeps canonical/core and legacy models,
+executors, planners, and shared task contracts/options; it does not import or
+re-export its children.
+`internal/agent` does not import `task`.
 
-### Print Mode
+Within agent, `config` owns independent YAML/deployment/remote configuration,
+including loading, merge, environment expansion, persistence, validation, and
+conversion. Factories that construct `*agent.Agent` stay in root. `plans` owns
+plan models, storage, generation, and execution, while root owns the Agent-facing
+plan methods. `guardrails` owns concrete implementations and `prompts` owns
+templates, stores, and management. Root imports `config` and `plans`, consumes
+guardrails only through `contracts.Guardrails`, and imports neither transport nor
+task. Remote clients are injected through `contracts.RemoteAgentClient`.
 
-```text
-args -> settings/auth/model -> session -> agent -> provider/tools -> stdout
-```
+SDK packages point inward only to other curated SDK owners. They never import
+Nu application, UI, or session packages. Nu composition and
+`internal/agentui` provide the one-way integration in the other direction.
 
-Print mode is the first full vertical slice because it exercises model calls,
-tools, events, sessions, and output without terminal complexity.
+The balanced migration is **IMPLEMENTED** and intentionally source-breaking.
+Superseded paths are deleted after behavior and tests move; old paths get no
+aliases, facades, or wrappers. Files inside a subpackage use ordinary names such
+as `client.go`, not provider-prefixed names. A subpackage must be cohesive, not a
+home for one helper.
 
-### Interactive Mode
-
-```text
-terminal input -> tui editor -> slash/agent command -> agent events -> tui render
-```
-
-The TUI is an event consumer. It cannot mutate agent state directly; it sends
-commands to the session controller.
-
-### RPC Mode
-
-```text
-stdin JSONL command -> rpc dispatcher -> session controller -> stdout JSONL
-```
-
-RPC stdout must remain machine-readable JSONL. Diagnostics go to stderr.
-
-Current wiring recognizes the Pi RPC command set and keeps command responses,
-agent events, queue state, settings, model labels, bash execution, and
-lightweight session/tree data inside `internal/rpc`. Durable
-session/export/share depth still belongs to the dedicated packages as they
-land.
-
-### Current Interactive Mode
-
-```text
-terminal input -> tui/input -> tui/editor -> agent prompt -> agent events -> tui/engine -> terminal diff
-```
-
-The current Go UI slice is split under `internal/tui`:
-
-- top-level `tui` is Nu app wiring only;
-- `tui/engine` renders component trees and writes synchronized diffs;
-- `tui/terminal` owns raw mode, size, resize, and writes;
-- `tui/input` groups raw bytes into key/paste events;
-- `tui/editor` owns multiline buffer state;
-- `tui/message` stores ordered text/thinking/tool message parts;
-- `tui/components/*` keeps each visible component in its own subpackage,
-  including Markdown, thinking, and tool execution blocks.
-
-Selectors and extension UI should be added as component subpackages, not merged
-into the top-level app package.
-
-## Package Responsibilities
-
-### `internal/agent`
-
-Owns turn state, provider streaming, tool call scheduling, retry, abort,
-steering, follow-up queues, and event emission.
-
-### `internal/session`
-
-Owns JSONL storage, tree reconstruction, active branch selection, resume lookup,
-fork, clone, import, and migration.
-
-### `internal/provider`
-
-Defines shared request/message/event structs used by adapters. Adapters own
-their HTTP payload shape and stream parsing.
-
-### `internal/tool`
-
-Owns registry and validation. Built-ins are boring Go code over filesystem,
-subprocesses, and search.
-
-### `internal/resource`
-
-Discovers context files, system prompts, skills, prompt templates, themes, and
-package resources after trust resolution.
-
-### `internal/pkgmgr`
-
-Installs, removes, updates, lists, filters, enables, and disables resource
-packages from local paths, git sources, and archives.
-
-### `internal/share`
-
-Creates private share artifacts and uploads them only after explicit user action.
-
-### `internal/extension`
-
-Runs extension processes and translates lifecycle/tool/UI events over JSONL RPC.
-The core never imports extension code.
-
-### `internal/tui`
-
-Owns raw terminal mode, input parsing, renderer diffing, components, focus,
-overlays, keybindings, and terminal capability detection.
-
-Implemented now: raw terminal lifecycle, synchronized diff writer, strict width
-checks, input decoding, editor buffer, structured message parts, Markdown,
-thinking blocks, tool execution blocks, and Pi-style header/chat/editor/footer
-composition.
-
-Pending: selector components, theme files, and extension UI components.
-
-## First Implementation Slice
-
-The first code slice should prove the architecture, not the whole product:
-
-1. `go.mod`, `cmd/nu`, `internal/app`.
-2. CLI parse for print mode.
-3. Fake provider in tests.
-4. Agent loop with one text response and one tool call.
-5. Session append/load.
-6. JSON event output.
-
-After that, each Pi feature lands behind a spec ID and tests.
+See `spec/backend.md` for provenance and local patches, and
+`spec/architecture.md` for normative ownership.

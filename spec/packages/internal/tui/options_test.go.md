@@ -1,4 +1,4 @@
-# `internal/tui/options_test.go`
+# `internal/tui/tui_options_test.go`
 
 ## Status
 
@@ -8,8 +8,8 @@ Implementation Comments: Verify terminal charset detection for TUI fallback rend
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
-- [x] Test file is runnable with `go test ./internal/tui/...`.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
+- [x] Test file is runnable with `go test ./internal/tui`.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash and summarize important comments.
 

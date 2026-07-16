@@ -1,4 +1,4 @@
-# `internal/tui/style.go`
+# `internal/tui/tui_style.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Defines Nu's dark green/black/gray/white TUI palette.
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Palette functions are exercised through TUI render tests.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash.

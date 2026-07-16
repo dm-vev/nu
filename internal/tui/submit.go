@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/agent"
+	"nu/internal/agentui"
 	"nu/internal/model"
-	"nu/internal/slash"
-	"nu/internal/tui/components/modelmenu"
-	tuimessage "nu/internal/tui/message"
+	"nu/internal/tui/components"
+	"nu/internal/tui/message"
 )
 
 func (a *App) submit(value string) error {
@@ -18,13 +17,13 @@ func (a *App) submit(value string) error {
 		a.render()
 		return nil
 	}
-	if name, args, ok := slash.Parse(value); ok {
+	if name, args, ok := components.SlashParse(value); ok {
 		return a.runSlashCommand(name, args)
 	}
 
 	a.mu.Lock()
 	agentRef := a.agent
-	a.messages = append(a.messages, tuimessage.NewUser(value))
+	a.messages = append(a.messages, message.NewUser(value))
 	a.rebuildChatLocked()
 	a.mu.Unlock()
 	a.render()
@@ -37,7 +36,7 @@ func (a *App) submit(value string) error {
 }
 
 func (a *App) runSlashCommand(name string, args string) error {
-	if _, ok := slash.Lookup(name); !ok {
+	if _, ok := components.SlashLookup(name); !ok {
 		a.appendLocalMessage("Unknown command: /" + name)
 		return nil
 	}
@@ -103,7 +102,7 @@ func (a *App) runSlashCommand(name string, args string) error {
 
 func (a *App) appendLocalMessage(text string) {
 	a.mu.Lock()
-	a.messages = append(a.messages, tuimessage.NewAssistantText(text))
+	a.messages = append(a.messages, message.NewAssistantText(text))
 	a.rebuildChatLocked()
 	a.mu.Unlock()
 	a.render()
@@ -205,7 +204,7 @@ func (a *App) selectModel(selected model.Model) error {
 	opts.Model = label
 	opts.Context = contextWindow
 	a.footer.SetOptions(opts)
-	a.messages = append(a.messages, tuimessage.NewAssistantText("Model switched from "+previous+" to "+label))
+	a.messages = append(a.messages, message.NewAssistantText("Model switched from "+previous+" to "+label))
 	a.rebuildChatLocked()
 	a.mu.Unlock()
 	a.render()
@@ -225,9 +224,9 @@ func (a *App) handleModelMenuInput(data string) bool {
 	}
 	action := a.models.HandleInput(data)
 	switch action {
-	case modelmenu.ActionCancel:
+	case components.ModelMenuActionCancel:
 		a.models.Close()
-	case modelmenu.ActionSelect:
+	case components.ModelMenuActionSelect:
 		selected, ok := a.models.Selected()
 		if !ok {
 			a.models.Close()
@@ -236,13 +235,13 @@ func (a *App) handleModelMenuInput(data string) bool {
 		if err := a.selectModel(selected); err != nil {
 			a.appendError(err)
 		}
-	case modelmenu.ActionChanged:
+	case components.ModelMenuActionChanged:
 	default:
 	}
 	return true
 }
 
-func (a *App) startPrompt(agentRef *agent.Agent, value string) {
+func (a *App) startPrompt(agentRef *agentui.Agent, value string) {
 	ctx := a.submitCtx
 	if ctx == nil {
 		ctx = context.Background()
@@ -250,7 +249,7 @@ func (a *App) startPrompt(agentRef *agent.Agent, value string) {
 	a.promptWG.Add(1)
 	go func() {
 		defer a.promptWG.Done()
-		if err := agentRef.Prompt(ctx, agent.Prompt{Text: value}); err != nil {
+		if err := agentRef.Prompt(ctx, agentui.Prompt{Text: value}); err != nil {
 			a.appendError(fmt.Errorf("interactive prompt: %w", err))
 		}
 	}()
@@ -259,7 +258,7 @@ func (a *App) startPrompt(agentRef *agent.Agent, value string) {
 func (a *App) appendError(err error) {
 	a.mu.Lock()
 	a.status.SetText("")
-	a.messages = append(a.messages, tuimessage.NewAssistantText("Error: "+err.Error()))
+	a.messages = append(a.messages, message.NewAssistantText("Error: "+err.Error()))
 	a.rebuildChatLocked()
 	a.mu.Unlock()
 	a.render()

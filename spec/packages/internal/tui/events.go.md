@@ -1,4 +1,4 @@
-# `internal/tui/events.go`
+# `internal/tui/tui_events.go`
 
 ## Status
 
@@ -8,7 +8,7 @@ Implementation Comments: Routes agent events into status and structured messages
 
 ## TODO
 
-- [x] File exists in the split `internal/tui` architecture.
+- [x] File exists in the temporary flat implementation; target migration is `IN_PROGRESS`.
 - [x] Text/thinking/tool event paths are covered by TUI tests.
 - [x] Current status is recorded in this spec file.
 - [ ] After implementation commit, replace `Implementation Commit` with the commit hash.
