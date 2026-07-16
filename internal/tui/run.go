@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/tui/input"
-	"nu/internal/tui/terminal"
+	"github.com/dm-vev/nu/internal/tui/input"
+	"github.com/dm-vev/nu/internal/tui/terminal"
 )
 
 // Run starts the interactive loop.

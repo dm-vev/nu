@@ -3,7 +3,7 @@ package registry
 import (
 	"sync"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Registry implements the ToolRegistry interface

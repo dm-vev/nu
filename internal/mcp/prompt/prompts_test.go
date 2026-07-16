@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

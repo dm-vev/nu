@@ -10,7 +10,7 @@ Status: **IMPLEMENTED: full baseline imported and balanced hierarchy applied**.
 | Version | `v0.2.62` |
 | Commit | `71a421c747c64392fd71e665067393a65e188bf7` |
 | Source review subtree | `pkg/` |
-| Nu destination | `internal/` |
+| Nu destination | public `agent`, `contracts`, `telemetry`; private implementations under `internal/` |
 | License | MIT |
 
 The pinned version identifies both source provenance and the feature baseline.
@@ -31,11 +31,13 @@ add compatibility wrappers solely to preserve an old path.
 ## Mechanical Transformation
 
 1. Start from the complete pinned upstream `pkg/` source currently imported
-   under `internal/`, including its feature/API behavior and owning tests.
+   into the public SDK packages and private implementations, including its
+   feature/API behavior and owning tests.
 2. Move or split packages only when all behavior and test coverage transfer to
    the approved balanced owner; delete only the superseded path.
-3. Rewrite imports directly to the final `nu/internal/*` owners. Do not preserve
-   old paths with wrappers or a second compatibility backend.
+3. Rewrite imports directly to the final public or
+   `github.com/dm-vev/nu/internal/*` owners. Do not preserve old paths with
+   wrappers or a second compatibility backend.
 4. Permit behavior-neutral in-package file splits and record package-level
    structural changes in this ledger.
 5. Remove a module dependency only when the reorganized full feature set and its
@@ -54,15 +56,15 @@ the pinned upstream commit; do not patch the generated output instead.
 
 | Area | Nu change | Reason |
 |---|---|---|
-| `internal/agent/streaming.go` | warnings use injected logger | preserve JSON/RPC stdout |
-| import paths | rewrite callers directly to each approved `nu/internal/*` owner | internal monorepo integration without wrappers |
+| `agent/streaming.go` | warnings use injected logger | preserve JSON/RPC stdout |
+| import paths | rewrite callers directly to each approved public SDK or `github.com/dm-vev/nu/internal/*` owner | clear public boundary and internal monorepo integration without wrappers |
 | temporary flat layout | consolidated behavior into domain roots and removed legacy wrappers | completed intermediate migration step; not the approved final topology |
 | balanced hierarchy | split the flat roots into the exact roots/subpackages in NUA-011; roots retain shared types/orchestration only | **IMPLEMENTED**; cohesive boundaries restored without feature loss or wrappers |
 | app | move credential behavior to `app/auth` and CLI parsing/help/request behavior to `app/cli` | keep `app` as process composition/orchestration |
-| agent | move deployment config, plans, guardrails, and prompts to `agent/{config,plans,guardrails,prompts}` | keep agent runtime shared types/orchestration at the root |
+| agent | split context, execution/MCP/providers/remote, and policy/configuration into their owning subpackages | keep the real Agent implementation and cross-domain orchestration in the public root; no runtime facade |
 | LLM | move provider implementations to the seven approved `llm/*` packages | use ordinary names such as `client.go`; retain retry/structured-output orchestration at the root |
-| tools, memory, and data | move cohesive implementations to `tools/{agent,calculator,registry,coding,search,image,graphrag}`, `memory/{conversation,history,redis,vector,factory}`, and `data/{embedding,weaviate/{graph,vector},sql,storage}` | avoid both one-helper packages and unrelated flat implementation packages |
-| task | keep models/executors/planners at the root; move services/adapters, workflows, and orchestrators/handoffs/routers to `task/{service,workflow,orchestration}` | completed with direct imports, ordinary filenames, and no root facade |
+| tools, memory, and data | move cohesive implementations to `tools/{agent,calculator,registry,coding,search,image/{edit,generation},graphrag}`, `memory/{conversation,history,redis,vector,factory}`, and `data/{embedding/{gemini,openai},weaviate/{graph,vector},sql/{postgres,supabase},storage/{gcs,local}}` | avoid both one-helper packages and unrelated flat implementation packages |
+| task | keep models/executors/planners at the root; move services/adapters, compatibility bridges, workflows, shared orchestration, and LLM orchestration to `task/{service/{bridge},workflow,orchestration/{llm}}` | completed with direct imports, ordinary filenames, and no root facade |
 | telemetry | move implementations to `telemetry/{otel,langfuse}` | preserve all imported diagnostics behavior |
 | transport | separate remote wiring, gRPC client/server/microservice, HTTP server, A2A domains, and UI server/tracing under `transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}` | retain remote behavior without an `agent` import cycle |
 | generated protobuf | move schema and generated output from `internal/transportpb` to `internal/transport/grpc/pb` by regeneration | **IMPLEMENTED**; target owns all transport protobuf and generated Go is never hand-edited |
@@ -77,8 +79,8 @@ move the schema to `internal/transport/grpc/pb/agent.proto`, update `go_package`
 and regenerate from the repository root with:
 
 ```bash
-protoc --go_out=. --go_opt=module=nu \
-  --go-grpc_out=. --go-grpc_opt=module=nu \
+protoc --go_out=. --go_opt=module=github.com/dm-vev/nu \
+  --go-grpc_out=. --go-grpc_opt=module=github.com/dm-vev/nu \
   internal/transport/grpc/pb/agent.proto
 mv internal/transport/grpc/pb/agent_grpc.pb.go internal/transport/grpc/pb/agentgrpc.pb.go
 ```
@@ -98,9 +100,9 @@ SDK-owned code must not import `internal/app`, `internal/agentui`,
 `internal/model`, `internal/tui`, `internal/rpc`, `internal/session`,
 `internal/testkit`, or other Nu-owned packages. Shared behavior needed by SDK
 code belongs in an SDK-owned target package or stays at the Nu composition
-boundary; it is not bridged with a compatibility package. `internal/agent` must
+boundary; it is not bridged with a compatibility package. `agent` must
 not import concrete transport subpackages; app composition injects the remote
-client through `internal/contracts`.
+client through `contracts`.
 
 ## Update Procedure
 

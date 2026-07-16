@@ -3,9 +3,9 @@ package service
 import (
 	"time"
 
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/telemetry"
 	"github.com/google/uuid"
-	. "nu/internal/task"
-	"nu/internal/telemetry"
 )
 
 // CoreAdapter is responsible for adapting between the SDK task model and the core model

@@ -9,14 +9,14 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 
-	"nu/internal/agentui"
-	"nu/internal/app/auth"
-	"nu/internal/app/cli"
-	"nu/internal/contracts"
-	"nu/internal/llm/anthropic"
-	"nu/internal/llm/gemini"
-	"nu/internal/llm/openai"
-	"nu/internal/model"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/app/auth"
+	"github.com/dm-vev/nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/llm/anthropic"
+	"github.com/dm-vev/nu/internal/llm/gemini"
+	"github.com/dm-vev/nu/internal/llm/openai"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 var fireworksBaseURL = "https://api.fireworks.ai/inference/v1"

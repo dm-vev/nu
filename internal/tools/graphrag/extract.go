@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph"
 )
 
 // ExtractTool extracts entities and relationships from text using an LLM.

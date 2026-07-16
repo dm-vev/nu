@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/transport"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/transport"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 const (

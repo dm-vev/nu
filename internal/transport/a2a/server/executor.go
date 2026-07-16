@@ -11,8 +11,8 @@ import (
 	"github.com/a2aproject/a2a-go/a2asrv"
 	"github.com/a2aproject/a2a-go/a2asrv/eventqueue"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // AgentAdapter is the interface that the A2A executor needs from an agent.

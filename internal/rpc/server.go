@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/agentui"
 )
 
 var errStop = errors.New("rpc stop")

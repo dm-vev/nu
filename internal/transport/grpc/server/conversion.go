@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 
-	"nu/internal/contracts"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // convertEventType converts agent event types to protobuf event types

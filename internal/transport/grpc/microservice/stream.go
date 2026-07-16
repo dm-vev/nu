@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"nu/internal/contracts"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // RunStream executes the agent with streaming response

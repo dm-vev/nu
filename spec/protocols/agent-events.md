@@ -1,6 +1,6 @@
 # Agent Event Adaptation
 
-The backend event contract is `internal/contracts.AgentStreamEvent`:
+The backend event contract is `contracts.AgentStreamEvent`:
 
 - `content`
 - `thinking`

@@ -1327,7 +1327,7 @@ const file_internal_transport_grpc_pb_agent_proto_rawDesc = "" +
 	"\x06Health\x12\x14.agent.HealthRequest\x1a\x15.agent.HealthResponse\x12:\n" +
 	"\x05Ready\x12\x17.agent.ReadinessRequest\x1a\x18.agent.ReadinessResponse\x12@\n" +
 	"\x15GenerateExecutionPlan\x12\x12.agent.PlanRequest\x1a\x13.agent.PlanResponse\x12G\n" +
-	"\x14ApproveExecutionPlan\x12\x16.agent.ApprovalRequest\x1a\x17.agent.ApprovalResponseB\"Z nu/internal/transport/grpc/pb;pbb\x06proto3"
+	"\x14ApproveExecutionPlan\x12\x16.agent.ApprovalRequest\x1a\x17.agent.ApprovalResponseB4Z2github.com/dm-vev/nu/internal/transport/grpc/pb;pbb\x06proto3"
 
 var (
 	file_internal_transport_grpc_pb_agent_proto_rawDescOnce sync.Once

@@ -22,4 +22,4 @@ come from `OPENAI_*`, `ANTHROPIC_*`, `GEMINI_API_KEY`, `AZURE_OPENAI_API_KEY`,
 required settings are absent.
 
 The other examples are local and require no credentials or network access.
-They remain inside this module because they import `nu/internal/...` packages.
+They remain inside this module because they import `github.com/dm-vev/nu/internal/...` packages.

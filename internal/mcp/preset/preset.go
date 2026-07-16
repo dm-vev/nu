@@ -2,7 +2,7 @@ package preset
 
 import (
 	"fmt"
-	"nu/internal/mcp/config"
+	"github.com/dm-vev/nu/internal/mcp/config"
 	"os"
 )
 

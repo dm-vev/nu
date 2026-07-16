@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/llm"
+	"github.com/dm-vev/nu/internal/llm"
 )
 
 // Chat performs a chat completion with messages

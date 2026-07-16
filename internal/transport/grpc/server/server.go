@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 
-	"nu/internal/agent"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Server implements the gRPC AgentService.

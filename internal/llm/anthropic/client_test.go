@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func TestAnthropicMessageFiltering(t *testing.T) {

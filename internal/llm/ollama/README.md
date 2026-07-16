@@ -29,8 +29,8 @@ import (
     "fmt"
     "log"
 
-    "nu/internal/llm"
-    "nu/internal/llm/ollama"
+    "github.com/dm-vev/nu/internal/llm"
+    "github.com/dm-vev/nu/internal/llm/ollama"
     "github.com/Ingenimax/agent-sdk-go/pkg/logging"
 )
 

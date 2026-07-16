@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"nu/internal/contracts"
-	"nu/internal/data/embedding"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/embedding"
 )
 
 // MockEmbedder implements a mock embedder for testing.

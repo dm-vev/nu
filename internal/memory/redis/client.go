@@ -7,7 +7,7 @@ import (
 
 	redisclient "github.com/go-redis/redis/v8"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // RedisMemory implements a Redis-backed memory store

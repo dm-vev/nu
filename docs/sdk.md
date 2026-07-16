@@ -1,17 +1,20 @@
-# Internal Agent SDK
+# Public Agent SDK
 
-Status: **IMPLEMENTED**. The fork uses the approved balanced hierarchy.
+Status: **IMPLEMENTED**. The agent SDK is importable by external Go modules.
 
-The backend is a curated internal fork sourced from `Ingenimax/agent-sdk-go`
-`v0.2.62`. It is not a frozen path-for-path mirror or separately published Nu
-package.
+The backend is a curated fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62`.
+The public SDK boundary is `github.com/dm-vev/nu/agent` with shared contracts
+at `github.com/dm-vev/nu/contracts`. Nu-specific providers, storage, memory,
+transport, and UI implementations remain private under `internal/`.
 
 Approved owners:
 
-- `internal/agent`: shared agent runtime types and Run/RunStream orchestration;
-- `internal/agent/{config,plans,guardrails,prompts}`: deployment configuration,
+- `github.com/dm-vev/nu/agent`: Agent type, construction, options, and cross-domain orchestration;
+- `github.com/dm-vev/nu/agent/context`: context and sub-agent invocation values;
+- `github.com/dm-vev/nu/agent/{config,execution,generation,image,mcp,plans,providers,remote,tools}`: cohesive runtime domains;
+- `github.com/dm-vev/nu/agent/{config,plans,guardrails,prompts}`: deployment configuration,
   execution plans, guardrails, and prompts;
-- `internal/contracts`: LLM, Tool, Memory, streaming, and transport-neutral
+- `github.com/dm-vev/nu/contracts`: LLM, Tool, Memory, streaming, and transport-neutral
   contracts;
 - `internal/config`: SDK configuration not owned by an agent;
 - `internal/llm`: shared LLM types, retry, and structured output;
@@ -24,19 +27,22 @@ Approved owners:
 - `internal/tools/{agent,calculator,registry}`: agent-as-tool, Calculator, and
   registry domains;
 - `internal/tools/coding`: cwd-scoped filesystem/process tools and `Builtins`;
-- `internal/tools/{search,image,graphrag}`: search integrations, image tools and
-  sessions, and GraphRAG adapters;
-- `internal/data/{embedding,weaviate/{graph,vector},sql,storage}`: embedders and
-  generic filters, GraphRAG/vector Weaviate stores, PostgreSQL/Supabase adapters, and the storage
-  contract with local/GCS backends; root `internal/data` is index-only;
+- `internal/tools/search`, `internal/tools/image/{edit,generation}`, and
+  `internal/tools/graphrag`: search integrations, image tools and sessions,
+  and GraphRAG adapters;
+- `internal/data/embedding` and `internal/data/embedding/{gemini,openai}`:
+  shared embedding behavior and provider adapters;
+- `internal/data/weaviate/{graph,vector}`, `internal/data/sql/{postgres,supabase}`,
+  and `internal/data/storage/{gcs,local}`: retrieval and concrete persistence
+  adapters; root `internal/data` is index-only;
 - `internal/task`: canonical/core and legacy models, executors, planners, and
   shared task contracts/options;
-- `internal/task/service`: in-memory/core services, API support, adapters, and
-  compatibility conversion behavior;
+- `internal/task/service` and `internal/task/service/bridge`: in-memory/core
+  services, API support, adapters, and compatibility conversion behavior;
 - `internal/task/workflow`: workflow models and execution;
-- `internal/task/orchestration`: LLM/code/workflow orchestrators, handoffs, and
-  routers;
-- `internal/telemetry` plus `{otel,langfuse}`: shared telemetry and integrations;
+- `internal/task/orchestration` and `internal/task/orchestration/llm`:
+  shared/code orchestration plus LLM planning, execution, and routing;
+- `github.com/dm-vev/nu/telemetry` plus `{otel,langfuse}`: shared telemetry and integrations;
 - `internal/transport/remote`: remote-agent construction;
 - `internal/transport/{remote,grpc/{client,server,microservice},http/server,a2a/{card,client,server,tool},ui/{server,trace}}`:
   concrete transport domains;
@@ -48,7 +54,8 @@ for old paths or duplicate the backend. SDK-owned code must not import Nu-owned
 packages.
 
 The migration deletes no feature or API behavior. Callers use final owners
-directly; aliases, facade packages, and forwarding wrappers are forbidden. Root
+directly; legacy aliases, facade packages, and forwarding wrappers for old paths
+are forbidden. Root
 packages own shared types/orchestration only. Subpackages use normal filenames
 such as `client.go`, and no subpackage exists for one helper. Every TUI component
 shares `internal/tui/components`.
@@ -66,8 +73,8 @@ The target schema and its only generated Go set live in
 root with:
 
 ```bash
-protoc --go_out=. --go_opt=module=nu \
-  --go-grpc_out=. --go-grpc_opt=module=nu \
+protoc --go_out=. --go_opt=module=github.com/dm-vev/nu \
+  --go-grpc_out=. --go-grpc_opt=module=github.com/dm-vev/nu \
   internal/transport/grpc/pb/agent.proto
 mv internal/transport/grpc/pb/agent_grpc.pb.go internal/transport/grpc/pb/agentgrpc.pb.go
 ```

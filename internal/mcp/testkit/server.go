@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Server is a configurable MCP server double for domain package tests.

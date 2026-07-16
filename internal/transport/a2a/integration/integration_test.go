@@ -11,12 +11,12 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
-	"nu/internal/transport/a2a/card"
-	a2aclient "nu/internal/transport/a2a/client"
-	"nu/internal/transport/a2a/server"
-	"nu/internal/transport/a2a/tool"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/a2a/card"
+	"github.com/dm-vev/nu/internal/transport/a2a/client"
+	"github.com/dm-vev/nu/internal/transport/a2a/server"
+	"github.com/dm-vev/nu/internal/transport/a2a/tool"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 type mockAgent struct {
@@ -94,19 +94,19 @@ func TestIntegration_ClientSendMessage(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
 	// Verify card was resolved
-	card := client.Card()
+	card := remote.Card()
 	if card.Name != "integration-agent" {
 		t.Errorf("expected card name 'integration-agent', got %s", card.Name)
 	}
 
 	// Send a message
-	result, err := client.SendMessage(ctx, "test message")
+	result, err := remote.SendMessage(ctx, "test message")
 	if err != nil {
 		t.Fatalf("SendMessage failed: %v", err)
 	}
@@ -133,12 +133,12 @@ func TestIntegration_ClientSendMessageWithContextID(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	result, err := client.SendMessage(ctx, "hello", a2aclient.WithContextID("conversation-123"))
+	result, err := remote.SendMessage(ctx, "hello", client.WithContextID("conversation-123"))
 	if err != nil {
 		t.Fatalf("SendMessage with context ID failed: %v", err)
 	}
@@ -165,13 +165,13 @@ func TestIntegration_ClientSendMessageWithTaskID(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
 	// First message to create a task
-	result, err := client.SendMessage(ctx, "first message")
+	result, err := remote.SendMessage(ctx, "first message")
 	if err != nil {
 		t.Fatalf("first SendMessage failed: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestIntegration_ClientSendMessageWithTaskID(t *testing.T) {
 
 	// The first task completed (terminal state), so the A2A protocol correctly
 	// rejects continuation. Verify the server enforces this constraint.
-	_, err = client.SendMessage(ctx, "continue", a2aclient.WithTaskID(task.ID))
+	_, err = remote.SendMessage(ctx, "continue", client.WithTaskID(task.ID))
 	if err == nil {
 		t.Error("expected error when continuing a completed task")
 	}
@@ -193,7 +193,7 @@ func TestIntegration_ClientSendMessageWithTaskID(t *testing.T) {
 func TestIntegration_ClientFromCard(t *testing.T) {
 	agent := &mockAgent{
 		name:        "fromcard-agent",
-		description: "Agent for a2aclient.NewFromCard testing",
+		description: "Agent for client.NewFromCard testing",
 		streamEvents: []contracts.AgentStreamEvent{
 			{Type: contracts.AgentEventContent, Content: "from card!", Timestamp: time.Now()},
 			{Type: contracts.AgentEventComplete, Timestamp: time.Now()},
@@ -203,24 +203,24 @@ func TestIntegration_ClientFromCard(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	// First resolve card manually via a2aclient.New
-	discoveryClient, err := a2aclient.New(ctx, baseURL)
+	// First resolve card manually via client.New
+	discoveryClient, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 	card := discoveryClient.Card()
 
 	// Now create client from pre-resolved card
-	client, err := a2aclient.NewFromCard(ctx, card, a2aclient.WithTimeout(10*time.Second))
+	remote, err := client.NewFromCard(ctx, card, client.WithTimeout(10*time.Second))
 	if err != nil {
-		t.Fatalf("a2aclient.NewFromCard failed: %v", err)
+		t.Fatalf("client.NewFromCard failed: %v", err)
 	}
 
-	if client.Card().Name != card.Name {
-		t.Errorf("expected card name %q, got %q", card.Name, client.Card().Name)
+	if remote.Card().Name != card.Name {
+		t.Errorf("expected card name %q, got %q", card.Name, remote.Card().Name)
 	}
 
-	result, err := client.SendMessage(ctx, "hello from card client")
+	result, err := remote.SendMessage(ctx, "hello from card client")
 	if err != nil {
 		t.Fatalf("SendMessage failed: %v", err)
 	}
@@ -245,13 +245,13 @@ func TestIntegration_SendMessageStream(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
 	// Use streaming API
-	iter := client.SendMessageStream(ctx, "stream me")
+	iter := remote.SendMessageStream(ctx, "stream me")
 	eventCount := 0
 	var lastErr error
 	iter(func(event a2a.Event, err error) bool {
@@ -284,12 +284,12 @@ func TestIntegration_SendMessageStreamWithContextID(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	iter := client.SendMessageStream(ctx, "stream with context", a2aclient.WithContextID("ctx-stream-1"))
+	iter := remote.SendMessageStream(ctx, "stream with context", client.WithContextID("ctx-stream-1"))
 	eventCount := 0
 	iter(func(event a2a.Event, err error) bool {
 		if err != nil {
@@ -317,12 +317,12 @@ func TestIntegration_RemoteAgentTool(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	tool := tool.New(client)
+	tool := tool.New(remote)
 
 	// Verify tool metadata
 	if tool.Name() == "" {
@@ -368,12 +368,12 @@ func TestIntegration_RemoteAgentToolWithName(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	tool := tool.New(client, tool.WithToolName("my_custom_tool"))
+	tool := tool.New(remote, tool.WithToolName("my_custom_tool"))
 	if tool.Name() != "my_custom_tool" {
 		t.Errorf("expected 'my_custom_tool', got %q", tool.Name())
 	}
@@ -391,12 +391,12 @@ func TestIntegration_RemoteAgentTool_RunError(t *testing.T) {
 
 	baseURL := startTestServer(t, agent)
 
-	client, err := a2aclient.New(context.Background(), baseURL)
+	remote, err := client.New(context.Background(), baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	tool := tool.New(client)
+	tool := tool.New(remote)
 
 	// Use a cancelled context to trigger the error path in Run
 	canceledCtx, cancel := context.WithCancel(context.Background())
@@ -423,12 +423,12 @@ func TestIntegration_RemoteAgentTool_ExecuteInvalidJSON(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL)
+	remote, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New failed: %v", err)
+		t.Fatalf("client.New failed: %v", err)
 	}
 
-	tool := tool.New(client)
+	tool := tool.New(remote)
 
 	// Invalid JSON
 	_, err = tool.Execute(ctx, "not json")
@@ -455,14 +455,14 @@ func TestIntegration_ClientOptions(t *testing.T) {
 	baseURL := startTestServer(t, agent)
 	ctx := context.Background()
 
-	client, err := a2aclient.New(ctx, baseURL,
-		a2aclient.WithLogger(telemetry.NewLogger()),
-		a2aclient.WithTimeout(10*time.Second),
+	remote, err := client.New(ctx, baseURL,
+		client.WithLogger(telemetry.NewLogger()),
+		client.WithTimeout(10*time.Second),
 	)
 	if err != nil {
-		t.Fatalf("a2aclient.New with options failed: %v", err)
+		t.Fatalf("client.New with options failed: %v", err)
 	}
-	if client.Card() == nil {
+	if remote.Card() == nil {
 		t.Error("expected non-nil card")
 	}
 }
@@ -519,9 +519,9 @@ func TestIntegration_BearerToken(t *testing.T) {
 	ctx := context.Background()
 
 	// Without token: should fail
-	clientNoAuth, err := a2aclient.New(ctx, baseURL)
+	clientNoAuth, err := client.New(ctx, baseURL)
 	if err != nil {
-		t.Fatalf("a2aclient.New (no auth) failed: %v", err)
+		t.Fatalf("client.New (no auth) failed: %v", err)
 	}
 	_, err = clientNoAuth.SendMessage(ctx, "should fail")
 	if err == nil {
@@ -529,9 +529,9 @@ func TestIntegration_BearerToken(t *testing.T) {
 	}
 
 	// With token: should succeed
-	clientAuth, err := a2aclient.New(ctx, baseURL, a2aclient.WithBearerToken("test-secret-token"))
+	clientAuth, err := client.New(ctx, baseURL, client.WithBearerToken("test-secret-token"))
 	if err != nil {
-		t.Fatalf("a2aclient.New (auth) failed: %v", err)
+		t.Fatalf("client.New (auth) failed: %v", err)
 	}
 	result, err := clientAuth.SendMessage(ctx, "hello with auth")
 	if err != nil {

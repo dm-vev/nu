@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/testkit"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/testkit"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

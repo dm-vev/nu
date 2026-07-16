@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Run executes the tool with the given input

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // runWithStreaming runs the sub-agent with streaming and forwards events to the parent

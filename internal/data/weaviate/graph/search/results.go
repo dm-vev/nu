@@ -3,8 +3,8 @@ package search
 import (
 	"github.com/weaviate/weaviate/entities/models"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/entity"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/entity"
 )
 
 // ParseResults parses GraphQL response into GraphSearchResult slice.

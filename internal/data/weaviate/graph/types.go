@@ -10,7 +10,7 @@
 package graph
 
 import (
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Type aliases for convenience; canonical graph types live in contracts.

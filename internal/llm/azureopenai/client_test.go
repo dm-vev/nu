@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"

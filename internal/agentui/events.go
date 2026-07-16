@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func consumeStream(ctx context.Context, runner contracts.StreamingAgent, input string, emit func(Event)) error {

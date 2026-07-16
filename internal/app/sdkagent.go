@@ -3,22 +3,22 @@ package app
 import (
 	"context"
 
-	sdkagent "nu/internal/agent"
-	agent "nu/internal/agentui"
-	"nu/internal/contracts"
-	sdkmemory "nu/internal/memory/conversation"
-	"nu/internal/telemetry"
-	"nu/internal/tools/coding"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/tools/coding"
+	"github.com/dm-vev/nu/telemetry"
 )
 
-func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
+func newAgent(opts Options, emit func(agentui.Event)) *agentui.Agent {
 	agentTools := opts.Tools
 	if agentTools == nil {
 		agentTools = coding.Builtins(opts.CWD)
 	}
 	memory := opts.Memory
 	if memory == nil {
-		memory = sdkmemory.NewConversationBuffer()
+		memory = conversation.NewConversationBuffer()
 	}
 	runner := opts.Runner
 	if runner == nil && opts.LLM != nil {
@@ -31,9 +31,9 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 	if runner == nil {
 		return nil
 	}
-	builder := agent.Builder(nil)
+	builder := agentui.Builder(nil)
 	if opts.BuildLLM != nil {
-		builder = func(ctx context.Context, config agent.Config, memory contracts.Memory) (contracts.StreamingAgent, error) {
+		builder = func(ctx context.Context, config agentui.Config, memory contracts.Memory) (contracts.StreamingAgent, error) {
 			llm, err := opts.BuildLLM(ctx, config)
 			if err != nil {
 				return nil, err
@@ -41,29 +41,29 @@ func newAgent(opts Options, emit func(agent.Event)) *agent.Agent {
 			return newSDKAgent(llm, memory, agentTools)
 		}
 	}
-	return agent.New(agent.Options{
+	return agentui.New(agentui.Options{
 		Runner:  runner,
 		Builder: builder,
 		Memory:  memory,
-		Config:  agent.Config{ProviderID: opts.ProviderID, API: opts.API, Model: opts.Model},
+		Config:  agentui.Config{ProviderID: opts.ProviderID, API: opts.API, Model: opts.Model},
 		Emit:    emit,
 	})
 }
 
-func newSDKAgent(llm contracts.LLM, memory contracts.Memory, tools []contracts.Tool) (*sdkagent.Agent, error) {
+func newSDKAgent(llm contracts.LLM, memory contracts.Memory, tools []contracts.Tool) (*agent.Agent, error) {
 	streamConfig := contracts.DefaultStreamConfig()
 	// The upstream OpenAI tool stream suppresses even final text when this is false
 	// and tools were offered but not called.
 	streamConfig.IncludeIntermediateMessages = true
-	return sdkagent.NewAgent(
-		sdkagent.WithLLM(llm),
-		sdkagent.WithMemory(memory),
-		sdkagent.WithTools(tools...),
-		sdkagent.WithRequirePlanApproval(false),
-		sdkagent.WithMaxIterations(16),
-		sdkagent.WithStreamConfig(&streamConfig),
-		sdkagent.WithName("nu"),
-		sdkagent.WithLogger(discardSDKLogger{}),
+	return agent.NewAgent(
+		agent.WithLLM(llm),
+		agent.WithMemory(memory),
+		agent.WithTools(tools...),
+		agent.WithRequirePlanApproval(false),
+		agent.WithMaxIterations(16),
+		agent.WithStreamConfig(&streamConfig),
+		agent.WithName("nu"),
+		agent.WithLogger(discardSDKLogger{}),
 	)
 }
 

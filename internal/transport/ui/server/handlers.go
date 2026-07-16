@@ -7,7 +7,7 @@ import (
 	nethttp "net/http"
 	"strconv"
 
-	memory "nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/memory/conversation"
 )
 
 // handleConfig provides detailed agent configuration
@@ -87,7 +87,7 @@ func (h *Server) handleDelegate(w nethttp.ResponseWriter, r *nethttp.Request) {
 	// Build context
 	ctx := r.Context()
 	if req.ConversationID != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationID)
+		ctx = conversation.WithConversationID(ctx, req.ConversationID)
 	}
 	_ = ctx // TODO: Use ctx when implementing actual delegation logic
 

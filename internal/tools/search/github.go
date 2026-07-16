@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 
 	"github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"

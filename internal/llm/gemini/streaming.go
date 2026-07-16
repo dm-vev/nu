@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // GenerateStream generates text with streaming response using native Gemini streaming

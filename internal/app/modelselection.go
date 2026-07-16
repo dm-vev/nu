@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"nu/internal/app/auth"
-	"nu/internal/app/cli"
-	"nu/internal/model"
+	"github.com/dm-vev/nu/internal/app/auth"
+	"github.com/dm-vev/nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 func loadModelRegistry(path string) ([]model.Model, model.Registry, error) {

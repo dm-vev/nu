@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/shared"

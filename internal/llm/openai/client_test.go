@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/llm"
-	provider "nu/internal/llm/openai"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/llm"
+	provider "github.com/dm-vev/nu/internal/llm/openai"
+	"github.com/dm-vev/nu/telemetry"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"

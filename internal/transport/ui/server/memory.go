@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // getConversationHistory returns conversation history with pagination

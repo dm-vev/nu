@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // geminiFakeTool is a minimal contracts.Tool for exercising

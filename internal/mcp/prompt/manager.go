@@ -6,8 +6,8 @@ import (
 	"strings"
 	"text/template"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // PromptManager provides high-level operations for MCP prompts

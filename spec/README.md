@@ -3,8 +3,10 @@
 Status: **agent SDK backend integrated; application features partially implemented**.
 
 Nu is a local-first coding agent. Pi is the application UX baseline. A curated
-fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62` is the internal backend and
-lives directly under `internal/`.
+fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62` exposes its agent runtime
+through `github.com/dm-vev/nu/agent` and contracts through
+`github.com/dm-vev/nu/contracts`; implementation integrations remain under
+`internal/`.
 
 ## Precedence
 
@@ -38,7 +40,7 @@ modifications require Nu specs.
 | Runtime/package boundaries | `architecture.md` |
 | SDK source/version/reorganization/patches | `backend.md` |
 | User-visible requirements | `functions.md` |
-| SDK exact Go API | `internal/*` source and owning tests |
+| SDK exact Go API | public `agent`, `contracts`, and `telemetry` source plus owning tests |
 | Runnable SDK examples | `examples.md` |
 | TUI/RPC SDK adaptation | `packages/internal/agentui/*` |
 | Persisted/wire formats | `protocols/*` |

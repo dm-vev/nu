@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/agentui"
-	"nu/internal/contracts"
-	"nu/internal/testkit"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/testkit"
 )
 
 func TestNUF171RPCPromptResponseCorrelation(t *testing.T) {

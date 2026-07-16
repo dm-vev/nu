@@ -6,14 +6,14 @@ import (
 	"log"
 	"os"
 
-	"nu/internal/config"
-	"nu/internal/llm/anthropic"
-	"nu/internal/llm/azureopenai"
-	"nu/internal/llm/deepseek"
-	"nu/internal/llm/gemini"
-	"nu/internal/llm/ollama"
-	"nu/internal/llm/openai"
-	"nu/internal/llm/vllm"
+	"github.com/dm-vev/nu/internal/config"
+	"github.com/dm-vev/nu/internal/llm/anthropic"
+	"github.com/dm-vev/nu/internal/llm/azureopenai"
+	"github.com/dm-vev/nu/internal/llm/deepseek"
+	"github.com/dm-vev/nu/internal/llm/gemini"
+	"github.com/dm-vev/nu/internal/llm/ollama"
+	"github.com/dm-vev/nu/internal/llm/openai"
+	"github.com/dm-vev/nu/internal/llm/vllm"
 )
 
 func main() {

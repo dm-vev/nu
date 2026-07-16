@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/preset"
-	"nu/internal/mcp/retry"
-	"nu/internal/mcp/transport"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/preset"
+	"github.com/dm-vev/nu/internal/mcp/retry"
+	"github.com/dm-vev/nu/internal/mcp/transport"
 )
 
 func (b *Builder) parseServerURL(urlStr string) (contracts.MCPServer, *LazyMCPServerConfig, error) {

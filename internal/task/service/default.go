@@ -3,8 +3,8 @@ package service
 import (
 	"time"
 
-	. "nu/internal/task"
-	"nu/internal/telemetry"
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // DefaultTask is a default implementation of an agent task

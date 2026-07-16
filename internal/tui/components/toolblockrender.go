@@ -1,6 +1,6 @@
 package components
 
-import "nu/internal/tui/message"
+import "github.com/dm-vev/nu/internal/tui/message"
 
 // Render returns a Pi-like tool execution box.
 func (b *ToolBlock) Render(width int) []string {

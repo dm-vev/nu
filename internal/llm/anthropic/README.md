@@ -42,8 +42,8 @@ import (
 	"fmt"
 	"os"
 
-	"nu/internal/llm"
-	"nu/internal/llm/anthropic"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/internal/llm/anthropic"
 )
 
 func main() {
@@ -94,8 +94,8 @@ import (
 	"strconv"
 	"time"
 
-	"nu/internal/llm"
-	"nu/internal/llm/anthropic"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/internal/llm/anthropic"
 )
 
 func main() {

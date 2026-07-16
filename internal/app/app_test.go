@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/model"
-	"nu/internal/testkit"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/testkit"
 )
 
 func TestAppRunHelp(t *testing.T) {

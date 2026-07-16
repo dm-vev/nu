@@ -11,9 +11,9 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
-	"nu/internal/transport/a2a/card"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/a2a/card"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // waitForServer polls srv.Addr() until it returns a resolved address (not the

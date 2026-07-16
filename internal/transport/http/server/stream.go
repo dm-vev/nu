@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // handleStream provides SSE streaming endpoint
@@ -50,7 +50,7 @@ func (h *Server) HandleStream(w http.ResponseWriter, r *http.Request) {
 		ctx = multitenancy.WithOrgID(ctx, req.OrgID)
 	}
 	if req.ConversationID != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationID)
+		ctx = conversation.WithConversationID(ctx, req.ConversationID)
 	}
 
 	// Check if agent supports streaming

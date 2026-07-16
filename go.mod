@@ -1,4 +1,4 @@
-module nu
+module github.com/dm-vev/nu
 
 go 1.25.0
 

@@ -3,7 +3,7 @@ package coding
 import (
 	"context"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 const defaultMaxOutputBytes = 16 * 1024

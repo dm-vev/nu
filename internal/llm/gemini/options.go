@@ -5,9 +5,9 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
-	"nu/internal/llm"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // GeminiOption represents an option for configuring the Gemini client

@@ -12,9 +12,9 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/retry"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/retry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // syncBuffer guards stderr because os/exec writes it from a background goroutine.

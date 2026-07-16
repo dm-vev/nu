@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/extraction"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/extraction"
 )
 
 // ExtractFromText extracts entities and relationships from text using an LLM.

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Option configures an A2A server.

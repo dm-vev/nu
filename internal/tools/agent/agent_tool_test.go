@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // MockSubAgent is a mock implementation of the SubAgent interface

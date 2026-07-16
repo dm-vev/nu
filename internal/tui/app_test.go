@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/agentui"
-	"nu/internal/model"
-	"nu/internal/tui/ansi"
-	"nu/internal/tui/components"
-	"nu/internal/tui/message"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/tui/ansi"
+	"github.com/dm-vev/nu/internal/tui/components"
+	"github.com/dm-vev/nu/internal/tui/message"
 )
 
 func TestTUIAppRendersPiStyleComponentTree(t *testing.T) {

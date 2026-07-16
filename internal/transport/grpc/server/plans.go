@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // GenerateExecutionPlan generates an execution plan (if the agent supports it)
@@ -21,7 +21,7 @@ func (s *Server) GenerateExecutionPlan(ctx context.Context, req *pb.PlanRequest)
 
 	// Add conversation_id to context if provided
 	if req.ConversationId != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationId)
+		ctx = conversation.WithConversationID(ctx, req.ConversationId)
 	}
 
 	// Extract JWT token from gRPC metadata and add to context

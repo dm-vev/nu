@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Connect establishes a connection to the remote agent service

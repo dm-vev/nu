@@ -3,7 +3,7 @@ package redis
 import (
 	"fmt"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // processMessage handles compression and encryption of messages

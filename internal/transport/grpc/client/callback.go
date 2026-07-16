@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // OnThinking registers a handler for thinking events

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/builder"
-	"nu/internal/mcp/config"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/builder"
+	"github.com/dm-vev/nu/internal/mcp/config"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // RegistryManager integrates registry discovery with MCP server creation

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph"
 )
 
 // GetContextTool retrieves context around an entity via graph traversal.

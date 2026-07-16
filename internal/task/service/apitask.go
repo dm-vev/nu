@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	. "nu/internal/task"
+	. "github.com/dm-vev/nu/internal/task"
 )
 
 // APITask provides a way to execute tasks over an API.

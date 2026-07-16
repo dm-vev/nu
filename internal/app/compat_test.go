@@ -1,5 +1,5 @@
 package app
 
-import "nu/internal/app/cli"
+import "github.com/dm-vev/nu/internal/app/cli"
 
 type Request = cli.Request

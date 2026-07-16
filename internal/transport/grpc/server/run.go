@@ -10,10 +10,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Run executes the agent with the given input
@@ -29,7 +29,7 @@ func (s *Server) Run(ctx context.Context, req *pb.RunRequest) (*pb.RunResponse, 
 
 	// Add conversation_id to context if provided
 	if req.ConversationId != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationId)
+		ctx = conversation.WithConversationID(ctx, req.ConversationId)
 	}
 
 	// Extract JWT token from gRPC metadata and add to context
@@ -81,7 +81,7 @@ func (s *Server) RunStream(req *pb.RunRequest, stream pb.AgentService_RunStreamS
 
 	// Add conversation_id to context if provided
 	if req.ConversationId != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationId)
+		ctx = conversation.WithConversationID(ctx, req.ConversationId)
 	}
 
 	// Extract JWT token from gRPC metadata and add to context

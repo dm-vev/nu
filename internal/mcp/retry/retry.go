@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Config configures retry behavior for MCP operations

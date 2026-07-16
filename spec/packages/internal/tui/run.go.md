@@ -1,4 +1,4 @@
-# `internal/tui/tui_run.go`
+# `internal/tui/run.go`
 
 ## Status
 

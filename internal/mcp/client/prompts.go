@@ -6,8 +6,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/fault"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/fault"
 )
 
 // ListPrompts lists the prompts available on the MCP server

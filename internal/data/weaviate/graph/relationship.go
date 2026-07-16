@@ -9,9 +9,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/relationship"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/relationship"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // StoreRelationships stores multiple relationships in the knowledge graph.

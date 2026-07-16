@@ -10,7 +10,7 @@ import (
 	"github.com/a2aproject/a2a-go/a2aclient"
 	"github.com/a2aproject/a2a-go/a2aclient/agentcard"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Client discovers and communicates with remote A2A-compliant agents.

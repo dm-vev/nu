@@ -7,9 +7,9 @@ import (
 	"math"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // AddMessage adds a message to the memory with improved error handling and retry logic

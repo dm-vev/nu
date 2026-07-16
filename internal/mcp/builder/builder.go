@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/config"
-	"nu/internal/mcp/preset"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/config"
+	"github.com/dm-vev/nu/internal/mcp/preset"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 type LazyMCPServerConfig = config.Config

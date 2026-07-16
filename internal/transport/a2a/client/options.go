@@ -5,7 +5,7 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Option configures an A2A client.

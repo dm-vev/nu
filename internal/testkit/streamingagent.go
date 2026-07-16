@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 type ScriptedAgent struct {

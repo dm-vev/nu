@@ -6,13 +6,13 @@ Nu combines its Go CLI/TUI with a curated internal fork of
 ```text
 cmd/nu -> internal/app
             -> app/{auth,cli}
-            -> agent/{config,plans,guardrails,prompts}
+            -> agent/{context,config,execution,generation,guardrails,image,mcp,plans,prompts,providers,remote,tools}
             -> llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
-            -> tools/{coding,search,image,graphrag}
+            -> tools/{coding,search,image/{edit,generation},graphrag}
             -> memory/{conversation,history,redis,vector,factory}
             -> mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
-            -> data/{embedding,weaviate/{graph,vector},sql,storage}
-            -> task/{service,workflow,orchestration}
+            -> data/{embedding/{gemini,openai},weaviate/{graph,vector},sql/{postgres,supabase},storage/{gcs,local}}
+            -> task/{service/{bridge},workflow,orchestration/{llm}}
             -> telemetry/{otel,langfuse}
             -> transport/{remote,a2a/{card,client,server,tool},grpc/{client,server,microservice,pb},http/server,ui/{server,trace}}
             -> internal/agentui     SDK stream to Nu event adapter
@@ -20,24 +20,31 @@ cmd/nu -> internal/app
                  -> internal/rpc
 ```
 
-The full feature set currently imported from pinned SDK `v0.2.62` lives directly
-under `internal/`: agent runtime and contracts, all imported providers, memory
-and retrieval, MCP and tools, orchestration/workflows/tasks, A2A/gRPC/service
-integration, guardrails, tracing, and supporting families. No feature is
+The public SDK surface currently imported from pinned SDK `v0.2.62` lives in
+`github.com/dm-vev/nu/agent`, `github.com/dm-vev/nu/contracts`, and
+`github.com/dm-vev/nu/telemetry`. Provider, memory, retrieval, MCP, tools,
+transport, and UI implementations remain under `internal/`. No feature is
 deleted. There is no nested SDK directory, frozen upstream folder mirror, old
 `internal/provider` backend, or wrapper for a superseded import path.
 
 The exact approved roots/subpackages are shown above. Transport-neutral remote
-construction lives in `transport/remote`; the `transport` root is only the
-package marker. Standalone packages are
-`agentui`, `config`, `contracts`, `multitenancy`, `model`, `rpc`, `session`,
-and `testkit`; `cmd/nu` is the only command package. Root
-packages own shared types and cross-subpackage orchestration only.
+construction lives in `internal/transport/remote`; the `transport` root is only
+the package marker. Public packages are `agent` and its cohesive child domains, `contracts`, and
+`telemetry`; private standalone packages are `internal/agentui`,
+`internal/config`, `internal/multitenancy`, `internal/model`, `internal/rpc`,
+`internal/session`, and `internal/testkit`. `cmd/nu` is the only command package.
+The root `agent` package owns the real Agent implementation and cross-domain
+orchestration. Agent-specific adapters that require private Agent state stay in
+that package; reusable domains live in cohesive child packages.
 
 `internal/tools/{agent,calculator,registry}` own agent-as-tool, Calculator, and
 registry domains. Its `coding`, `search`, `image`, and `graphrag` children own
-their implementations directly; there is no root tools facade. `internal/agent` owns
-model/tool execution. `internal/agentui` owns only busy, abort,
+their implementations directly; there is no root tools facade. `agent`
+owns the Agent type and cross-domain orchestration; its configuration, generation,
+planning, MCP, provider, remote, and tool domains live in dedicated child
+packages. Agent-specific memory, GraphRAG, sub-agent, task, and validation
+adapters stay beside the Agent because they use its private state.
+`internal/agentui` owns only busy, abort,
 reset/model-swap lifecycle and translates SDK events for the existing TUI/RPC.
 Nu coding tools and `Builtins(cwd)` stay together in `internal/tools/coding`. TUI runtime
 layers use the approved child packages, and every reusable component shares the
@@ -51,24 +58,26 @@ SDK diagnostics to stdout.
 
 SDK providers live in their `internal/llm/*` packages while shared retry and
 structured-output orchestration remain at the root. Data implementations live
-only in `internal/data/{embedding,weaviate/{graph,vector},sql,storage}`: embedding
-owns generic metadata filtering, Weaviate exposes distinct GraphRAG and vector
-stores with focused child packages, SQL owns PostgreSQL/Supabase, and storage
-owns its contract plus local/GCS backends.
+only in `internal/data/{embedding/{gemini,openai},weaviate/{graph,vector},sql/{postgres,supabase},storage/{gcs,local}}`:
+embedding owns shared contracts and generic metadata filtering while provider
+clients live in child packages; Weaviate exposes distinct GraphRAG and vector
+stores; SQL and storage backends also own separate child packages.
 The root data package is an index, not a facade. Task, telemetry, and transport
 implementations follow their listed cohesive packages. Generated
 protobuf lives only in `internal/transport/grpc/pb`. Remote-agent wiring lives
 in `internal/transport/remote`; protocol clients and servers live in their
 transport domain packages. Concrete remote clients stay outside
-`internal/agent`; app injects them through transport-neutral contracts so
+`agent`; app injects them through transport-neutral contracts so
 agent and transport do not form an import cycle.
 
-Task services and compatibility adapters live in `task/service`, workflow models
-and execution live in `task/workflow`, and orchestrators, handoffs, and routers
-live in `task/orchestration`. The root keeps canonical/core and legacy models,
+Task services and adapters live in `task/service`, compatibility bridges live
+in `task/service/bridge`, workflow models
+and execution live in `task/workflow`, shared/code orchestration lives in
+`task/orchestration`, and LLM orchestration lives in `task/orchestration/llm`.
+The root keeps canonical/core and legacy models,
 executors, planners, and shared task contracts/options; it does not import or
 re-export its children.
-`internal/agent` does not import `task`.
+`agent` does not import `task`.
 
 Within agent, `config` owns independent YAML/deployment/remote configuration,
 including loading, merge, environment expansion, persistence, validation, and

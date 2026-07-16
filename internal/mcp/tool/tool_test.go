@@ -3,7 +3,7 @@ package tool
 import (
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 
 	"github.com/google/jsonschema-go/jsonschema"
 )

@@ -7,10 +7,10 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Run executes the remote agent with the given input
@@ -31,7 +31,7 @@ func (r *Client) Run(ctx context.Context, input string) (string, error) {
 	}
 
 	// Add conversation_id from context if available
-	if conversationID, ok := memory.GetConversationID(ctx); ok && conversationID != "" {
+	if conversationID, ok := conversation.GetConversationID(ctx); ok && conversationID != "" {
 		req.ConversationId = conversationID
 	}
 
@@ -81,7 +81,7 @@ func (r *Client) RunWithAuth(ctx context.Context, input string, authToken string
 	}
 
 	// Add conversation_id from context if available
-	if conversationID, ok := memory.GetConversationID(ctx); ok && conversationID != "" {
+	if conversationID, ok := conversation.GetConversationID(ctx); ok && conversationID != "" {
 		req.ConversationId = conversationID
 	}
 
@@ -193,7 +193,7 @@ func (r *Client) GenerateExecutionPlan(ctx context.Context, input string) (*pb.P
 	}
 
 	// Add conversation_id from context if available
-	if conversationID, ok := memory.GetConversationID(ctx); ok && conversationID != "" {
+	if conversationID, ok := conversation.GetConversationID(ctx); ok && conversationID != "" {
 		req.ConversationId = conversationID
 	}
 

@@ -3,8 +3,8 @@ package graph
 import (
 	"context"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // TraverseFrom performs a breadth-first traversal from a starting entity.

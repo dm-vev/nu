@@ -44,7 +44,7 @@ if err != nil {
 import (
     "github.com/Ingenimax/agent-sdk-go/pkg/agent"
     "github.com/Ingenimax/agent-sdk-go/pkg/interfaces"
-    "nu/internal/llm/openai"
+    "github.com/dm-vev/nu/internal/llm/openai"
     "github.com/Ingenimax/agent-sdk-go/pkg/mcp"
     "github.com/Ingenimax/agent-sdk-go/pkg/memory"
 )

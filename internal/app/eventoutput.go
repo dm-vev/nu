@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/agentui"
 )
 
 type printEventWriter struct {

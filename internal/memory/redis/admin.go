@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // GetAllConversationsAcrossOrgs returns all conversation IDs from all organizations

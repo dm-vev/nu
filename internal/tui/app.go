@@ -4,14 +4,14 @@ import (
 	"context"
 	"sync"
 
-	"nu/internal/agentui"
-	"nu/internal/model"
-	"nu/internal/tui/components"
-	"nu/internal/tui/core"
-	"nu/internal/tui/editor"
-	"nu/internal/tui/engine"
-	"nu/internal/tui/message"
-	"nu/internal/tui/terminal"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/tui/components"
+	"github.com/dm-vev/nu/internal/tui/core"
+	"github.com/dm-vev/nu/internal/tui/editor"
+	"github.com/dm-vev/nu/internal/tui/engine"
+	"github.com/dm-vev/nu/internal/tui/message"
+	"github.com/dm-vev/nu/internal/tui/terminal"
 )
 
 // App wires Nu agent events into the component TUI.

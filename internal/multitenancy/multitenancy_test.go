@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/data/embedding"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/embedding"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // MockEmbedder implements a simple mock for testing

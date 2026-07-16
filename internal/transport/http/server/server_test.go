@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/agent"
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
 )
 
 // MockLLM implements a simple mock LLM for testing
@@ -188,7 +188,7 @@ func (m *MockStreamingAgent) RunStream(ctx context.Context, input string) (<-cha
 
 func createTestAgent(response string, err error) contracts.StreamingAgent {
 	mockLLM := &MockLLM{response: response, err: err}
-	memoryStore := memory.NewConversationBuffer()
+	memoryStore := conversation.NewConversationBuffer()
 
 	agentInstance, _ := agent.NewAgent(
 		agent.WithLLM(mockLLM),

@@ -7,9 +7,9 @@ import (
 	nethttp "net/http"
 	"time"
 
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	httpserver "nu/internal/transport/http/server"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	httpserver "github.com/dm-vev/nu/internal/transport/http/server"
 )
 
 // addToConversationHistory adds an entry to local conversation history
@@ -56,7 +56,7 @@ func (h *Server) handleRun(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 	// Add conversation ID if provided
 	if req.ConversationID != "" {
-		ctx = memory.WithConversationID(ctx, req.ConversationID)
+		ctx = conversation.WithConversationID(ctx, req.ConversationID)
 	}
 
 	// Add user input to conversation history

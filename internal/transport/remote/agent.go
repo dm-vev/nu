@@ -1,9 +1,9 @@
 package remote
 
 import (
-	"nu/internal/agent"
-	"nu/internal/contracts"
-	"nu/internal/transport/grpc/client"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/client"
 )
 
 // NewRemoteAgent returns an agent configured with the concrete gRPC transport.

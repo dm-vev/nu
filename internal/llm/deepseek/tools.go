@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // GenerateWithTools implements contracts.LLM.GenerateWithTools

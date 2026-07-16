@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"nu/internal/contracts"
-	. "nu/internal/task"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // SimpleMemoryService implements contracts.TaskService

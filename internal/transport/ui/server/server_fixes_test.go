@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/agent"
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	httpserver "nu/internal/transport/http/server"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	httpserver "github.com/dm-vev/nu/internal/transport/http/server"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -231,7 +231,7 @@ func TestHTTPServerWithUI_getMemoryInfo(t *testing.T) {
 		{
 			name: "Agent with active memory",
 			setupMemory: func() contracts.Memory {
-				return memory.NewConversationBuffer()
+				return conversation.NewConversationBuffer()
 			},
 			expectedType:   "buffer", // ConversationBuffer now correctly detected as "buffer"
 			expectedStatus: "active",

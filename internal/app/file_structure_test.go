@@ -21,24 +21,35 @@ func repositoryRoot(t *testing.T) string {
 	return filepath.Clean(filepath.Join(filepath.Dir(testFile), "..", ".."))
 }
 
-func TestNUF212HierarchyHasNoOldPackagesOrFacade(t *testing.T) {
+func TestNUF212HierarchyHasNoOldPackagesOrLegacyFacade(t *testing.T) {
 	root := repositoryRoot(t)
 	for _, oldPath := range []string{
 		"internal/auth",
 		"internal/cli",
+		"internal/agent",
+		"internal/contracts",
+		"internal/telemetry",
 		"internal/agentconfig",
 		"internal/executionplan",
 		"internal/context",
 		"internal/guardrails",
 		"internal/prompts",
 		"internal/agentsdk.go",
+		"agent/runtime",
 	} {
 		if _, err := os.Stat(filepath.Join(root, oldPath)); !os.IsNotExist(err) {
 			t.Errorf("superseded path still exists: %s", oldPath)
 		}
 	}
+	agentSource, err := os.ReadFile(filepath.Join(root, "agent", "agent.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(agentSource, []byte("type Agent struct")) {
+		t.Fatal("public agent package must own the real Agent implementation")
+	}
 
-	files, err := filepath.Glob(filepath.Join(root, "internal/agent/*.go"))
+	files, err := filepath.Glob(filepath.Join(root, "agent/*.go"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +60,9 @@ func TestNUF212HierarchyHasNoOldPackagesOrFacade(t *testing.T) {
 		}
 		for _, imported := range parsed.Imports {
 			path := strings.Trim(imported.Path.Value, `"`)
-			if strings.HasPrefix(path, "nu/internal/task") || strings.HasPrefix(path, "nu/internal/transport") {
+			if strings.HasPrefix(path, "github.com/dm-vev/nu/internal/task") ||
+				strings.HasPrefix(path, "github.com/dm-vev/nu/internal/transport") ||
+				strings.HasPrefix(path, "github.com/dm-vev/nu/agent/runtime") {
 				t.Errorf("agent has forbidden import %s: %s", path, file)
 			}
 		}
@@ -59,14 +72,15 @@ func TestNUF212HierarchyHasNoOldPackagesOrFacade(t *testing.T) {
 func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 	root := repositoryRoot(t)
 	allowed := map[string]bool{
-		"agent": true, "agentui": true, "app": true, "app/auth": true, "app/cli": true, "config": true,
-		"agent/config": true, "agent/plans": true, "agent/guardrails": true, "agent/prompts": true,
-		"contracts": true, "data": true, "llm": true,
+		"agentui": true, "app": true, "app/auth": true, "app/cli": true, "config": true,
+		"data": true, "llm": true,
 		"mcp/builder": true, "mcp/client": true, "mcp/config": true, "mcp/fault": true,
 		"mcp/lazy": true, "mcp/preset": true, "mcp/prompt": true, "mcp/registry": true,
 		"mcp/resource": true, "mcp/retry": true, "mcp/sampling": true, "mcp/schema": true,
 		"mcp/testkit": true, "mcp/tool": true, "mcp/transport": true,
-		"data/embedding": true, "data/sql": true, "data/storage": true,
+		"data/embedding": true, "data/embedding/gemini": true, "data/embedding/openai": true,
+		"data/sql": true, "data/sql/postgres": true, "data/sql/supabase": true,
+		"data/storage": true, "data/storage/gcs": true, "data/storage/local": true,
 		"data/weaviate/graph": true, "data/weaviate/graph/entity": true,
 		"data/weaviate/graph/extraction": true, "data/weaviate/graph/relationship": true,
 		"data/weaviate/graph/search": true, "data/weaviate/vector": true,
@@ -76,9 +90,10 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		"memory/conversation": true, "memory/factory": true, "memory/history": true,
 		"memory/redis": true, "memory/vector": true,
 		"model": true, "multitenancy": true, "rpc": true,
-		"session": true, "task": true, "telemetry": true, "telemetry/otel": true, "telemetry/langfuse": true, "testkit": true,
-		"task/service": true, "task/workflow": true, "task/orchestration": true,
-		"tools/agent": true, "tools/calculator": true, "tools/registry": true,
+		"session": true, "task": true, "testkit": true,
+		"task/service": true, "task/service/bridge": true, "task/workflow": true, "task/orchestration": true,
+		"task/orchestration/llm": true,
+		"tools/agent":            true, "tools/calculator": true, "tools/registry": true,
 		"transport": true, "transport/remote": true,
 		"transport/a2a/card": true, "transport/a2a/client": true, "transport/a2a/server": true,
 		"transport/a2a/tool": true, "transport/grpc/client": true, "transport/grpc/server": true,
@@ -86,7 +101,8 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		"transport/http/server": true, "transport/ui/server": true, "transport/ui/trace": true, "tui": true,
 		"tui/ansi": true, "tui/core": true, "tui/editor": true, "tui/engine": true,
 		"tui/input": true, "tui/message": true, "tui/terminal": true, "tui/components": true,
-		"tools/coding": true, "tools/search": true, "tools/image": true, "tools/graphrag": true,
+		"tools/coding": true, "tools/search": true, "tools/image": true,
+		"tools/image/edit": true, "tools/image/generation": true, "tools/graphrag": true,
 	}
 	seen := map[string]bool{}
 	err := filepath.WalkDir(filepath.Join(root, "internal"), func(path string, entry fs.DirEntry, err error) error {
@@ -111,7 +127,7 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		t.Fatal(err)
 	}
 	for dir := range allowed {
-		if dir == "data" || dir == "data/weaviate" { // Index-only roots intentionally have no production Go file.
+		if dir == "data" || dir == "data/weaviate" || dir == "data/sql" || dir == "tools/image" { // Index-only roots intentionally have no production Go file.
 			continue
 		}
 		if !seen[dir] {
@@ -119,7 +135,7 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 		}
 	}
 	for _, dir := range []string{
-		"memory", "mcp", "tools", "transport/a2a", "transport/grpc", "transport/http", "transport/ui",
+		"memory", "mcp", "tools", "tools/image", "data/sql", "transport/a2a", "transport/grpc", "transport/http", "transport/ui",
 	} {
 		if seen[dir] {
 			t.Errorf("domain family root must not contain production Go files: %s", dir)
@@ -129,10 +145,12 @@ func TestNUA009InternalPackagesMatchBalancedHierarchy(t *testing.T) {
 
 func TestNUF212AgentPackagesHaveFinalOwnership(t *testing.T) {
 	root := repositoryRoot(t)
-	agentRoot := filepath.Join(root, "internal", "agent")
+	agentRoot := filepath.Join(root, "agent")
 	children := map[string]string{
-		"config": "models.go", "plans": "plan.go",
-		"guardrails": "guardrails.go", "prompts": "template.go",
+		"context": "context.go", "config": "models.go", "execution": "usage.go",
+		"generation": "config.go", "guardrails": "guardrails.go", "image": "generation.go",
+		"mcp": "manager.go", "plans": "plan.go", "prompts": "template.go",
+		"providers": "llm.go", "remote": "service.go", "tools": "factory.go",
 	}
 
 	for child, ordinaryFile := range children {
@@ -146,21 +164,20 @@ func TestNUF212AgentPackagesHaveFinalOwnership(t *testing.T) {
 		}
 		for _, file := range files {
 			name := filepath.Base(file)
-			for _, prefix := range []string{"config_", "execution_plan_", "guardrail_", "prompt_"} {
-				if strings.HasPrefix(name, prefix) {
-					t.Errorf("agent child filename repeats package context: %s", file)
-				}
+			if !strings.HasSuffix(name, "_test.go") && strings.Contains(name, "_") {
+				t.Errorf("agent child production filename contains underscore: %s", file)
 			}
 			parsed, err := parser.ParseFile(token.NewFileSet(), file, nil, parser.ImportsOnly)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if parsed.Name.Name != child {
-				t.Errorf("%s declares package %s, want %s", file, parsed.Name.Name, child)
+			wantPackage := filepath.Base(child)
+			if parsed.Name.Name != wantPackage {
+				t.Errorf("%s declares package %s, want %s", file, parsed.Name.Name, wantPackage)
 			}
 			for _, imported := range parsed.Imports {
 				path := strings.Trim(imported.Path.Value, `"`)
-				if path == "nu/internal/agent" || strings.HasPrefix(path, "nu/internal/transport") || strings.HasPrefix(path, "nu/internal/task") {
+				if path == "github.com/dm-vev/nu/agent" || strings.HasPrefix(path, "github.com/dm-vev/nu/internal/transport") || strings.HasPrefix(path, "github.com/dm-vev/nu/internal/task") {
 					t.Errorf("agent child has forbidden import %s: %s", path, file)
 				}
 			}
@@ -189,7 +206,7 @@ func TestNUF212TaskPackagesHaveFinalOwnership(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, imported := range parsed.Imports {
-			if strings.HasPrefix(strings.Trim(imported.Path.Value, `"`), "nu/internal/task/") {
+			if strings.HasPrefix(strings.Trim(imported.Path.Value, `"`), "github.com/dm-vev/nu/internal/task/") {
 				t.Errorf("root task must not import child packages: %s", file)
 			}
 		}
@@ -243,7 +260,7 @@ func TestNUF204ToolRootDoesNotReExportChildPackages(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, imported := range parsed.Imports {
-			if strings.HasPrefix(strings.Trim(imported.Path.Value, `"`), "nu/internal/tools/") {
+			if strings.HasPrefix(strings.Trim(imported.Path.Value, `"`), "github.com/dm-vev/nu/internal/tools/") {
 				t.Errorf("root tools must not import child packages: %s", file)
 			}
 		}
@@ -298,6 +315,72 @@ func TestNUT010ProductionGoFilenamesHaveNoUnderscore(t *testing.T) {
 		}
 		if strings.Contains(filepath.Base(path), "_") {
 			t.Errorf("production Go filename contains underscore: %s", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNUT010ProductionGoFilenamesDoNotRepeatPackageName(t *testing.T) {
+	root := repositoryRoot(t)
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() && (entry.Name() == ".git" || entry.Name() == "vendor") {
+			return filepath.SkipDir
+		}
+		if entry.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+
+		name := strings.TrimSuffix(filepath.Base(path), ".go")
+		packageName := filepath.Base(filepath.Dir(path))
+		if name != packageName && strings.HasPrefix(name, packageName) {
+			t.Errorf("production Go filename repeats package name: %s", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNUT010ImportsDoNotEncodeAncestorDomains(t *testing.T) {
+	root := repositoryRoot(t)
+	forbidden := map[string]bool{
+		"transportgrpc": true,
+		"grpcserver":    true,
+		"grpcclient":    true,
+		"agentconfig":   true,
+		"agentmcp":      true,
+		"agentplans":    true,
+		"sdkagent":      true,
+		"sdkmemory":     true,
+		"runtimemcp":    true,
+	}
+
+	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() && (entry.Name() == ".git" || entry.Name() == "vendor") {
+			return filepath.SkipDir
+		}
+		if entry.IsDir() || !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		parsed, err := parser.ParseFile(token.NewFileSet(), path, nil, parser.ImportsOnly)
+		if err != nil {
+			return err
+		}
+		for _, imported := range parsed.Imports {
+			if imported.Name != nil && forbidden[imported.Name.Name] {
+				t.Errorf("import alias encodes ancestor domains: %s: %s", path, imported.Name.Name)
+			}
 		}
 		return nil
 	})

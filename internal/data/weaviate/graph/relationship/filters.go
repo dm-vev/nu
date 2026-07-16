@@ -3,7 +3,7 @@ package relationship
 import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // BuildIDFilter creates a Weaviate filter for relationship ID and optional tenant.

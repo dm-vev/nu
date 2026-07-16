@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"nu/internal/tui/message"
+	"github.com/dm-vev/nu/internal/tui/message"
 )
 
 func (a *App) settingsCommandText() string {

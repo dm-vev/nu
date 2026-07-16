@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // ConversationSummary implements a memory that summarizes old messages

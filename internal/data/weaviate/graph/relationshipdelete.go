@@ -6,9 +6,9 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/relationship"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/relationship"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // DeleteRelationship deletes a relationship by its ID.

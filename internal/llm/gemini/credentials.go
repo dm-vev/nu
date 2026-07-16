@@ -7,10 +7,10 @@ import (
 	"cloud.google.com/go/auth/credentials"
 	"google.golang.org/genai"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
-// NewGemini creates a new Gemini client
+// NewClient creates a Gemini client.
 func NewClient(ctx context.Context, options ...Option) (*Client, error) {
 	// Create client with default options
 	defaultThinking := DefaultThinkingConfig()

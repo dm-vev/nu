@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"nu/internal/model"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 func (m *ModelMenu) refresh() {

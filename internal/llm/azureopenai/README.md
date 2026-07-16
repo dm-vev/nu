@@ -30,7 +30,7 @@ Before using this client, you need:
 ### Creating a Client
 
 ```go
-import "nu/internal/llm/azureopenai"
+import "github.com/dm-vev/nu/internal/llm/azureopenai"
 
 // Option 1: Using Base URL (traditional approach)
 client := azureopenai.NewClient(
@@ -78,7 +78,7 @@ fmt.Println(response)
 ### Chat Completion
 
 ```go
-import "nu/internal/llm"
+import "github.com/dm-vev/nu/internal/llm"
 
 messages := []llm.Message{
     {

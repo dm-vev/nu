@@ -3,8 +3,8 @@ package client
 import (
 	"time"
 
-	"nu/internal/contracts"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // convertPbToStreamEvent converts a protobuf RunStreamResponse to AgentStreamEvent

@@ -1,8 +1,8 @@
 package vector
 
 import (
-	"nu/internal/data/embedding"
-	"nu/internal/data/weaviate/vector/metadata"
+	"github.com/dm-vev/nu/internal/data/embedding"
+	"github.com/dm-vev/nu/internal/data/weaviate/vector/metadata"
 )
 
 // FilterToWeaviateFormat converts metadata filters to Weaviate's filter format.

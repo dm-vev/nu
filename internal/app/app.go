@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/app/cli"
 )
 
 const (

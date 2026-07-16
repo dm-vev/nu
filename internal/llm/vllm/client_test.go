@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 
 	"github.com/stretchr/testify/assert"
 )

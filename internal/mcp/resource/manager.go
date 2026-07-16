@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // ResourceManager provides high-level operations for MCP resources

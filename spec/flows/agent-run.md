@@ -4,7 +4,7 @@
 sequenceDiagram
     participant U as User/TUI/RPC
     participant C as internal/agentui
-    participant A as internal/agent SDK
+    participant A as agent SDK
     participant L as internal/llm SDK
     participant T as SDK/Nu tools
     participant M as SDK memory

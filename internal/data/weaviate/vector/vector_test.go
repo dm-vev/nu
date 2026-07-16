@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/contracts"
-	"nu/internal/data/embedding"
-	"nu/internal/data/weaviate/vector"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/embedding"
+	"github.com/dm-vev/nu/internal/data/weaviate/vector"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // MockEmbedder implements a simple mock embedding client for testing

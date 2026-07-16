@@ -1,9 +1,9 @@
 package tui
 
-import agent "nu/internal/agentui"
+import "github.com/dm-vev/nu/internal/agentui"
 
 // Emit updates UI state from one agent event.
-func (a *App) Emit(ev agent.Event) {
+func (a *App) Emit(ev agentui.Event) {
 	a.mu.Lock()
 	switch ev.Type {
 	case "turn_start":

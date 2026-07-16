@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"nu/internal/agentui"
-	"nu/internal/app/auth"
-	"nu/internal/app/cli"
-	"nu/internal/model"
-	"nu/internal/rpc"
-	"nu/internal/tui"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/app/auth"
+	"github.com/dm-vev/nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/rpc"
+	"github.com/dm-vev/nu/internal/tui"
 )
 
 func runMode(ctx context.Context, rt *Runtime, req cli.Request) error {

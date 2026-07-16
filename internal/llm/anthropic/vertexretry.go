@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // AnthropicVertexRetryPolicy represents the retry policy (imported from pkg/retry)

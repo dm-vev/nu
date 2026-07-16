@@ -1,7 +1,7 @@
 package components
 
 import (
-	"nu/internal/tui/ansi"
+	"github.com/dm-vev/nu/internal/tui/ansi"
 	"strings"
 )
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 func TestDeepSeekBuildMessagesWithoutMemory(t *testing.T) {
@@ -32,11 +32,11 @@ func TestDeepSeekBuildMessagesWithoutMemory(t *testing.T) {
 func TestDeepSeekBuildMessagesWithMemory(t *testing.T) {
 	builder := deepSeekNewMessageHistoryBuilder(telemetry.NewLogger())
 	ctx := context.Background()
-	ctx = memory.WithConversationID(ctx, "test-conv")
+	ctx = conversation.WithConversationID(ctx, "test-conv")
 	ctx = multitenancy.WithOrgID(ctx, "test-org")
 
 	// Create memory with messages
-	mem := memory.NewConversationBuffer()
+	mem := conversation.NewConversationBuffer()
 	if err := mem.AddMessage(ctx, contracts.Message{
 		Role:    contracts.RoleUser,
 		Content: "Previous question",
@@ -233,11 +233,11 @@ func TestDeepSeekConvertMemoryMessageToolResult(t *testing.T) {
 func TestDeepSeekBuildMessagesWithComplexConversation(t *testing.T) {
 	builder := deepSeekNewMessageHistoryBuilder(telemetry.NewLogger())
 	ctx := context.Background()
-	ctx = memory.WithConversationID(ctx, "test-conv")
+	ctx = conversation.WithConversationID(ctx, "test-conv")
 	ctx = multitenancy.WithOrgID(ctx, "test-org")
 
 	// Create memory with a complex conversation including tool calls
-	mem := memory.NewConversationBuffer()
+	mem := conversation.NewConversationBuffer()
 
 	// User asks a question
 	if err := mem.AddMessage(ctx, contracts.Message{

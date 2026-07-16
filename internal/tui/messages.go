@@ -1,8 +1,8 @@
 package tui
 
 import (
-	"nu/internal/tui/components"
-	"nu/internal/tui/message"
+	"github.com/dm-vev/nu/internal/tui/components"
+	"github.com/dm-vev/nu/internal/tui/message"
 )
 
 func (a *App) rebuildChatLocked() {

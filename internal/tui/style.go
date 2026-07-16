@@ -1,6 +1,6 @@
 package tui
 
-import "nu/internal/tui/ansi"
+import "github.com/dm-vev/nu/internal/tui/ansi"
 
 func green(value string) string {
 	return ansi.Green + value + ansi.DefaultFG

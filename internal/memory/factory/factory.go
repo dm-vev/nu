@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/memory/conversation"
-	redismemory "nu/internal/memory/redis"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/memory/redis"
 
 	redisclient "github.com/go-redis/redis/v8"
 )
@@ -44,7 +44,7 @@ func (f *Factory) CreateMemory(config map[string]interface{}, llmClient contract
 }
 
 // createRedisMemory creates a Redis memory instance from configuration
-func (f *Factory) createRedisMemory(config map[string]interface{}, llmClient contracts.LLM) (*redismemory.RedisMemory, error) {
+func (f *Factory) createRedisMemory(config map[string]interface{}, llmClient contracts.LLM) (*redis.RedisMemory, error) {
 	// Extract Redis configuration
 	address, ok := config["address"].(string)
 	if !ok || address == "" {
@@ -108,12 +108,12 @@ func (f *Factory) createRedisMemory(config map[string]interface{}, llmClient con
 	ttlDuration := time.Duration(ttlHours) * time.Hour
 
 	// Create Redis memory with configuration options
-	redisMemory := redismemory.NewRedisMemory(
+	redisMemory := redis.NewRedisMemory(
 		redisClient,
-		redismemory.WithTTL(ttlDuration),
-		redismemory.WithKeyPrefix(keyPrefix),
-		redismemory.WithMaxMessageSize(maxMessageSize),
-		redismemory.WithRetryOptions(&redismemory.RetryOptions{
+		redis.WithTTL(ttlDuration),
+		redis.WithKeyPrefix(keyPrefix),
+		redis.WithMaxMessageSize(maxMessageSize),
+		redis.WithRetryOptions(&redis.RetryOptions{
 			MaxRetries:    3,
 			RetryInterval: 100 * time.Millisecond,
 			BackoffFactor: 2.0,
@@ -144,17 +144,17 @@ func (f *Factory) createRedisMemory(config map[string]interface{}, llmClient con
 			}
 		}
 
-		redisMemory = redismemory.NewRedisMemory(
+		redisMemory = redis.NewRedisMemory(
 			redisClient,
-			redismemory.WithTTL(ttlDuration),
-			redismemory.WithKeyPrefix(keyPrefix),
-			redismemory.WithMaxMessageSize(maxMessageSize),
-			redismemory.WithRetryOptions(&redismemory.RetryOptions{
+			redis.WithTTL(ttlDuration),
+			redis.WithKeyPrefix(keyPrefix),
+			redis.WithMaxMessageSize(maxMessageSize),
+			redis.WithRetryOptions(&redis.RetryOptions{
 				MaxRetries:    3,
 				RetryInterval: 100 * time.Millisecond,
 				BackoffFactor: 2.0,
 			}),
-			redismemory.WithSummarization(llmClient, maxSummaries, summaryAfterMessages),
+			redis.WithSummarization(llmClient, maxSummaries, summaryAfterMessages),
 		)
 	}
 

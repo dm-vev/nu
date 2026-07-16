@@ -7,24 +7,24 @@ import (
 )
 
 // TaskStatus represents the status of a task
-type OrchestratorTaskStatus string
+type TaskStatus string
 
 const (
 	// TaskPending indicates the task is pending
-	OrchestratorTaskPending OrchestratorTaskStatus = "pending"
+	TaskPending TaskStatus = "pending"
 
 	// TaskRunning indicates the task is running
-	OrchestratorTaskRunning OrchestratorTaskStatus = "running"
+	TaskRunning TaskStatus = "running"
 
 	// TaskCompleted indicates the task is completed
-	OrchestratorTaskCompleted OrchestratorTaskStatus = "completed"
+	TaskCompleted TaskStatus = "completed"
 
 	// TaskFailed indicates the task failed
-	OrchestratorTaskFailed OrchestratorTaskStatus = "failed"
+	TaskFailed TaskStatus = "failed"
 )
 
 // Task represents a task to be executed by an agent
-type OrchestratorTask struct {
+type Task struct {
 	// ID is the unique identifier for the task
 	ID string
 
@@ -38,7 +38,7 @@ type OrchestratorTask struct {
 	Dependencies []string
 
 	// Status is the current status of the task
-	Status OrchestratorTaskStatus
+	Status TaskStatus
 
 	// Result is the result of the task
 	Result string
@@ -48,9 +48,9 @@ type OrchestratorTask struct {
 }
 
 // Workflow represents a workflow of tasks
-type OrchestratorWorkflow struct {
+type Workflow struct {
 	// Tasks is the list of tasks in the workflow
-	Tasks []*OrchestratorTask
+	Tasks []*Task
 
 	// Results is a map of task IDs to results
 	Results map[string]string
@@ -63,46 +63,46 @@ type OrchestratorWorkflow struct {
 }
 
 // NewWorkflow creates a new workflow
-func NewOrchestratorWorkflow() *OrchestratorWorkflow {
-	return &OrchestratorWorkflow{
-		Tasks:   make([]*OrchestratorTask, 0),
+func NewWorkflow() *Workflow {
+	return &Workflow{
+		Tasks:   make([]*Task, 0),
 		Results: make(map[string]string),
 		Errors:  make(map[string]error),
 	}
 }
 
 // AddTask adds a task to the workflow
-func (w *OrchestratorWorkflow) AddTask(id string, agentID string, input string, dependencies []string) {
-	task := &OrchestratorTask{
+func (w *Workflow) AddTask(id string, agentID string, input string, dependencies []string) {
+	task := &Task{
 		ID:           id,
 		AgentID:      agentID,
 		Input:        input,
 		Dependencies: dependencies,
-		Status:       OrchestratorTaskPending,
+		Status:       TaskPending,
 	}
 
 	w.Tasks = append(w.Tasks, task)
 }
 
 // SetFinalTask sets the final task
-func (w *OrchestratorWorkflow) SetFinalTask(id string) {
+func (w *Workflow) SetFinalTask(id string) {
 	w.FinalTaskID = id
 }
 
 // CodeOrchestrator orchestrates agents using code-defined workflows
-type OrchestratorCode struct {
-	registry *OrchestratorAgentRegistry
+type Code struct {
+	registry *AgentRegistry
 }
 
 // NewCodeOrchestrator creates a new code orchestrator
-func NewOrchestratorCode(registry *OrchestratorAgentRegistry) *OrchestratorCode {
-	return &OrchestratorCode{
+func NewCode(registry *AgentRegistry) *Code {
+	return &Code{
 		registry: registry,
 	}
 }
 
 // ExecuteWorkflow executes a workflow
-func (o *OrchestratorCode) ExecuteWorkflow(ctx context.Context, workflow *OrchestratorWorkflow) (string, error) {
+func (o *Code) ExecuteWorkflow(ctx context.Context, workflow *Workflow) (string, error) {
 	// Create a wait group to wait for all tasks
 	var wg sync.WaitGroup
 
@@ -130,7 +130,7 @@ func (o *OrchestratorCode) ExecuteWorkflow(ctx context.Context, workflow *Orches
 				// Check if all tasks are completed
 				allCompleted := true
 				for _, task := range workflow.Tasks {
-					if task.Status != OrchestratorTaskCompleted && task.Status != OrchestratorTaskFailed {
+					if task.Status != TaskCompleted && task.Status != TaskFailed {
 						allCompleted = false
 						break
 					}
@@ -144,7 +144,7 @@ func (o *OrchestratorCode) ExecuteWorkflow(ctx context.Context, workflow *Orches
 
 				// Check if any tasks can now be executed
 				for _, task := range workflow.Tasks {
-					if task.Status == OrchestratorTaskPending {
+					if task.Status == TaskPending {
 						// Check if all dependencies are completed
 						allDepsCompleted := true
 						for _, depID := range task.Dependencies {
@@ -197,16 +197,16 @@ func (o *OrchestratorCode) ExecuteWorkflow(ctx context.Context, workflow *Orches
 }
 
 // executeTask executes a task
-func (o *OrchestratorCode) executeTask(ctx context.Context, task *OrchestratorTask, workflow *OrchestratorWorkflow, wg *sync.WaitGroup, completionCh chan<- string) {
+func (o *Code) executeTask(ctx context.Context, task *Task, workflow *Workflow, wg *sync.WaitGroup, completionCh chan<- string) {
 	defer wg.Done()
 
 	// Update task status
-	task.Status = OrchestratorTaskRunning
+	task.Status = TaskRunning
 
 	// Get the agent
 	agent, ok := o.registry.Get(task.AgentID)
 	if !ok {
-		task.Status = OrchestratorTaskFailed
+		task.Status = TaskFailed
 		task.Error = fmt.Errorf("agent not found: %s", task.AgentID)
 		workflow.Errors[task.ID] = task.Error
 		completionCh <- task.ID
@@ -224,7 +224,7 @@ func (o *OrchestratorCode) executeTask(ctx context.Context, task *OrchestratorTa
 	// Execute the agent
 	result, err := agent.Run(ctx, input)
 	if err != nil {
-		task.Status = OrchestratorTaskFailed
+		task.Status = TaskFailed
 		task.Error = fmt.Errorf("agent execution failed: %w", err)
 		workflow.Errors[task.ID] = task.Error
 		completionCh <- task.ID
@@ -232,7 +232,7 @@ func (o *OrchestratorCode) executeTask(ctx context.Context, task *OrchestratorTa
 	}
 
 	// Update task status and result
-	task.Status = OrchestratorTaskCompleted
+	task.Status = TaskCompleted
 	task.Result = result
 	workflow.Results[task.ID] = result
 

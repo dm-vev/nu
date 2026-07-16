@@ -61,8 +61,8 @@ Run imported agent/memory/MCP race tests before upgrading the SDK baseline.
 
 Verification must prove:
 
-- no Go import references `nu/internal/provider` or `internal/agent-go-sdk`;
-- `internal/agent` is the SDK agent package;
+- no Go import references `github.com/dm-vev/nu/internal/provider` or `agent-go-sdk`;
+- `agent` is the SDK agent package;
 - `internal/AGENT_SDK_LICENSE` and `THIRD_PARTY_NOTICES.md` name the pinned source;
 - every SDK-owned package belongs to an ownership family in `spec/sdk/README.md`;
 - SDK-owned code imports no Nu-owned package;
@@ -73,14 +73,17 @@ Verification must prove:
 - all reusable TUI components are in `internal/tui/components`, with no nested
   component package;
 - subpackage filenames do not repeat their package/provider prefix;
+- import aliases do not encode ancestor domains when the declared package name
+  is available; aliases are reserved for real file-local name collisions;
 - no production Go package remains at the `internal/` root;
-- no compatibility package, alias facade, or forwarding wrapper preserves a
+- no legacy compatibility package, alias facade, or forwarding wrapper preserves a
   deleted Nu or upstream SDK path;
 - concrete remote clients are owned by `internal/transport/{remote,grpc/client,a2a/client}`, and
-  `internal/agent` does not import concrete transport packages;
-- `internal/agent/{config,plans,guardrails,prompts}` use ordinary filenames and
-  import neither root agent, transport, nor task; root agent imports neither
-  transport nor task;
+  `agent` does not import concrete transport packages;
+- `agent` owns the real Agent implementation and cross-domain orchestration,
+  imports neither transport nor task, and is not a forwarding facade;
+  `agent/{context,config,execution,generation,guardrails,image,mcp,plans,prompts,providers,remote,tools}`
+  remain independent domain owners;
 - generated protobuf is owned only by `internal/transport/grpc/pb`;
 - imported generated protobuf descriptors initialize without panic and a second
   generation produces no diff.
@@ -118,18 +121,18 @@ Develop with the smallest owner set:
 
 ```bash
 go test ./internal/agentui ./internal/tools/... ./internal/app/... ./internal/rpc ./internal/tui/...
-go test ./internal/agent/... ./internal/contracts ./internal/llm/...
+go test ./agent/... ./contracts ./internal/llm/...
 go test ./internal/...
 ```
 
 Hierarchy migration verification:
 
 ```bash
-go list -f '{{if not .ForTest}}{{.ImportPath}}{{end}}' ./cmd/... ./internal/...
+go list -f '{{if not .ForTest}}{{.ImportPath}}{{end}}' ./cmd/... ./agent/... ./contracts ./telemetry/... ./internal/...
 go test ./internal/app/... -run 'TestNUF212Hierarchy|TestNUA009InternalPackages'
 go test ./examples/...
-protoc --go_out=. --go_opt=module=nu \
-  --go-grpc_out=. --go-grpc_opt=module=nu \
+protoc --go_out=. --go_opt=module=github.com/dm-vev/nu \
+  --go-grpc_out=. --go-grpc_opt=module=github.com/dm-vev/nu \
   internal/transport/grpc/pb/agent.proto
 mv internal/transport/grpc/pb/agent_grpc.pb.go internal/transport/grpc/pb/agentgrpc.pb.go
 ```

@@ -6,7 +6,7 @@ import (
 
 	"github.com/weaviate/weaviate/entities/models"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // ExtractUUID extracts the Weaviate UUID from a GraphQL response.

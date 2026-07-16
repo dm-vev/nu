@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func TestSDKStreamMapsContentThinkingAndTools(t *testing.T) {

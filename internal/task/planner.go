@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // AIPlanner is an interface for AI-based planning services

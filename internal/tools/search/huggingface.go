@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 type HuggingFaceModel struct {

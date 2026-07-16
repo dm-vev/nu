@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 type MockLLM struct {

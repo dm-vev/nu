@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // executeStreamingRequestWithToolCapture executes a streaming request and captures tool calls

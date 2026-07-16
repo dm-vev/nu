@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	. "github.com/dm-vev/nu/internal/task"
 	"github.com/google/uuid"
-	. "nu/internal/task"
 )
 
 // ApproveTaskPlan approves or rejects a task plan

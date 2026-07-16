@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	. "nu/internal/task"
-	"nu/internal/telemetry"
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/internal/task/service/bridge"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // AgentTaskService provides a complete implementation for the AgentTaskServiceInterface
@@ -35,10 +36,7 @@ func NewAgentTaskService(logger telemetry.Logger) (*AgentTaskService, error) {
 	}
 
 	// Create a bridge adapter
-	bridgeAdapter := &SimpleBridgeAdapter{
-		coreService: coreService,
-		logger:      logger,
-	}
+	bridgeAdapter := bridge.NewSimple(coreService, logger)
 
 	return &AgentTaskService{
 		service:     bridgeAdapter,

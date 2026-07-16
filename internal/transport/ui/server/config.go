@@ -6,8 +6,8 @@ import (
 	nethttp "net/http"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // withOrgContext adds organization context to HTTP requests
@@ -248,9 +248,9 @@ func (h *Server) detectDataStoreType(ds contracts.DataStore) string {
 	dsType := fmt.Sprintf("%T", ds)
 
 	switch {
-	case strings.Contains(dsType, "sql.PostgresClient"):
+	case strings.Contains(dsType, "postgres.Client"):
 		return "postgres"
-	case strings.Contains(dsType, "sql.SupabaseClient"):
+	case strings.Contains(dsType, "supabase.Client"):
 		return "supabase"
 	default:
 		return "database"

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // convertAnthropicEventToStreamEvent converts an Anthropic SSE event to our internal StreamEvent

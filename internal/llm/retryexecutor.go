@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // RetryExecutor handles the execution of operations with retries

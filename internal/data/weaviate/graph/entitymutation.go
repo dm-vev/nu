@@ -8,9 +8,9 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/entity"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/entity"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // UpdateEntity updates an existing entity.

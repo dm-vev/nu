@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/grpc"
 
-	"nu/internal/contracts"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Client handles communication with remote agents via gRPC.

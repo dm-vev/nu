@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"nu/internal/model"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 const defaultContext = 128000

@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Trace represents a trace in the UI

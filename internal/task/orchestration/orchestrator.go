@@ -7,18 +7,18 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Orchestrator orchestrates handoffs between agents
 type HandoffOrchestrator struct {
-	registry *OrchestratorAgentRegistry
+	registry *AgentRegistry
 	router   HandoffRouter
 	logger   telemetry.Logger
 }
 
 // NewOrchestrator creates a new orchestrator
-func NewHandoffOrchestrator(registry *OrchestratorAgentRegistry, router HandoffRouter) *HandoffOrchestrator {
+func NewHandoffOrchestrator(registry *AgentRegistry, router HandoffRouter) *HandoffOrchestrator {
 	return &HandoffOrchestrator{
 		registry: registry,
 		router:   router,

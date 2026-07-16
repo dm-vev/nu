@@ -3,9 +3,9 @@ package service
 import (
 	"sync"
 
-	"nu/internal/contracts"
-	. "nu/internal/task"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // InMemoryTaskService implements the Service interface with an in-memory storage

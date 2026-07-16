@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // SchemaValidator handles validation of tool outputs against their schemas

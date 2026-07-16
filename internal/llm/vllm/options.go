@@ -3,9 +3,9 @@ package vllm
 import (
 	"net/http"
 
-	"nu/internal/contracts"
-	"nu/internal/llm"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // VLLMOption represents an option for configuring the vLLM client

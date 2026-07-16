@@ -4,8 +4,8 @@ import (
 	"embed"
 	"io/fs"
 
-	httpserver "nu/internal/transport/http/server"
-	"nu/internal/transport/ui/trace"
+	httpserver "github.com/dm-vev/nu/internal/transport/http/server"
+	"github.com/dm-vev/nu/internal/transport/ui/trace"
 )
 
 // Config represents UI configuration options

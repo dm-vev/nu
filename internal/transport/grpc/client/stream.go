@@ -8,10 +8,10 @@ import (
 
 	"google.golang.org/grpc/metadata"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // RunStream executes the remote agent with streaming response
@@ -32,7 +32,7 @@ func (r *Client) RunStream(ctx context.Context, input string) (<-chan contracts.
 	}
 
 	// Add conversation_id from context if available
-	if conversationID, ok := memory.GetConversationID(ctx); ok && conversationID != "" {
+	if conversationID, ok := conversation.GetConversationID(ctx); ok && conversationID != "" {
 		req.ConversationId = conversationID
 	}
 
@@ -131,7 +131,7 @@ func (r *Client) RunStreamWithAuth(ctx context.Context, input string, authToken 
 	}
 
 	// Add conversation_id from context if available
-	if conversationID, ok := memory.GetConversationID(ctx); ok && conversationID != "" {
+	if conversationID, ok := conversation.GetConversationID(ctx); ok && conversationID != "" {
 		req.ConversationId = conversationID
 	}
 

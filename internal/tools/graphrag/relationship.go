@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // AddRelationshipTool adds relationships between graph entities.

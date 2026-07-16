@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // SamplingManager provides high-level operations for MCP sampling

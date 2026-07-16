@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // geminiConvertToolsToFunctionDeclarations turns contracts.Tool definitions into

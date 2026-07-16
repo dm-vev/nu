@@ -1,4 +1,4 @@
-# `internal/tui/tui_events.go`
+# `internal/tui/events.go`
 
 ## Status
 

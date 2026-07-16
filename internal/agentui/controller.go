@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 var ErrBusy = errors.New("agent busy")
@@ -48,7 +48,7 @@ type Controller struct {
 	cancel  context.CancelFunc
 }
 
-// Agent keeps the existing TUI/RPC controller name while the backend lives in internal/agent.
+// Agent keeps the existing TUI/RPC controller name while the backend lives in the public agent package.
 type Agent = Controller
 
 func New(opts Options) *Controller {
@@ -144,5 +144,5 @@ func (c *Controller) finish() {
 
 func conversationContext(ctx context.Context) context.Context {
 	ctx = multitenancy.WithOrgID(ctx, "nu")
-	return memory.WithConversationID(ctx, "default")
+	return conversation.WithConversationID(ctx, "default")
 }

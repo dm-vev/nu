@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/agent"
-	httpserver "nu/internal/transport/http/server"
-	"nu/internal/transport/ui/trace"
+	"github.com/dm-vev/nu/agent"
+	httpserver "github.com/dm-vev/nu/internal/transport/http/server"
+	"github.com/dm-vev/nu/internal/transport/ui/trace"
 )
 
 // New creates an HTTP server with the embedded UI.

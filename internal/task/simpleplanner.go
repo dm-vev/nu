@@ -3,7 +3,7 @@ package task
 import (
 	"context"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // SimplePlanner implements TaskPlanner with minimal functionality

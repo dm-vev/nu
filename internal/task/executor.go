@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Options contains options for task execution

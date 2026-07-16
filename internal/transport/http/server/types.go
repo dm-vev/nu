@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"nu/internal/agent"
+	"github.com/dm-vev/nu/agent"
 )
 
 // Server provides HTTP/SSE endpoints for agent streaming

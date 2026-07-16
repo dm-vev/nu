@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"sync"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/config"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/config"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 type LazyMCPServerConfig = config.Config

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"nu/internal/llm"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // DeepSeekOption represents an option for configuring the DeepSeek client

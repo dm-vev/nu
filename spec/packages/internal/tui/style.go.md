@@ -1,4 +1,4 @@
-# `internal/tui/tui_style.go`
+# `internal/tui/style.go`
 
 ## Status
 

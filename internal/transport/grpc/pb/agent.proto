@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package agent;
 
-option go_package = "nu/internal/transport/grpc/pb;pb";
+option go_package = "github.com/dm-vev/nu/internal/transport/grpc/pb;pb";
 
 // AgentService defines the gRPC service for agent operations
 service AgentService {

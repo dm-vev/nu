@@ -1,4 +1,4 @@
-# `internal/tui/tui_git.go`
+# `internal/tui/git.go`
 
 ## Status
 

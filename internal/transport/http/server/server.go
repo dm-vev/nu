@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"nu/internal/agent"
+	"github.com/dm-vev/nu/agent"
 )
 
 // New creates a new HTTP server for agent streaming

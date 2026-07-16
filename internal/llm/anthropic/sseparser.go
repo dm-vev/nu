@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // anthropicParseSSELine parses a single SSE line from Anthropic's API

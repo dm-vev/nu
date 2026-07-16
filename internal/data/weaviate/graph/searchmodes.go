@@ -6,8 +6,8 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/search"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/search"
 )
 
 // vectorSearch performs a pure vector similarity search.

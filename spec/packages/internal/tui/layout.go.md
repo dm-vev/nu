@@ -1,4 +1,4 @@
-# `internal/tui/tui_layout.go`
+# `internal/tui/layout.go`
 
 ## Status
 

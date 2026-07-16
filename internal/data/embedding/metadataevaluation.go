@@ -3,7 +3,7 @@ package embedding
 import (
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // ApplyFilters filters a list of documents based on metadata filters

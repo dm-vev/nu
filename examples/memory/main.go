@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/contracts"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 func main() {
 	ctx := multitenancy.WithOrgID(context.Background(), "acme")
-	ctx = memory.WithConversationID(ctx, "demo")
-	buffer := memory.NewConversationBuffer()
+	ctx = conversation.WithConversationID(ctx, "demo")
+	buffer := conversation.NewConversationBuffer()
 
 	err := buffer.AddMessage(ctx, contracts.Message{Role: contracts.RoleUser, Content: "hello"})
 	var messages []contracts.Message

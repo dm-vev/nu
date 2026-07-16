@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/agent"
+	"github.com/dm-vev/nu/agent"
 )
 
 // getSubAgentsList returns list of sub-agents

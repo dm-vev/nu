@@ -2,8 +2,8 @@ package components
 
 import (
 	"fmt"
-	"nu/internal/model"
-	"nu/internal/tui/ansi"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/tui/ansi"
 	"strings"
 )
 

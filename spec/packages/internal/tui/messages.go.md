@@ -1,4 +1,4 @@
-# `internal/tui/tui_messages.go`
+# `internal/tui/messages.go`
 
 ## Status
 

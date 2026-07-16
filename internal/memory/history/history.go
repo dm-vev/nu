@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // BuildInlineHistoryPrompt builds a prompt with conversation history for prompt-based models

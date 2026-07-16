@@ -6,14 +6,14 @@ import (
 
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	"nu/internal/telemetry"
-	"nu/internal/telemetry/otel"
+	"github.com/dm-vev/nu/telemetry"
+	"github.com/dm-vev/nu/telemetry/otel"
 )
 
 func main() {
 	ctx := context.Background()
 	provider := sdktrace.NewTracerProvider()
-	tracer := otel.NewTracerWrapper(provider.Tracer("nu/examples/tracing"))
+	tracer := otel.NewTracerWrapper(provider.Tracer("github.com/dm-vev/nu/examples/tracing"))
 
 	ctx, request := telemetry.StartRequestTracing(ctx, tracer, "request-123")
 	_, child := tracer.StartSpan(ctx, "process")

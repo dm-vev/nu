@@ -2,10 +2,12 @@
 
 ## Goal
 
-Nu is a local-first coding agent with a Go TUI and a curated internal agent SDK
-backend. The user-facing artifact is the `nu` binary. Agent execution, required
-model providers, conversation memory, retry/logging, and MCP client support come
-from the `Ingenimax/agent-sdk-go` fork under `internal/`.
+Nu is a local-first coding agent with a Go TUI and a curated agent SDK backend.
+The user-facing artifact is the `nu` binary. External consumers use the public
+agent API and implementation at `github.com/dm-vev/nu/agent`
+and shared contracts at
+`github.com/dm-vev/nu/contracts`; model providers, conversation memory,
+retry/logging, and MCP implementations remain under `internal/`.
 
 Nu owns the product shell: CLI/TUI, local auth/settings, coding tools, branchable
 sessions, resources, Pi compatibility, RPC/JSON modes, and exports. It does not
@@ -35,9 +37,9 @@ API behavior is deleted. Old import paths are removed without aliases or wrapper
 
 ## Distribution
 
-The primary artifact is one `nu` binary. The curated SDK fork is internal and has no
-separate Nu public-API stability promise. It may later be made public only by a
-new product decision; copying it under a second package tree is forbidden.
+The primary artifact is one `nu` binary. The public SDK module path is
+`github.com/dm-vev/nu`; its stable agent entry point is
+`github.com/dm-vev/nu/agent`. Private Nu integrations remain behind `internal/`.
 
 No Node/TypeScript runtime is required. MCP/extension subprocesses may use any
 runtime selected explicitly by the user.
@@ -78,7 +80,7 @@ logging is enabled elsewhere.
 
 A backend migration is done only when:
 
-- `internal/agent` is the integrated SDK package;
+- `github.com/dm-vev/nu/agent` is the integrated SDK package;
 - no `internal/provider` or custom agent loop remains;
 - TUI/RPC operate through `internal/agentui` and SDK stream events;
 - Nu coding tools implement the SDK Tool interface;
@@ -88,6 +90,6 @@ A backend migration is done only when:
 - generated protobuf is reproducible from its `.proto` sources and is not
   hand-edited, and lives in `internal/transport/grpc/pb`;
 - only the approved target packages remain, with remote-client implementation
-  outside `internal/agent` and no compatibility wrappers;
+  outside `agent` and no compatibility wrappers;
 - upstream attribution is present;
 - SDK ownership tests and Nu app/TUI/RPC tests pass.

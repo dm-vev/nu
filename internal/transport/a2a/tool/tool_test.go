@@ -7,9 +7,9 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/telemetry"
-	"nu/internal/transport/a2a/card"
-	"nu/internal/transport/a2a/client"
+	"github.com/dm-vev/nu/internal/transport/a2a/card"
+	"github.com/dm-vev/nu/internal/transport/a2a/client"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 func TestSanitizeToolName(t *testing.T) {

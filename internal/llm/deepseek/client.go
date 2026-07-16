@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"nu/internal/llm"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 const (

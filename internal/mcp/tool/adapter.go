@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // ToolAdapter converts MCP tools to the agent SDK tool interface

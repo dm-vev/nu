@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // Health returns the health status of the agent service

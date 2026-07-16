@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"nu/internal/contracts"
-	"nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
 )
 
 // Retriever implements a memory that stores messages in a vector store

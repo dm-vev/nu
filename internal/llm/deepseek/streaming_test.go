@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // TestGenerateStream tests the basic streaming functionality

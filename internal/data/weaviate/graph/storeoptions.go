@@ -1,6 +1,6 @@
 package graph
 
-import "nu/internal/contracts"
+import "github.com/dm-vev/nu/contracts"
 
 // applyStoreOptions applies GraphStoreOptions and returns the effective options.
 func applyStoreOptions(opts []contracts.GraphStoreOption) *contracts.GraphStoreOptions {

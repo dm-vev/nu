@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"nu/internal/llm"
+	"github.com/dm-vev/nu/internal/llm"
 )
 
 // Chat uses the messages API to have a conversation with a model

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // convertAgentEventToHTTPEvent converts agent stream events to HTTP event format

@@ -1,4 +1,4 @@
-# `internal/tui/tui_options.go`
+# `internal/tui/options.go`
 
 ## Status
 

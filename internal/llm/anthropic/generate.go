@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // Generate generates text from a prompt

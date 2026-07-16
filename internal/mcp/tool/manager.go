@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
-	"nu/internal/mcp/schema"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/schema"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // ToolManager provides enhanced tool operations with schema support

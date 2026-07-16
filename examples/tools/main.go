@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/tools/calculator"
-	"nu/internal/tools/registry"
+	"github.com/dm-vev/nu/internal/tools/calculator"
+	"github.com/dm-vev/nu/internal/tools/registry"
 )
 
 func main() {

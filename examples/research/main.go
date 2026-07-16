@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/agent"
-	"nu/internal/config"
-	"nu/internal/llm/openai"
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
-	"nu/internal/telemetry"
-	"nu/internal/tools/registry"
-	"nu/internal/tools/search"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/internal/config"
+	"github.com/dm-vev/nu/internal/llm/openai"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/tools/registry"
+	"github.com/dm-vev/nu/internal/tools/search"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 func main() {
@@ -23,11 +23,11 @@ func main() {
 	if web := cfg.Tools.WebSearch; web.GoogleAPIKey != "" && web.GoogleSearchEngineID != "" {
 		toolRegistry.Register(search.NewWebSearch(web.GoogleAPIKey, web.GoogleSearchEngineID))
 	}
-	conversation := memory.NewConversationBuffer()
+	memory := conversation.NewConversationBuffer()
 	researcher, err := agent.NewAgent(
 		agent.WithName("researcher"),
 		agent.WithLLM(client),
-		agent.WithMemory(conversation),
+		agent.WithMemory(memory),
 		agent.WithTools(toolRegistry.List()...),
 		agent.WithSystemPrompt("Research the question and return a concise answer with sources when available."),
 		agent.WithMaxIterations(5),
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	ctx := multitenancy.WithOrgID(context.Background(), cfg.Multitenancy.DefaultOrgID)
-	ctx = memory.WithConversationID(ctx, "example")
+	ctx = conversation.WithConversationID(ctx, "example")
 	answer, err := researcher.Run(ctx, "What is retrieval-augmented generation?")
 	if err != nil {
 		log.Fatal(err)

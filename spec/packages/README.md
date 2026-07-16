@@ -8,11 +8,12 @@ still name temporary flat-root files describe current source only; they do not
 approve that path as the final owner. Move/update each affected file spec to its
 approved path before moving the corresponding Go file.
 
-Exception: the curated SDK fork under `internal/` is tracked by
-`spec/backend.md`, `spec/sdk/README.md`, imported upstream tests, license, and
-patch ledger. Do not create duplicate file specs for unchanged imported SDK
-files. Nu-owned adapters and modifications still require file specs here; an SDK
-file over the production line limit records its exception in `spec/backend.md`.
+Exception: the curated SDK public packages and their private implementations are
+tracked by `spec/backend.md`, `spec/sdk/README.md`, imported upstream tests,
+license, and patch ledger. Do not create duplicate file specs for unchanged
+imported SDK files. Nu-owned adapters and modifications still require file
+specs here; an SDK file over the production line limit records its exception in
+`spec/backend.md`.
 
 Each file spec must include:
 
@@ -86,7 +87,7 @@ The exhaustive target is:
 
 ```text
 app/{auth,cli}
-agent/{config,plans,guardrails,prompts}
+agent/{context,config,execution,generation,guardrails,image,mcp,plans,prompts,providers,remote,tools}
 llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
 tools/{agent,calculator,registry,coding,search,image,graphrag}
 memory/{conversation,history,redis,vector,factory}
@@ -106,6 +107,9 @@ standalone: agentui config contracts multitenancy model rpc session testkit
   helper that belongs with its caller.
 - Inside a subpackage, use normal filenames such as `client.go`, `stream.go`, and
   `client_test.go`; do not repeat the package/provider name in the filename.
+- Use the package's declared import name unless the file has a real collision.
+  Ancestor-qualified aliases such as `transportgrpc` and `agentconfig` are not
+  package boundaries and are forbidden.
 - Put every reusable TUI component in `internal/tui/components`. Do not create
   child packages per component.
 - During migration, move behavior only into an approved owner and delete

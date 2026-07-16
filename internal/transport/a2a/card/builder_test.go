@@ -6,7 +6,7 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 type mockTool struct {

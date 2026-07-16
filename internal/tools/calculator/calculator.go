@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Calculator implements a simple calculator tool

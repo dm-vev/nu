@@ -1,6 +1,6 @@
 package openai
 
-import "nu/internal/contracts"
+import "github.com/dm-vev/nu/contracts"
 
 // convertToOpenAISchema converts tool parameters to an OpenAI function schema.
 func (c *Client) convertToOpenAISchema(params map[string]contracts.ParameterSpec) map[string]interface{} {

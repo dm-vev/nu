@@ -1,9 +1,9 @@
 package openai
 
 import (
-	"nu/internal/contracts"
-	"nu/internal/llm"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/llm"
+	"github.com/dm-vev/nu/telemetry"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // RegistryClient handles interaction with MCP Registry for server discovery

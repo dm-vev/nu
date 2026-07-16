@@ -23,12 +23,12 @@ go get github.com/lib/pq
 ```go
 import (
     "context"
-    datasql "nu/internal/data/sql"
-    "nu/internal/multitenancy"
+    "github.com/dm-vev/nu/internal/data/sql/postgres"
+    "github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // Create a new PostgreSQL client
-client, err := datasql.NewPostgres("postgres://user:password@localhost:5432/dbname?sslmode=disable")
+client, err := postgres.New("postgres://user:password@localhost:5432/dbname?sslmode=disable")
 if err != nil {
     log.Fatal(err)
 }
@@ -50,7 +50,7 @@ if err != nil {
 }
 
 // Create client with existing connection
-client, err := datasql.NewPostgresWithDB(db)
+client, err := postgres.NewWithDB(db)
 if err != nil {
     log.Fatal(err)
 }

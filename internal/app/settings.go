@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"nu/internal/model"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 type providerSetting struct {

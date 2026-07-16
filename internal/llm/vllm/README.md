@@ -33,8 +33,8 @@ import (
     "fmt"
     "log"
 
-    "nu/internal/llm"
-    "nu/internal/llm/vllm"
+    "github.com/dm-vev/nu/internal/llm"
+    "github.com/dm-vev/nu/internal/llm/vllm"
     "github.com/Ingenimax/agent-sdk-go/pkg/logging"
 )
 

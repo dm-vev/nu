@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // New creates a trace collector for the UI.

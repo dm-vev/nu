@@ -3,7 +3,7 @@ package openai
 import (
 	"context"
 	"fmt"
-	"nu/internal/llm"
+	"github.com/dm-vev/nu/internal/llm"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/shared"

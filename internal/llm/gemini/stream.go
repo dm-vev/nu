@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // generateWithToolsAndStream executes tool calling with real-time streaming events

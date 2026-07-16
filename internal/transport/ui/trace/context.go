@@ -3,8 +3,8 @@ package trace
 import (
 	"context"
 
-	memory "nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 func (c *Collector) getParentSpanID(ctx context.Context) string {
@@ -15,7 +15,7 @@ func (c *Collector) getParentSpanID(ctx context.Context) string {
 }
 
 func (c *Collector) getConversationID(ctx context.Context) string {
-	if id, ok := memory.GetConversationID(ctx); ok {
+	if id, ok := conversation.GetConversationID(ctx); ok {
 		return id
 	}
 	return ""

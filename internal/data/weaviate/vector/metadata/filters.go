@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/data/embedding"
+	"github.com/dm-vev/nu/internal/data/embedding"
 )
 
 // FilterToWeaviateFormat converts a FilterGroup to a Weaviate-compatible filter format.

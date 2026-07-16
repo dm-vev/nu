@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // streamResponse streams a response string in chunks

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func TestBuildInlineHistoryPrompt(t *testing.T) {

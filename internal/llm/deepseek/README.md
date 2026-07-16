@@ -43,7 +43,7 @@ import (
     "fmt"
     "log"
 
-    "nu/internal/llm/deepseek"
+    "github.com/dm-vev/nu/internal/llm/deepseek"
 )
 
 func main() {
@@ -113,7 +113,7 @@ import (
     "fmt"
 
     "github.com/Ingenimax/agent-sdk-go/pkg/interfaces"
-    "nu/internal/llm/deepseek"
+    "github.com/dm-vev/nu/internal/llm/deepseek"
 )
 
 // Define a simple tool

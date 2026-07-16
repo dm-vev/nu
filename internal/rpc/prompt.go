@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/agentui"
 )
 
 // Emit forwards agent events to RPC stdout and updates lightweight state.

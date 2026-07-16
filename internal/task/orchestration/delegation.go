@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"reflect"
 
-	"nu/internal/agent"
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // DelegationAgent is an agent that can delegate tasks to other agents
 type HandoffDelegationAgent struct {
 	*agent.Agent
-	registry *OrchestratorAgentRegistry
+	registry *AgentRegistry
 }
 
 // NewDelegationAgent creates a new delegation agent
-func NewHandoffDelegationAgent(baseAgent *agent.Agent, registry *OrchestratorAgentRegistry) *HandoffDelegationAgent {
+func NewHandoffDelegationAgent(baseAgent *agent.Agent, registry *AgentRegistry) *HandoffDelegationAgent {
 	return &HandoffDelegationAgent{
 		Agent:    baseAgent,
 		registry: registry,
@@ -88,43 +88,43 @@ func (a *HandoffDelegationAgent) copyMemory(ctx context.Context, targetAgent *ag
 }
 
 // AgentPool represents a pool of specialized agents
-type OrchestratorAgentPool struct {
+type AgentPool struct {
 	agents       map[string]*agent.Agent
 	descriptions map[string]string
 }
 
 // NewAgentPool creates a new agent pool
-func NewOrchestratorAgentPool() *OrchestratorAgentPool {
-	return &OrchestratorAgentPool{
+func NewAgentPool() *AgentPool {
+	return &AgentPool{
 		agents:       make(map[string]*agent.Agent),
 		descriptions: make(map[string]string),
 	}
 }
 
 // Add adds an agent to the pool
-func (p *OrchestratorAgentPool) Add(id string, agent *agent.Agent, description string) {
+func (p *AgentPool) Add(id string, agent *agent.Agent, description string) {
 	p.agents[id] = agent
 	p.descriptions[id] = description
 }
 
 // Get retrieves an agent from the pool
-func (p *OrchestratorAgentPool) Get(id string) (*agent.Agent, bool) {
+func (p *AgentPool) Get(id string) (*agent.Agent, bool) {
 	agent, ok := p.agents[id]
 	return agent, ok
 }
 
 // GetDescription retrieves an agent's description
-func (p *OrchestratorAgentPool) GetDescription(id string) (string, bool) {
+func (p *AgentPool) GetDescription(id string) (string, bool) {
 	desc, ok := p.descriptions[id]
 	return desc, ok
 }
 
 // List returns all agents in the pool
-func (p *OrchestratorAgentPool) List() map[string]*agent.Agent {
+func (p *AgentPool) List() map[string]*agent.Agent {
 	return p.agents
 }
 
 // ListDescriptions returns all agent descriptions
-func (p *OrchestratorAgentPool) ListDescriptions() map[string]string {
+func (p *AgentPool) ListDescriptions() map[string]string {
 	return p.descriptions
 }

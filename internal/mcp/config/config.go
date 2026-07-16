@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Config describes an MCP server that can be created on demand.

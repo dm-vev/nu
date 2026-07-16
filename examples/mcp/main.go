@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/mcp/builder"
+	"github.com/dm-vev/nu/internal/mcp/builder"
 )
 
 func main() {

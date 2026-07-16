@@ -1,6 +1,6 @@
 package anthropic
 
-import "nu/internal/contracts"
+import "github.com/dm-vev/nu/contracts"
 
 func WithReasoning(reasoning string) contracts.GenerateOption {
 	return func(options *contracts.GenerateOptions) {

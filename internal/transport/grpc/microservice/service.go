@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"nu/internal/agent"
-	"nu/internal/contracts"
-	"nu/internal/transport/grpc/server"
+	"github.com/dm-vev/nu/agent"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/grpc/server"
 )
 
 // Service represents a microservice wrapping an agent.

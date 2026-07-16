@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // buildConversationListFromAllOrgs builds conversation list from all organizations

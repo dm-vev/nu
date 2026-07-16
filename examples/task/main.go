@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"nu/internal/task"
-	"nu/internal/task/service"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/internal/task/service"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 func main() {

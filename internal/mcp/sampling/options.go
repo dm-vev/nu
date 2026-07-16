@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 type SamplingOption func(*contracts.MCPSamplingRequest)

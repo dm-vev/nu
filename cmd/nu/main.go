@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 
-	"nu/internal/app"
-	"nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/app"
+	"github.com/dm-vev/nu/internal/app/cli"
 )
 
 var (

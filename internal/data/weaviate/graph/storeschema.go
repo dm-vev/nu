@@ -6,7 +6,7 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // ApplySchema stores the schema definition for use in extraction and validation.

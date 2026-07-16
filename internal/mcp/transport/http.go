@@ -7,11 +7,11 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"nu/internal/contracts"
-	mcpclient "nu/internal/mcp/client"
-	"nu/internal/mcp/fault"
-	"nu/internal/mcp/retry"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/mcp/client"
+	"github.com/dm-vev/nu/internal/mcp/fault"
+	"github.com/dm-vev/nu/internal/mcp/retry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // HTTPConfig holds configuration for an HTTP MCP server
@@ -108,7 +108,7 @@ func NewCustomTransportServerWithRetry(ctx context.Context, config CustomTranspo
 }
 
 func newServerFromTransport(ctx context.Context, transport mcp.Transport, serverName, serverType string, retryConfig *retry.Config, logger telemetry.Logger) (contracts.MCPServer, *fault.Error) {
-	server, err := mcpclient.NewClientWithLogger(ctx, transport, logger)
+	server, err := client.NewClientWithLogger(ctx, transport, logger)
 	if err != nil {
 		return nil, fault.ClassifyError(err, "Connect", serverName, serverType)
 	}

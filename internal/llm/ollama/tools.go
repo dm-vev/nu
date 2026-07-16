@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // GenerateWithTools generates text using Ollama's native /api/chat tool support.

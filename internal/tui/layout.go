@@ -1,6 +1,6 @@
 package tui
 
-import "nu/internal/tui/components"
+import "github.com/dm-vev/nu/internal/tui/components"
 
 func (a *App) buildLayout() {
 	a.ui.AddChild(a.header)

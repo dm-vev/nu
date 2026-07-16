@@ -592,15 +592,18 @@ Tests:
 - `TestNUF182OfflineSkipsNetworkChecks`
 - `TestNUF182UpdateLeavesInstallUntouchedOnFailure`
 
-## Integrated Agent SDK Backend
+## Public Agent SDK Backend
 
-### NUF-200 Curated Internal SDK Fork
+### NUF-200 Public Agent SDK
 
-Nu contains a curated fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62`
-under `internal/`. Every SDK feature and API behavior currently imported from
-that pinned baseline remains available; this is a structural reorganization,
-not a feature-reduction project. The final target is the exact balanced hierarchy
-in NUA-011: `app/{auth,cli}`; `agent/{config,plans,guardrails,prompts}`;
+Nu contains a curated fork sourced from `Ingenimax/agent-sdk-go` `v0.2.62`.
+The public Agent implementation is `github.com/dm-vev/nu/agent`. Shared contracts are
+`github.com/dm-vev/nu/contracts`, and telemetry is
+`github.com/dm-vev/nu/telemetry`; implementation-only integrations remain under
+`internal/`. Every SDK feature and API behavior currently imported from that
+pinned baseline remains available; this is a structural reorganization, not a
+feature-reduction project. The final target is the exact balanced hierarchy
+in NUA-011: `app/{auth,cli}`; `agent/{context,config,execution,generation,guardrails,image,mcp,plans,prompts,providers,remote,tools}`;
 `llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}`;
 `tools/{agent,calculator,registry,coding,search,image,graphrag}`;
 `memory/{conversation,history,redis,vector,factory}`;
@@ -608,17 +611,20 @@ in NUA-011: `app/{auth,cli}`; `agent/{config,plans,guardrails,prompts}`;
 `data/{embedding,weaviate/{graph,vector},sql,storage}`;
 `task/{service,workflow,orchestration}`; `telemetry/{otel,langfuse}`;
 `transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}`; and
-`tui/{core,editor,engine,input,message,terminal,components}`. Standalone packages
-are exactly `agentui`, `config`, `contracts`, `multitenancy`,
-`model`, `rpc`, `session`, and `testkit`, plus `cmd/nu`. Superseded paths are
-deleted. Old paths receive no compatibility wrappers, aliases, facade package,
+`tui/{core,editor,engine,input,message,terminal,components}`. Public standalone
+packages are `agent` and its listed child packages, `contracts`, and
+`telemetry`; private standalone packages
+are `internal/agentui`, `internal/config`, `internal/multitenancy`,
+`internal/model`, `internal/rpc`, `internal/session`, and `internal/testkit`,
+plus `cmd/nu`. Superseded paths are
+deleted. Old paths receive no legacy compatibility wrappers, aliases, facade package,
 or duplicate backend. No feature or API behavior is deleted. The pinned commit
 and MIT license remain recorded in `THIRD_PARTY_NOTICES.md` and
 `internal/AGENT_SDK_LICENSE`.
 
 Tests:
 
-- `go test ./internal/agent/... ./internal/contracts ./internal/llm/...`
+- `go test ./agent/... ./contracts ./internal/llm/...`
 - full imported SDK package tests;
 - structural check that only the approved target package roots exist and the
   imported feature/test inventory is preserved;
@@ -626,15 +632,15 @@ Tests:
 
 ### NUF-201 SDK Agent Runtime
 
-`internal/agent.Agent` is the sole model/tool agent runtime. Nu constructs it
+`agent.Agent` is the sole model/tool agent runtime. Nu constructs it
 with an SDK `LLM`, conversation memory, Nu coding tools, bounded tool iterations,
 streaming enabled, and a diagnostics-safe logger.
 
 Tests:
 
-- upstream `internal/agent` tests;
+- upstream `agent` tests;
 - retained retry and telemetry tests under `internal/llm` and
-  `internal/telemetry/...`;
+  `telemetry/...`;
 - `TestPrintModeBuildsProviderFromCLI`;
 - `TestSDKStreamMapsContentThinkingAndTools`.
 
@@ -670,7 +676,7 @@ The seven Nu coding tools and `Builtins(cwd)` live together in
 `internal/tools/coding`; imported SDK tools live in the cohesive
 `internal/tools/{search,image,graphrag}` families. `internal/tools/{agent,calculator,registry}`
 own agent-as-tool, Calculator, and registry domains without a root facade. The Nu tools implement
-`internal/contracts.Tool` and are
+`contracts.Tool` and are
 supplied to the SDK agent. Their filesystem/process behavior and cwd safety
 remain unchanged; the old provider/tool-loop contracts and old `internal/tool`
 import path do not remain.
@@ -755,7 +761,7 @@ Tests:
 ### NUF-214 No Legacy Backend
 
 The old Nu provider abstraction, provider-specific adapters, scripted-provider
-testkit, and custom agent loop do not exist. `internal/agent` is the imported SDK
+testkit, and custom agent loop do not exist. `agent` is the imported SDK
 package; `internal/agentui` is the only Nu adapter between SDK streams and TUI/RPC.
 No wrapper package preserves old Nu backend or removed upstream SDK paths,
 including legacy `auth`, `cli`, `slash`, `interfaces`, and any package outside
@@ -764,7 +770,7 @@ wrappers for temporary flat-root APIs.
 
 Tests:
 
-- repository import check rejects `nu/internal/provider`;
+- repository import check rejects `github.com/dm-vev/nu/internal/provider`;
 - `go build ./cmd/nu`;
 - `go test ./internal/agentui ./internal/app/... ./internal/rpc ./internal/tui/...`;
 - package-root allowlist check for NUF-200.

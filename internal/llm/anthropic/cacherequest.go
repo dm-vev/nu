@@ -3,7 +3,7 @@ package anthropic
 import (
 	"encoding/json"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // anthropicCacheRequestBuilder transforms standard requests into cacheable requests

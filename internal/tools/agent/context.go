@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // Context keys for sub-agent metadata

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // TestRealAPIIntegration tests the DeepSeek client with the real API

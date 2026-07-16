@@ -5,10 +5,10 @@ import (
 	"io"
 	"strings"
 
-	"nu/internal/agentui"
-	"nu/internal/app/cli"
-	"nu/internal/contracts"
-	"nu/internal/model"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/app/cli"
+	"github.com/dm-vev/nu/internal/model"
 )
 
 // Options carries process state into one app invocation.

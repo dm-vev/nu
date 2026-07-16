@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // NewStructuredResponseFormat creates a ResponseFormat from a struct type

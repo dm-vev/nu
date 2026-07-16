@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/memory/conversation"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/memory/conversation"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // checkAndSummarize checks if summarization is needed and performs it

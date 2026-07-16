@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/multitenancy"
-	"nu/internal/tools/search"
+	"github.com/dm-vev/nu/internal/multitenancy"
+	"github.com/dm-vev/nu/internal/tools/search"
 )
 
 func TestWebSearch(t *testing.T) {

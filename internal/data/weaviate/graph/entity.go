@@ -9,9 +9,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/entity"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/entity"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // StoreEntities stores multiple entities in the knowledge graph.

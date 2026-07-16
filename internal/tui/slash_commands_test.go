@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/tui/components"
+	"github.com/dm-vev/nu/internal/tui/components"
 )
 
 func TestSlashBuiltinsCopiesPiCommandSet(t *testing.T) {

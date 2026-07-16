@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"nu/internal/tools/coding"
+	"github.com/dm-vev/nu/internal/tools/coding"
 )
 
 const defaultBashOutputLimit = 16 * 1024

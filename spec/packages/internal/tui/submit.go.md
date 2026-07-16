@@ -1,4 +1,4 @@
-# `internal/tui/tui_submit.go`
+# `internal/tui/submit.go`
 
 ## Status
 

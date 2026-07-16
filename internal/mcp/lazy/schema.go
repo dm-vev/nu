@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func (t *LazyMCPTool) discoverSchema(ctx context.Context) error {

@@ -8,9 +8,9 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 
-	"nu/internal/contracts"
-	"nu/internal/telemetry"
-	"nu/internal/transport/a2a/client"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/transport/a2a/client"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Tool wraps an A2A client as a contracts.Tool so that a remote

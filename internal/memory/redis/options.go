@@ -3,7 +3,7 @@ package redis
 import (
 	"time"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // RetryOptions configures retry behavior for Redis operations

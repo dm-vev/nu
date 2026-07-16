@@ -5,8 +5,8 @@ import (
 
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 
-	"nu/internal/contracts"
-	"nu/internal/data/weaviate/graph/entity"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/weaviate/graph/entity"
 )
 
 // CountAllEntities is a diagnostic method that counts all entities without any filter.

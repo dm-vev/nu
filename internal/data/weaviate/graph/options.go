@@ -1,6 +1,6 @@
 package graph
 
-import "nu/internal/contracts"
+import "github.com/dm-vev/nu/contracts"
 
 // Re-export option functions from interfaces for convenience
 

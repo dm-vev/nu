@@ -29,13 +29,13 @@ Useful narrow commands for the UI/RPC slice:
 
 ```bash
 go test ./internal/agentui ./internal/rpc ./internal/tui/... ./internal/app/...
-go test ./internal/agent/... ./internal/contracts ./internal/llm/...
+go test ./agent/... ./contracts ./internal/llm/...
 ```
 
 Verify the hierarchy migration and examples with:
 
 ```bash
-go list -f '{{if not .ForTest}}{{.ImportPath}}{{end}}' ./cmd/... ./internal/...
+go list -f '{{if not .ForTest}}{{.ImportPath}}{{end}}' ./cmd/... ./agent/... ./contracts ./telemetry/... ./internal/...
 go test ./internal/app/... -run 'TestNUF212Hierarchy|TestNUA009InternalPackages'
 go test ./examples/...
 ```
@@ -69,6 +69,9 @@ reorganization follow `spec/backend.md` rather than ad-hoc dependency bumps.
   and never extract a one-helper package.
 - Use normal subpackage filenames such as `client.go`; do not repeat package or
   provider names in filenames. Keep all TUI components in `tui/components`.
+- Import a package by its declared name. Add an alias only for a real name
+  collision in that file; do not encode ancestor domains in aliases such as
+  `transportgrpc` or `agentconfig`.
 - Keep one cohesive responsibility per production file. Split files over 300
   lines or record why cohesion requires the exception. Generated/test files are
   exempt.

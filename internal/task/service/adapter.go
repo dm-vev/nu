@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/contracts"
-	. "nu/internal/task"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	. "github.com/dm-vev/nu/internal/task"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // This file is maintained for backward compatibility

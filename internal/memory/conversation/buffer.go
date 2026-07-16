@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // ConversationBuffer implements a simple in-memory conversation buffer

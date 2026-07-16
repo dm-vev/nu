@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"nu/internal/contracts"
-	"nu/internal/data/embedding"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/embedding"
 )
 
 // Deduplicate removes duplicate entities using embedding similarity.

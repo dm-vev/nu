@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 func (c *Client) createHTTPRequest(ctx context.Context, req *CompletionRequest, path string) (*http.Request, error) {

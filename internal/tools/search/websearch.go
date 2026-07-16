@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/contracts"
-	"nu/internal/multitenancy"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/multitenancy"
 )
 
 // WebSearchTool implements a web search tool.

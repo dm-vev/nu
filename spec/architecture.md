@@ -8,8 +8,8 @@ cmd/nu
      -> internal/app/auth            Nu credential storage/resolution
      -> internal/app/cli             CLI parsing/help/request types
      -> internal/model               Nu model registry
-     -> internal/agent               SDK agent runtime orchestration
-        -> config plans guardrails prompts
+     -> github.com/dm-vev/nu/agent public Agent implementation
+        -> context config execution generation guardrails image mcp plans prompts providers remote tools
      -> internal/llm                 shared LLM types, retry, structured output
         -> openai anthropic gemini azureopenai deepseek ollama vllm
      -> internal/tools               tool domains
@@ -22,7 +22,7 @@ cmd/nu
         -> embedding weaviate sql storage
      -> internal/task                task models, executor, planner, contracts/options
         -> service workflow orchestration
-     -> internal/telemetry           shared telemetry types/orchestration
+     -> github.com/dm-vev/nu/telemetry shared telemetry types/orchestration
         -> otel langfuse
      -> internal/transport           shared transport types/orchestration
         -> remote
@@ -34,24 +34,26 @@ cmd/nu
         -> internal/rpc
 ```
 
-The imported upstream SDK source lives directly under `internal/`; there is no
-`internal/agent-go-sdk` nesting. Upstream package relationships are not an API:
-behavior moves into the exact approved hierarchy, superseded paths are deleted,
-and files may split while all imported feature/API behavior and tests are
-preserved. Imports use the resulting `nu/internal/*` owners; compatibility
-wrappers for old upstream paths are forbidden.
+The imported upstream SDK source is exposed through public packages under
+`github.com/dm-vev/nu/agent`, `github.com/dm-vev/nu/contracts`, and
+`github.com/dm-vev/nu/telemetry`; implementation-only Nu packages remain under
+`github.com/dm-vev/nu/internal/`. There is no `agent-go-sdk` nesting. Upstream
+package relationships are not an API: behavior moves into the exact approved
+hierarchy, superseded paths are deleted, and files may split while all imported
+feature/API behavior and tests are preserved. Compatibility wrappers for old
+upstream paths are forbidden.
 
 The approved breaking target is exhaustive:
 
 ```text
 app/{auth,cli}
-agent/{config,plans,guardrails,prompts}
+agent/{context,config,execution,generation,guardrails,image,mcp,plans,prompts,providers,remote,tools}
 llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}
-tools/{agent,calculator,registry,coding,search,image,graphrag}
+tools/{agent,calculator,registry,coding,search,image/{edit,generation},graphrag}
 memory/{conversation,history,redis,vector,factory}
 mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}
-data/{embedding,weaviate/{graph,vector},sql,storage}
-task/{service,workflow,orchestration}
+data/{embedding/{gemini,openai},weaviate/{graph,vector},sql/{postgres,supabase},storage/{gcs,local}}
+task/{service/{bridge},workflow,orchestration/{llm}}
 telemetry/{otel,langfuse}
 transport/{remote,grpc/{client,server,microservice,pb},http/server,a2a/{card,client,server,tool},ui/{server,trace}}
 tui/{core,editor,engine,input,message,terminal,components}
@@ -59,11 +61,11 @@ tui/{core,editor,engine,input,message,terminal,components}
 standalone: agentui config contracts multitenancy model rpc session testkit
 ```
 
-Every path is below `internal/`; `cmd/nu` remains the only command package. A
-listed owner is a package boundary. Family roots such as `transport/grpc` are
+Only implementation paths are below `internal/`; `cmd/nu` remains the only
+command package. A listed owner is a package boundary. Family roots such as `transport/grpc` are
 index-only directories; protocol behavior belongs in the listed domain package.
 The hierarchy is not a compatibility layer: old paths are deleted as callers
-move, with no alias facade, forwarding wrapper, or duplicate tree. No feature
+move, with no legacy alias facade, forwarding wrapper, or duplicate tree. No feature
 or API behavior may be deleted.
 
 ### Approved Ownership Map
@@ -72,27 +74,35 @@ or API behavior may be deleted.
 |---|---|
 | `internal/app` | process composition and mode orchestration only |
 | `internal/app/auth`, `internal/app/cli` | credentials; CLI parsing/help/request handling |
-| `internal/agent` | shared Agent runtime types and run orchestration |
-| `internal/agent/{config,plans,guardrails,prompts}` | cohesive agent policy/configuration families |
+| `github.com/dm-vev/nu/agent` | public Agent type, construction, options, and cross-domain orchestration |
+| `github.com/dm-vev/nu/agent/context` | Agent context and sub-agent invocation values |
+| `github.com/dm-vev/nu/agent/{config,execution,generation}` | deployment configuration, execution tracking, and LLM generation |
+| `github.com/dm-vev/nu/agent/{image,mcp,plans}` | image generation, MCP lifecycle, and execution plans |
+| `github.com/dm-vev/nu/agent/{providers,remote,tools}` | provider construction, remote lifecycle, and configured tools |
+| `github.com/dm-vev/nu/agent/{guardrails,prompts}` | cohesive agent policy and prompt families |
 | `internal/llm` | shared LLM contracts, retry, and structured-output orchestration |
 | `internal/llm/{openai,anthropic,gemini,azureopenai,deepseek,ollama,vllm}` | provider clients and provider-specific streaming; OpenAI-compatible variants stay with `openai`, and Claude-on-Bedrock stays with `anthropic` |
 | `internal/tools/{agent,calculator,registry}` | agent-as-tool, Calculator, and registry domains |
 | `internal/tools/coding` | all seven cwd-scoped Nu filesystem/process tools and `Builtins(cwd)` |
 | `internal/tools/search` | WebSearch, GitHub content, and HuggingFace integrations |
-| `internal/tools/image` | image generation/edit tools and their sessions |
+| `internal/tools/image/{edit,generation}` | image edit and generation tools with their own session lifecycles; `image` is an index-only family root |
 | `internal/tools/graphrag` | GraphRAG tool adapters |
 | `internal/data` | concise package index; no implementation or forwarding API |
-| `internal/data/embedding` | embedders plus generic metadata filters and in-memory evaluation |
+| `internal/data/embedding` | shared embedding contracts, configuration, similarity, metadata filters, and in-memory evaluation |
+| `internal/data/embedding/{gemini,openai}` | provider-specific embedders |
 | `internal/data/weaviate/graph` | GraphRAG `Store` implementation and graph helpers |
 | `internal/data/weaviate/vector` | Vector `Store` implementation and metadata helpers |
-| `internal/data/sql` | PostgreSQL and Supabase adapters with `Postgres*` and `Supabase*` names |
-| `internal/data/storage` | `Storage` contract plus `Local*` and `GCS*` implementations |
+| `internal/data/sql/{postgres,supabase}` | PostgreSQL and Supabase adapters; `sql` is an index-only family root |
+| `internal/data/storage` | shared image-storage contract |
+| `internal/data/storage/{gcs,local}` | GCS and local-filesystem storage implementations |
 | `internal/task` | canonical/core and legacy task models, executors, planners, and shared task contracts/options |
-| `internal/task/service` | in-memory/core services, API support, service adapters, and compatibility conversion behavior |
+| `internal/task/service` | in-memory/core services, API support, and service adapters |
+| `internal/task/service/bridge` | canonical/core compatibility bridges and conversion behavior |
 | `internal/task/workflow` | workflow models and execution behavior |
-| `internal/task/orchestration` | LLM/code/workflow orchestrators, handoffs, registries, and routers |
-| `internal/telemetry` | shared telemetry contracts and fan-out orchestration |
-| `internal/telemetry/{otel,langfuse}` | OpenTelemetry/logging and Langfuse integrations |
+| `internal/task/orchestration` | code/workflow orchestration, handoffs, shared registries, and non-LLM routers |
+| `internal/task/orchestration/llm` | LLM planning, execution, final synthesis, and routing |
+| `github.com/dm-vev/nu/telemetry` | shared telemetry contracts and fan-out orchestration |
+| `github.com/dm-vev/nu/telemetry/{otel,langfuse}` | OpenTelemetry/logging and Langfuse integrations |
 | `internal/transport` | transport package marker and transport-neutral ownership |
 | `internal/transport/remote` | remote-agent construction and gRPC client injection |
 | `internal/transport/grpc/client` | remote-agent gRPC client and stream callbacks |
@@ -102,13 +112,17 @@ or API behavior may be deleted.
 | `internal/transport/http/server` | HTTP agent endpoints and SSE responses |
 | `internal/transport/ui/{server,trace}` | UI HTTP server and trace collection |
 
-The agent split is directional: root `agent` owns every factory that constructs
-an `*agent.Agent` and imports `agent/config` and `agent/plans`. `agent/config`
+The root `agent` package owns the real Agent type, construction, options, and
+cross-domain orchestration; it is not a forwarding facade. Its child packages
+own configuration, generation, image, execution plans, MCP, providers, remote
+lifecycle, and tools. Agent-specific adapters that need private Agent state
+remain in the root package instead of becoming fake one-file subpackages:
+memory, GraphRAG, sub-agents, task helpers, and tree validation. `agent/config`
 owns YAML, deployment, remote-configuration, MCP-configuration, merge,
 environment, persistence, validation, and conversion behavior without importing
 root agent or transport. `agent/plans` owns plan models, storage, generation, and
-execution without importing root agent. `agent/guardrails` owns concrete
-guardrails; root consumes only `contracts.Guardrails`. `agent/prompts` owns prompt
+execution without importing runtime. `agent/guardrails` owns concrete
+guardrails; runtime consumes only `contracts.Guardrails`. `agent/prompts` owns prompt
 templates, stores, and management. Concrete remote clients remain outside agent
 and are injected through `contracts.RemoteAgentClient`; neither root nor a child
 imports `internal/transport` or `internal/task`.
@@ -118,7 +132,7 @@ imports `internal/transport` or `internal/task`.
 | `internal/tui/components` | every reusable TUI component; no component-per-package tree |
 | `internal/memory/{conversation,history,redis,vector,factory}` | conversation context/history, Redis, vector retrieval, and config construction |
 | `internal/mcp/{builder,client,config,fault,lazy,preset,prompt,registry,resource,retry,sampling,schema,tool,transport}` | MCP client, transports, retry, lazy servers, management, and protocol domains |
-| standalone packages | `agentui`, `config`, `contracts`, `multitenancy`, `model`, `rpc`, `session`, `testkit` |
+| standalone packages | public `agent` and its listed child domains, `contracts`, `telemetry`; private `internal/agentui`, `internal/config`, `internal/multitenancy`, `internal/model`, `internal/rpc`, `internal/session`, `internal/testkit` |
 
 Files inside a subpackage use ordinary responsibility names such as `client.go`,
 `stream.go`, and `client_test.go`; they do not repeat the package/provider name.
@@ -129,14 +143,14 @@ extracted to satisfy a size or naming preference.
 
 | Concern | Owner |
 |---|---|
-| Model/tool agent loop | `internal/agent` SDK fork |
+| Model/tool agent loop | `agent` SDK fork |
 | LLM clients and provider streaming | `internal/llm/*` SDK fork |
 | Retry and structured-output orchestration | `internal/llm` |
 | Conversation memory and MCP client support | `internal/memory/{conversation,history,redis,vector,factory}`, `internal/mcp/*` |
-| Data and retrieval | `internal/data/{embedding,weaviate/{graph,vector},sql,storage}` |
-| SDK diagnostics and tracing | `internal/telemetry`, `internal/telemetry/*` |
+| Data and retrieval | `internal/data/{embedding/{gemini,openai},weaviate/{graph,vector},sql/{postgres,supabase},storage/{gcs,local}}` |
+| SDK diagnostics and tracing | `telemetry`, `telemetry/*` |
 | Nu process composition, auth/CLI, and model selection | `internal/app`, `internal/app/*`, `internal/model` |
-| SDK tools and Nu coding tools | `internal/tools/{agent,calculator,registry,coding,search,image,graphrag}` |
+| SDK tools and Nu coding tools | `internal/tools/{agent,calculator,registry,coding,search,image/{edit,generation},graphrag}` |
 | TUI/RPC busy, abort, event translation | `internal/agentui` |
 | Terminal UI and slash commands | `internal/tui`, `internal/tui/*` |
 | Local JSONL RPC | `internal/rpc` |

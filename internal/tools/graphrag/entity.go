@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // AddEntityTool adds entities to the knowledge graph.

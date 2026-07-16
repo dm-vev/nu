@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"nu/internal/contracts"
+	"github.com/dm-vev/nu/contracts"
 )
 
 // geminiCollectEvents drains every event from eventCh until it is closed.

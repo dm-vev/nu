@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 func containsIgnoreCase(str, substr string) bool {

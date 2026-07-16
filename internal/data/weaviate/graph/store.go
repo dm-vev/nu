@@ -11,9 +11,9 @@ import (
 	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"github.com/weaviate/weaviate-go-client/v5/weaviate/auth"
 
-	"nu/internal/contracts"
-	"nu/internal/data/embedding"
-	"nu/internal/telemetry"
+	"github.com/dm-vev/nu/contracts"
+	"github.com/dm-vev/nu/internal/data/embedding"
+	"github.com/dm-vev/nu/telemetry"
 )
 
 // Store implements contracts.GraphRAGStore using Weaviate.

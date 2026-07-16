@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"nu/internal/agentui"
-	"nu/internal/model"
-	"nu/internal/tui/components"
-	"nu/internal/tui/message"
+	"github.com/dm-vev/nu/internal/agentui"
+	"github.com/dm-vev/nu/internal/model"
+	"github.com/dm-vev/nu/internal/tui/components"
+	"github.com/dm-vev/nu/internal/tui/message"
 )
 
 func (a *App) submit(value string) error {

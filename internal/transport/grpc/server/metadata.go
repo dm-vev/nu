@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	pb "nu/internal/transport/grpc/pb"
+	"github.com/dm-vev/nu/internal/transport/grpc/pb"
 )
 
 // contextKey is a custom type for context keys to avoid collisions
